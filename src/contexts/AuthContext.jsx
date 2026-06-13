@@ -41,17 +41,29 @@ export function AuthProvider({ children }) {
   const login = async (loginId, password, branch) => {
     try {
       const users = await getAll('users');
-      if (users.length === 0) {
+      
+      // If we don't have enough users (or only the test user I created), trigger the seed
+      if (users.length < 5) {
         // First run - seed the database
-        await seedFirestore();
+        const seedResult = await seedFirestore();
+        if (!seedResult.success) {
+          if (seedResult.error?.includes('Missing or insufficient permissions') || seedResult.error?.includes('permission_denied')) {
+             return { success: false, error: 'Firebase Security Rules are blocking access. Please update your Firestore Rules to allow read/write.' };
+          }
+          return { success: false, error: 'Failed to seed database: ' + seedResult.error };
+        }
+        
         // Retry fetching users
         const seeded = await getAll('users');
+        if (seeded.length === 0) {
+          return { success: false, error: 'Seeded but no users found. Check Firebase.' };
+        }
         return loginFromList(seeded, loginId, password, branch);
       }
       return loginFromList(users, loginId, password, branch);
     } catch (e) {
       console.error('Login error:', e);
-      return { success: false, error: 'Connection error. Please try again.' };
+      return { success: false, error: e.message || 'Connection error. Please try again.' };
     }
   };
 
