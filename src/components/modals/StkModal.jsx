@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { autoFillFromInq } from '../../utils/relations';
 
-export const StkModal = ({ isOpen, onClose, onSave, editData }) => {
+export const StkModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
   "sk_inqid": "",
   "sk_regn": "",
@@ -36,10 +37,43 @@ export const StkModal = ({ isOpen, onClose, onSave, editData }) => {
   "sk_mkt": ""
 });
 
+  useEffect(() => {
+    if (isOpen && quickInqId) {
+      setFormData(prev => ({ ...prev, sk_inqid: quickInqId }));
+      autoFillFromInq(quickInqId).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            sk_make: inqData.make || '',
+            sk_model: inqData.model || '',
+            sk_var: inqData.variant || '',
+            sk_year: inqData.year || '',
+            sk_fuel: inqData.fuel || ''
+          }));
+        }
+      });
+    }
+  }, [isOpen, quickInqId]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'sk_inqid' && value.length >= 5) {
+      autoFillFromInq(value).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            sk_make: inqData.make || '',
+            sk_model: inqData.model || '',
+            sk_var: inqData.variant || '',
+            sk_year: inqData.year || '',
+            sk_fuel: inqData.fuel || ''
+          }));
+        }
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -53,7 +87,7 @@ export const StkModal = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   return (
-    <div className="overlay" id="m_stk">
+    <div className="overlay on" id="m_stk">
  <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ­</div><h3>Car Stock</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div style={{"background":"rgba(255,107,0,.07)","border":"1px solid rgba(255,107,0,.25)","borderRadius":"var(--radius-sm)","padding":"10px 14px","marginBottom":"14px","display":"flex","alignItems":"center","gap":"10px"}}>

@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { autoFillFromInq } from '../../utils/relations';
 
-export const WsModal = ({ isOpen, onClose, onSave, editData }) => {
+export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
   "ws_inqid": "",
   "ws_vnum": "",
@@ -28,10 +29,35 @@ export const WsModal = ({ isOpen, onClose, onSave, editData }) => {
   "ws_rem": ""
 });
 
+  useEffect(() => {
+    if (isOpen && quickInqId) {
+      setFormData(prev => ({ ...prev, ws_inqid: quickInqId }));
+      autoFillFromInq(quickInqId).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            ws_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
+          }));
+        }
+      });
+    }
+  }, [isOpen, quickInqId]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'ws_inqid' && value.length >= 5) {
+      autoFillFromInq(value).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            ws_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
+          }));
+        }
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -45,7 +71,7 @@ export const WsModal = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   return (
-    <div className="overlay" id="m_ws">
+    <div className="overlay on" id="m_ws">
  <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ”§</div><h3>Workshop / Refurbishment Job Card</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div style={{"background":"rgba(255,107,0,.07)","border":"1px solid rgba(255,107,0,.25)","borderRadius":"var(--radius-sm)","padding":"10px 14px","marginBottom":"14px","display":"flex","alignItems":"center","gap":"10px"}}>

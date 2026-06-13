@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { autoFillFromInq } from '../../utils/relations';
 
-export const ValModal = ({ isOpen, onClose, onSave, editData }) => {
+export const ValModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
   "v_inqid": "",
   "v_date": "",
@@ -27,6 +27,25 @@ export const ValModal = ({ isOpen, onClose, onSave, editData }) => {
   "v_nextfu": "",
   "v_rem": ""
 });
+
+  useEffect(() => {
+    if (isOpen && quickInqId) {
+      setFormData(prev => ({ ...prev, v_inqid: quickInqId }));
+      autoFillFromInq(quickInqId).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            v_cname: inqData.sellerName || '',
+            v_cont: inqData.mobile || '',
+            v_make: inqData.make || '',
+            v_model: inqData.model || '',
+            v_year: inqData.year || '',
+            v_fuel: inqData.fuel || ''
+          }));
+        }
+      });
+    }
+  }, [isOpen, quickInqId]);
 
   if (!isOpen) return null;
 
@@ -61,7 +80,7 @@ export const ValModal = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   return (
-    <div className="overlay" id="m_val">
+    <div className="overlay on" id="m_val">
  <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ”</div><h3>Vehicle Valuation</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div className="grid3"><div className="fg"><label>Inquiry ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="v_inqid" name="v_inqid" value={formData['v_inqid'] || ''} onChange={handleChange} placeholder="INQ-2025-0001"  /></div><div className="fg"><label>Valuation Date</label><input type="date" id="v_date" name="v_date" value={formData['v_date'] || ''} onChange={handleChange} /></div><div className="fg"><label>Vehicle Number</label><input id="v_vnum" name="v_vnum" value={formData['v_vnum'] || ''} onChange={handleChange} placeholder="GJ-01-AB-1234" /></div></div>

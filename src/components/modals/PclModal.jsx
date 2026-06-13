@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { autoFillFromInq } from '../../utils/relations';
 
-export const PclModal = ({ isOpen, onClose, onSave, editData }) => {
+export const PclModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
   "pc_inqid": "",
   "pc_sname": "",
@@ -29,10 +30,37 @@ export const PclModal = ({ isOpen, onClose, onSave, editData }) => {
   "pc_rem": ""
 });
 
+  useEffect(() => {
+    if (isOpen && quickInqId) {
+      setFormData(prev => ({ ...prev, pc_inqid: quickInqId }));
+      autoFillFromInq(quickInqId).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            pc_sname: inqData.sellerName || '',
+            pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
+          }));
+        }
+      });
+    }
+  }, [isOpen, quickInqId]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'pc_inqid' && value.length >= 5) {
+      autoFillFromInq(value).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            pc_sname: inqData.sellerName || '',
+            pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
+          }));
+        }
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -46,7 +74,7 @@ export const PclModal = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   return (
-    <div className="overlay" id="m_pcl">
+    <div className="overlay on" id="m_pcl">
  <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ¤</div><h3>Purchase Closer</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div className="grid3"><div className="fg"><label>Inquiry ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="pc_inqid" name="pc_inqid" value={formData['pc_inqid'] || ''} onChange={handleChange} placeholder="INQ-2025-0001"  /></div><div className="fg"><label>Seller Name</label><input id="pc_sname" name="pc_sname" value={formData['pc_sname'] || ''} onChange={handleChange} placeholder="Name" /></div><div className="fg"><label>Vehicle Details</label><input id="pc_veh" name="pc_veh" value={formData['pc_veh'] || ''} onChange={handleChange} placeholder="Make Model Year" /></div></div>
