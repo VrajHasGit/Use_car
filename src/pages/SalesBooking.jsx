@@ -1,124 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useData } from '../contexts/DataContext';
+import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
+import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SobModal } from '../components/modals/SobModal';
-import { db } from '../firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
 
 const SalesBooking = () => {
-  const [bookings, setBookings] = useState([]);
+  const { data, refresh } = useData();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    // Fetch from Firestore
-    const fetchData = async () => {
-      try {
-        const q = query(collection(db, 'sob'));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setBookings(data);
-      } catch (error) {
-        console.error("Error fetching sales bookings: ", error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const filteredBookings = bookings.filter(item => {
-    const matchesSearch = (item.id || '').toLowerCase().includes(search.toLowerCase()) || 
-                          (item.clientName || '').toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter ? item.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
-  });
-
+  const [editRec, setEditRec] = useState(null);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
+  const records = data.sob || [];
+  const filtered = records.filter(r => !search || (r.buyerName||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase()));
+  const handleSave = async (fd) => {
+    try {
+      if (editRec) { await updateRecord('sob', editRec.id, fd); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('sob'); await addRecord('sob', {...fd, sobId: genId('SOB', cnt), date: fd.date||today()}); showToast('Sales booking added!'); }
+      await refresh('sob'); setIsModalOpen(false);
+    } catch(e) { showToast('Failed: '+e.message, 'error'); }
+  };
+  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('sob', rec.id); await refresh('sob'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   return (
     <div className="page on" id="pg_sal_booking">
+      {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
       <div className="ph">
-        <div className="ph-left">
-          <h1>
-            <div className="ph-icon"><i className="fa fa-clipboard-list"></i></div>
-            Sales Order Booking
-          </h1>
-          <p>Used Car Sale Booking Form — Client · Car · Deal · Payment · Documents</p>
-        </div>
+        <div className="ph-left"><h1><div className="ph-icon"><i className="fa fa-clipboard-list"></i></div>Sales Order Booking</h1><p>Sales order booking and SOB management</p></div>
         <div className="ph-actions">
-          <input 
-            className="srch" 
-            placeholder="🔍 Search…" 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)} 
-          />
-          <select 
-            className="flt" 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Status</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Pending">Pending</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <button className="btn btn-out btn-sm"><i className="fa fa-file-csv"></i> Export</button>
-          <button className="btn btn-or" onClick={() => setIsModalOpen(true)}><i className="fa fa-plus"></i> New Booking</button>
+          <input className="srch" placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)} />
+          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> Add Booking</button>
         </div>
       </div>
-      <SobModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {isModalOpen && <SobModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
+        <div className="tc-hdr"><div className="tc-title">Sales Order Bookings <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_sob">
-            <thead>
-              <tr>
-                <th>Booking ID</th>
-                <th>Date</th>
-                <th>Branch</th>
-                <th>Client Name</th>
-                <th>Contact</th>
-                <th>Reg No.</th>
-                <th>Make/Model</th>
-                <th>Year</th>
-                <th>Color</th>
-                <th>KM</th>
-                <th>Sale Price</th>
-                <th>Total Amt</th>
-                <th>Booking Amt</th>
-                <th>Balance</th>
-                <th>Sales Exec</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+            <thead><tr><th>SOB ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Sale Price</th><th>Advance</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {filteredBookings.length > 0 ? (
-                filteredBookings.map(item => (
-                  <tr key={item.id}>
-                    <td>{item.bookingId || item.id}</td>
-                    <td>{item.date}</td>
-                    <td>{item.branch}</td>
-                    <td>{item.clientName}</td>
-                    <td>{item.contact}</td>
-                    <td>{item.regNo}</td>
-                    <td>{item.makeModel}</td>
-                    <td>{item.year}</td>
-                    <td>{item.color}</td>
-                    <td>{item.km}</td>
-                    <td>{item.salePrice}</td>
-                    <td>{item.totalAmt}</td>
-                    <td>{item.bookingAmt}</td>
-                    <td>{item.balance}</td>
-                    <td>{item.salesExec}</td>
-                    <td><span className={`badge b-${(item.status || '').toLowerCase().replace(' ', '-')}`}>{item.status}</span></td>
-                    <td>
-                      <button className="btn-icon bi-edit" title="Edit"><i className="fa fa-pen"></i></button>
-                      <button className="btn-icon bi-print" title="Print Booking"><i className="fa fa-print"></i></button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="17" className="empty">No sales bookings found</td>
+              {filtered.length > 0 ? filtered.map(r => (
+                <tr key={r.id}>
+                  <td style={{fontWeight:700,color:'var(--bl5)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.sobId||r.id?.slice(0,12)}</td>
+                  <td>{fmtDate(r.date)}</td><td style={{fontWeight:600}}>{r.buyerName}</td>
+                  <td style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>{r.regNo}</td>
+                  <td>{r.make} {r.model}</td>
+                  <td style={{color:'var(--success)',fontWeight:700}}>{fmt(r.sp)}</td>
+                  <td className="amt-or">{fmt(r.advance)}</td>
+                  <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
+                  <td><div style={{display:'flex',gap:4}}>
+                    <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
+                    <button className="btn-icon bi-print" title="Print" onClick={()=>window.print()}><i className="fa fa-print"></i></button>
+                    <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
+                  </div></td>
                 </tr>
-              )}
+              )) : <tr><td colSpan="9" className="empty"><i className="fa fa-clipboard-list"></i><br />{search?'No results found':'No sales bookings yet.'}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -126,5 +61,4 @@ const SalesBooking = () => {
     </div>
   );
 };
-
 export default SalesBooking;

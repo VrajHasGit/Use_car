@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DataProvider } from './contexts/DataContext';
+import Loader from './components/Loader';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -20,42 +23,104 @@ import DeliveryNote from './pages/DeliveryNote';
 import GatePass from './pages/GatePass';
 import Settings from './pages/Settings';
 import Reports from './pages/Reports';
-
-// Import our custom global styles extracted from the original HTML
+import Documents from './pages/Documents';
+import Expenses from './pages/Expenses';
+import Customers from './pages/Customers';
+import Finance from './pages/Finance';
+import GstInvoice from './pages/GstInvoice';
+import Targets from './pages/Targets';
+import TestDrive from './pages/TestDrive';
+import UserMgmt from './pages/UserMgmt';
+import EmpPerf from './pages/EmpPerf';
+import PurchaseDashboard from './pages/PurchaseDashboard';
+import SalesDashboard from './pages/SalesDashboard';
 import './index.css';
+
+// Protected Route - redirects to login if not authenticated
+function ProtectedRoute({ children }) {
+  const { currentUser, authLoading } = useAuth();
+  if (authLoading) return null;
+  if (!currentUser) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// App inner - needs auth context
+function AppInner() {
+  const [showLoader, setShowLoader] = useState(true);
+  const { currentUser, authLoading } = useAuth();
+
+  // Only show loader on first visit (when we truly need to load)
+  useEffect(() => {
+    // If user is not logged in, skip loader and go straight to login
+    if (!authLoading && !currentUser) {
+      setShowLoader(false);
+    }
+  }, [authLoading, currentUser]);
+
+  if (showLoader) {
+    return <Loader onFinish={() => setShowLoader(false)} />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={
+        currentUser ? <Navigate to="/" replace /> : <Login />
+      } />
+
+      <Route path="/" element={
+        <ProtectedRoute>
+          <DataProvider>
+            <Layout />
+          </DataProvider>
+        </ProtectedRoute>
+      }>
+        <Route index element={<Dashboard />} />
+        <Route path="purchase-dashboard" element={<PurchaseDashboard />} />
+        <Route path="sales-dashboard" element={<SalesDashboard />} />
+        {/* Purchase Pipeline */}
+        <Route path="purchase-inquiry" element={<PurchaseInquiry />} />
+        <Route path="valuation" element={<Valuation />} />
+        <Route path="purchase-follow" element={<PurchaseFollowUp />} />
+        <Route path="purchase-closer" element={<PurchaseCloser />} />
+        <Route path="purchase-booking" element={<PurchaseBooking />} />
+        <Route path="payment" element={<Payment />} />
+        <Route path="documents" element={<Documents />} />
+        {/* Sales Pipeline */}
+        <Route path="sales-inquiry" element={<SalesInquiry />} />
+        <Route path="sales-follow" element={<SalesFollowUp />} />
+        <Route path="test-drive" element={<TestDrive />} />
+        <Route path="sales-closer" element={<SalesCloser />} />
+        <Route path="sales-booking" element={<SalesBooking />} />
+        <Route path="finance" element={<Finance />} />
+        <Route path="gst-invoice" element={<GstInvoice />} />
+        <Route path="delivery" element={<Delivery />} />
+        <Route path="delivery-note" element={<DeliveryNote />} />
+        <Route path="gate-pass" element={<GatePass />} />
+        {/* Inventory & Workshop */}
+        <Route path="stock" element={<Stock />} />
+        <Route path="workshop" element={<Workshop />} />
+        <Route path="expenses" element={<Expenses />} />
+        {/* Sales Tools */}
+        <Route path="customers" element={<Customers />} />
+        <Route path="targets" element={<Targets />} />
+        <Route path="emp-perf" element={<EmpPerf />} />
+        {/* Admin */}
+        <Route path="user-mgmt" element={<UserMgmt />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          {/* We will add more routes here for Purchase, Sales, etc. */}
-          <Route path="purchase-dashboard" element={<Dashboard />} />
-          <Route path="sales-dashboard" element={<Dashboard />} />
-          <Route path="purchase-inquiry" element={<PurchaseInquiry />} />
-          <Route path="sales-inquiry" element={<SalesInquiry />} />
-          <Route path="valuation" element={<Valuation />} />
-          <Route path="stock" element={<Stock />} />
-          <Route path="purchase-closer" element={<PurchaseCloser />} />
-          <Route path="purchase-follow" element={<PurchaseFollowUp />} />
-          <Route path="purchase-booking" element={<PurchaseBooking />} />
-          <Route path="sales-follow" element={<SalesFollowUp />} />
-          <Route path="sales-closer" element={<SalesCloser />} />
-          <Route path="sales-booking" element={<SalesBooking />} />
-          <Route path="workshop" element={<Workshop />} />
-          <Route path="payment" element={<Payment />} />
-          <Route path="delivery" element={<Delivery />} />
-          <Route path="delivery-note" element={<DeliveryNote />} />
-          <Route path="gate-pass" element={<GatePass />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="reports" element={<Reports />} />
-        </Route>
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AuthProvider>
+        <AppInner />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

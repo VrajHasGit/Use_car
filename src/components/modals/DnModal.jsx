@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const DnModal = ({ isOpen, onClose }) => {
+export const DnModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "dn_obid": "",
   "dn_id": "",
@@ -45,8 +45,7 @@ export const DnModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'dn'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -56,13 +55,13 @@ export const DnModal = ({ isOpen, onClose }) => {
   return (
     <div className="overlay" id="m_dn">
  <div className="mbox" style={{"maxWidth":"860px"}}>
-  <div className="m-hdr"><div className="m-hdr-icon">📋</div><h3>Delivery Note</h3><button className="m-close" onClick={onClose} >✕</button></div>
+  <div className="m-hdr"><div className="m-hdr-icon">ðŸ“‹</div><h3>Delivery Note</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
   <div className="m-body">
    <div style={{"background":"rgba(8,145,178,.1)","border":"1px solid rgba(8,145,178,.3)","borderRadius":"8px","padding":"10px 14px","marginBottom":"14px","fontSize":"12px","color":"#67E8F9"}}>
-    <i className="fa fa-bolt" style={{"color":"var(--or1)"}}></i> Booking ID dalo → Customer, Vehicle auto-fill ho jayega
+    <i className="fa fa-bolt" style={{"color":"var(--or1)"}}></i> Booking ID dalo â†’ Customer, Vehicle auto-fill ho jayega
    </div>
    <div className="grid3">
-    <div className="fg"><label>Booking ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="dn_obid" name="dn_obid" value={formData['dn_obid'] || ''} onChange={handleChange} placeholder="SOB-2025-0001"  /></div>
+    <div className="fg"><label>Booking ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="dn_obid" name="dn_obid" value={formData['dn_obid'] || ''} onChange={handleChange} placeholder="SOB-2025-0001"  /></div>
     <div className="fg"><label>DN Number</label><input id="dn_id" name="dn_id" value={formData['dn_id'] || ''} onChange={handleChange} placeholder="DN-2025-0001" readOnly /></div>
     <div className="fg"><label>Date *</label><input type="date" id="dn_date" name="dn_date" value={formData['dn_date'] || ''} onChange={handleChange} /></div>
    </div>
@@ -130,3 +129,4 @@ export const DnModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+

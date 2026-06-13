@@ -1,11 +1,41 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { initials } from '../utils/helpers';
 
-const Sidebar = ({ isSlim, toggleCompanyModal }) => {
+const Sidebar = ({ isSlim }) => {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const role = currentUser?.role || 'Admin';
+  const isAdmin = ['Admin', 'Partner', 'Manager'].includes(role);
+  const isPurchase = isAdmin || ['Closer', 'Executive', 'Valuator', 'Workshop'].includes(role);
+  const isSales = isAdmin || ['Sales'].includes(role);
+
+  const navItem = (to, icon, label, badge, style = {}) => (
+    <NavLink
+      key={to}
+      to={to}
+      className={({ isActive }) => `sb-item${isActive ? ' act' : ''}`}
+      style={style}
+    >
+      <i className={`${icon} sb-ico`}></i>
+      <span className="sb-lbl">{label}</span>
+      {badge !== undefined && badge !== null && (
+        <span className="sb-badge">{badge}</span>
+      )}
+    </NavLink>
+  );
+
   return (
     <div id="sb" className={isSlim ? 'slim' : ''}>
       <div className="sb-hdr">
-        <div className="sb-logo" onClick={toggleCompanyModal} title="Click to edit company" id="sbLogoWrap">
+        <div className="sb-logo" id="sbLogoWrap" title="Carecay ERP">
           <i className="fa fa-car" id="sbLogoIcon"></i>
         </div>
         <div className="sb-brand">
@@ -13,100 +43,85 @@ const Sidebar = ({ isSlim, toggleCompanyModal }) => {
           <div className="sb-tag" id="sbTag">Carecay Pvt. Ltd.</div>
         </div>
       </div>
-      
+
       <nav className="sb-nav" id="sbNav">
+        {/* OVERVIEW */}
         <div className="sb-sec" data-role="all">OVERVIEW</div>
-        
-        <NavLink to="/" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-gauge-high sb-ico"></i>
-          <span className="sb-lbl">Dashboard</span>
-        </NavLink>
-        
-        <div className="sb-sec" data-role="all" style={{color: 'rgba(80,220,160,.7)'}}>📊 ROLE DASHBOARDS</div>
-        
-        <NavLink to="/purchase-dashboard" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-car-side sb-ico" style={{color: '#34D399'}}></i>
-          <span className="sb-lbl">Purchase Dashboard</span>
-        </NavLink>
+        {navItem('/', 'fa fa-gauge-high', 'Dashboard')}
 
-        <NavLink to="/sales-dashboard" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-tags sb-ico" style={{color: '#67E8F9'}}></i>
-          <span className="sb-lbl">Sales Dashboard</span>
-        </NavLink>
+        {/* ROLE DASHBOARDS */}
+        <div className="sb-sec" data-role="all" style={{ color: 'rgba(80,220,160,.7)' }}>📊 ROLE DASHBOARDS</div>
+        {navItem('/purchase-dashboard', 'fa fa-car-side', 'Purchase Dashboard', null, { color: '#34D399' })}
+        {navItem('/sales-dashboard', 'fa fa-tags', 'Sales Dashboard', null, { color: '#67E8F9' })}
 
-        {/* Purchase Pipeline */}
-        <div className="sb-sec" data-role="purchase admin" style={{color: 'rgba(255,160,80,.7)'}}>⬇ PURCHASE PIPELINE</div>
-        <NavLink to="/purchase-inquiry" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-car-side sb-ico"></i><span className="sb-lbl">Purchase Inquiry</span>
-        </NavLink>
-        <NavLink to="/valuation" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-magnifying-glass-dollar sb-ico"></i><span className="sb-lbl">Valuation</span>
-        </NavLink>
-        <NavLink to="/purchase-follow" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-phone-volume sb-ico"></i><span className="sb-lbl">Purchase Follow-Up</span>
-        </NavLink>
-        <NavLink to="/purchase-closer" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-handshake sb-ico"></i><span className="sb-lbl">Purchase Closer</span>
-        </NavLink>
-        <NavLink to="/purchase-booking" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-file-pen sb-ico"></i><span className="sb-lbl">Order Booking</span>
-        </NavLink>
+        {/* PURCHASE PIPELINE */}
+        {isPurchase && <>
+          <div className="sb-sec" data-role="purchase admin" style={{ color: 'rgba(255,160,80,.7)' }}>⬇ PURCHASE PIPELINE</div>
+          {navItem('/purchase-inquiry', 'fa fa-car-side', 'Purchase Inquiry')}
+          {navItem('/valuation', 'fa fa-magnifying-glass-dollar', 'Valuation', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-follow', 'fa fa-phone-volume', 'Purchase Follow-Up', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-closer', 'fa fa-handshake', 'Purchase Closer', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-booking', 'fa fa-file-pen', 'Order Booking', null, { paddingLeft: '22px' })}
+          {navItem('/payment', 'fa fa-money-bill-wave', 'Purchase Payment', null, { paddingLeft: '22px' })}
+          {navItem('/documents', 'fa fa-file-contract', 'Documents', null, { paddingLeft: '22px' })}
+          {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
+          {navItem('/workshop', 'fa fa-screwdriver-wrench', 'Workshop / Refurb', null, { paddingLeft: '22px' })}
+          {navItem('/expenses', 'fa fa-receipt', 'Expenses', null, { paddingLeft: '22px' })}
+          {navItem('/reports', 'fa fa-chart-bar', 'Reports', null, { paddingLeft: '22px' })}
+        </>}
 
-        {/* Sales Pipeline */}
-        <div className="sb-sec" data-role="sales admin" style={{color: 'rgba(80,160,255,.7)'}}>⬇ SALES PIPELINE</div>
-        <NavLink to="/sales-inquiry" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-tags sb-ico"></i><span className="sb-lbl">Sales Inquiry</span>
-        </NavLink>
-        <NavLink to="/sales-follow" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-comments sb-ico"></i><span className="sb-lbl">Sales Follow-Up</span>
-        </NavLink>
-        <NavLink to="/sales-closer" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-trophy sb-ico"></i><span className="sb-lbl">Sales Closer</span>
-        </NavLink>
-        <NavLink to="/sales-booking" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-clipboard-list sb-ico"></i><span className="sb-lbl">Order Booking</span>
-        </NavLink>
+        {/* SALES PIPELINE */}
+        {isSales && <>
+          <div className="sb-sec" data-role="sales admin" style={{ color: 'rgba(80,160,255,.7)' }}>⬇ SALES PIPELINE</div>
+          {navItem('/sales-inquiry', 'fa fa-tags', 'Sales Inquiry')}
+          {navItem('/sales-follow', 'fa fa-comments', 'Sales Follow-Up', null, { paddingLeft: '22px' })}
+          {navItem('/test-drive', 'fa fa-road', 'Test Drive', null, { paddingLeft: '22px' })}
+          {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
+          {navItem('/sales-closer', 'fa fa-trophy', 'Sales Closer', null, { paddingLeft: '22px' })}
+          {navItem('/sales-booking', 'fa fa-clipboard-list', 'Sales Order Booking', null, { paddingLeft: '22px' })}
+          {navItem('/finance', 'fa fa-landmark', 'Finance / Loan', null, { paddingLeft: '22px' })}
+          {navItem('/payment', 'fa fa-credit-card', 'Sale Payment', null, { paddingLeft: '22px' })}
+          {navItem('/documents', 'fa fa-file-contract', 'Sale Documents', null, { paddingLeft: '22px' })}
+          {navItem('/delivery-note', 'fa fa-file-lines', 'Delivery Note', null, { paddingLeft: '22px' })}
+          {navItem('/gate-pass', 'fa fa-door-open', 'Gate Pass', null, { paddingLeft: '22px' })}
+          {navItem('/delivery', 'fa fa-truck', 'Delivery', null, { paddingLeft: '22px' })}
+        </>}
 
-        {/* Additional links can be added here progressively */}
-        
-        <div className="sb-sec" data-role="all" style={{color: 'rgba(255,255,255,.7)'}}>⬇ INVENTORY & WORKSHOP</div>
-        <NavLink to="/stock" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-warehouse sb-ico"></i><span className="sb-lbl">Car Stock</span>
-        </NavLink>
-        <NavLink to="/workshop" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-screwdriver-wrench sb-ico"></i><span className="sb-lbl">Workshop</span>
-        </NavLink>
+        {/* SALES TOOLS */}
+        {isSales && <>
+          <div className="sb-sec" data-role="sales admin" style={{ color: 'rgba(103,232,249,.7)' }}>🛠 SALES TOOLS</div>
+          {navItem('/customers', 'fa fa-users', 'Customers')}
+          {navItem('/gst-invoice', 'fa fa-file-invoice', 'GST Invoice')}
+          {navItem('/targets', 'fa fa-bullseye', 'Targets & Achievements')}
+          {navItem('/emp-perf', 'fa fa-chart-line', 'Employee Performance')}
+        </>}
 
-        <div className="sb-sec" data-role="all" style={{color: 'rgba(167,139,250,.7)'}}>⬇ OPERATIONS</div>
-        <NavLink to="/payment" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-credit-card sb-ico"></i><span className="sb-lbl">Payment</span>
-        </NavLink>
-        <NavLink to="/delivery" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-truck-ramp-box sb-ico"></i><span className="sb-lbl">Delivery</span>
-        </NavLink>
-        <NavLink to="/delivery-note" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-file-lines sb-ico"></i><span className="sb-lbl">Delivery Note</span>
-        </NavLink>
-        <NavLink to="/gate-pass" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`} style={{paddingLeft: '22px'}}>
-          <i className="fa fa-door-open sb-ico"></i><span className="sb-lbl">Gate Pass</span>
-        </NavLink>
-
-        <div className="sb-sec" data-role="all" style={{color: 'rgba(255,200,80,.7)'}}>⬇ ADMIN & SETTINGS</div>
-        <NavLink to="/reports" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-chart-pie sb-ico"></i><span className="sb-lbl">Reports</span>
-        </NavLink>
-        <NavLink to="/settings" className={({ isActive }) => `sb-item ${isActive ? 'act' : ''}`}>
-          <i className="fa fa-sliders sb-ico"></i><span className="sb-lbl">Settings</span>
-        </NavLink>
+        {/* MANAGEMENT (ADMIN ONLY) */}
+        {isAdmin && <>
+          <div className="sb-sec" data-role="admin">MANAGEMENT</div>
+          {navItem('/user-mgmt', 'fa fa-user-shield', 'User Management')}
+          {navItem('/settings', 'fa fa-gear', 'Settings')}
+        </>}
       </nav>
-      
+
       <div className="sb-foot">
-        <div className="sb-user">
-          <div className="sb-avatar">AD</div>
-          <div style={{overflow: 'hidden'}}>
-            <div className="sb-uname">Admin User</div>
-            <div className="sb-urole">admin</div>
+        <div className="sb-user" onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }}>
+          <div className="sb-avatar" id="sbAv">
+            {initials(currentUser?.name || 'Admin')}
           </div>
+          <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div className="sb-uname" id="sbUname">{currentUser?.name || 'Administrator'}</div>
+            <div className="sb-urole" id="sbRole">{currentUser?.role || 'Admin'}</div>
+          </div>
+          <i className="fa fa-chevron-right" style={{ marginLeft: 'auto', color: 'var(--text3)', fontSize: 10 }}></i>
+        </div>
+        <div
+          className="sb-item"
+          onClick={handleLogout}
+          style={{ marginTop: 4, color: 'var(--danger)', cursor: 'pointer' }}
+        >
+          <i className="fa fa-right-from-bracket sb-ico"></i>
+          <span className="sb-lbl">Logout</span>
         </div>
       </div>
     </div>

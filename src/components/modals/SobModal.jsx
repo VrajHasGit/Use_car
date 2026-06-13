@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { autoFillFromStock } from '../../utils/relations';
 
-export const SobModal = ({ isOpen, onClose }) => {
+export const SobModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "sob_sclid": "",
   "sob_sinid": "",
@@ -91,8 +91,7 @@ export const SobModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'sob'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -103,29 +102,29 @@ export const SobModal = ({ isOpen, onClose }) => {
     <div className="overlay" id="m_sob">
  <div className="mbox" style={{"maxWidth":"900px"}}>
   <div className="m-hdr">
-   <div className="m-hdr-icon">📋</div>
+   <div className="m-hdr-icon">ðŸ“‹</div>
    <h3>Sales Order Booking</h3>
    <div style={{"marginLeft":"auto","display":"flex","alignItems":"center","gap":"10px"}}>
     <button className="btn btn-bl btn-sm" ><i className="fa fa-print"></i> Print Form</button>
-    <button className="m-close" onClick={onClose} >✕</button>
+    <button className="m-close" onClick={onClose} >âœ•</button>
    </div>
   </div>
   <div className="m-body">
 
    
    <div style={{"background":"rgba(255,107,0,.07)","border":"1px solid rgba(255,107,0,.25)","borderRadius":"var(--radius-sm)","padding":"10px 14px","marginBottom":"14px","display":"flex","alignItems":"center","gap":"10px"}}>
-    <span style={{"fontSize":"18px"}}>⚡</span>
+    <span style={{"fontSize":"18px"}}>âš¡</span>
     <div style={{"flex":"1","display":"grid","gridTemplateColumns":"1fr 1fr 1fr","gap":"10px"}}>
      <div className="fg" style={{"margin":"0"}}>
-      <label style={{"color":"var(--or3)","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>Sales Closer ID — Auto-Fill</label>
+      <label style={{"color":"var(--or3)","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>Sales Closer ID â€” Auto-Fill</label>
       <input id="sob_sclid" name="sob_sclid" value={formData['sob_sclid'] || ''} onChange={handleChange} placeholder="SCL-2025-0001" style={{"background":"var(--bg)","border":"1px solid rgba(255,107,0,.4)","color":"var(--text)","borderRadius":"var(--radius-sm)","padding":"8px 12px","fontFamily":"inherit","fontSize":"12px","width":"100%"}}  />
      </div>
      <div className="fg" style={{"margin":"0"}}>
-      <label style={{"color":"var(--bl5)","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>Sales Inquiry ID — Auto-Fill</label>
+      <label style={{"color":"var(--bl5)","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>Sales Inquiry ID â€” Auto-Fill</label>
       <input id="sob_sinid" name="sob_sinid" value={formData['sob_sinid'] || ''} onChange={handleChange} placeholder="SIN-2025-0001" style={{"background":"var(--bg)","border":"1px solid rgba(59,130,246,.4)","color":"var(--text)","borderRadius":"var(--radius-sm)","padding":"8px 12px","fontFamily":"inherit","fontSize":"12px","width":"100%"}}  />
      </div>
      <div className="fg" style={{"margin":"0"}}>
-      <label style={{"color":"#059669","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>🚗 Stock ID — Car Auto-Fill</label>
+      <label style={{"color":"#059669","fontSize":"10px","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"4px","display":"block"}}>ðŸš— Stock ID â€” Car Auto-Fill</label>
       <input id="sob_stkid" name="sob_stkid" value={formData['sob_stkid'] || ''} onChange={handleChange} placeholder="STK-2025-0001" style={{"background":"var(--bg)","border":"1px solid rgba(5,150,105,.4)","color":"var(--text)","borderRadius":"var(--radius-sm)","padding":"8px 12px","fontFamily":"inherit","fontSize":"12px","width":"100%"}}  />
      </div>
     </div>
@@ -170,7 +169,7 @@ export const SobModal = ({ isOpen, onClose }) => {
    <div className="grid3">
     <div className="fg"><label>Support Partner</label><select id="sob_support" name="sob_support" value={formData['sob_support'] || ''} onChange={handleChange}><option value="">-- Select Support Partner --</option><option>Rajan Desai</option><option>Ritesh Shah</option><option>Rohan Mehta</option><option>Ronak Mehta</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Other</option></select></div>
     <div className="fg"><label>Broker Name</label><input id="sob_broker" name="sob_broker" value={formData['sob_broker'] || ''} onChange={handleChange} placeholder="Broker name" /></div>
-    <div className="fg"><label>Broker Commission</label><input id="sob_brokcomm" name="sob_brokcomm" value={formData['sob_brokcomm'] || ''} onChange={handleChange} placeholder="e.g. ₹5000 / N.A." /></div>
+    <div className="fg"><label>Broker Commission</label><input id="sob_brokcomm" name="sob_brokcomm" value={formData['sob_brokcomm'] || ''} onChange={handleChange} placeholder="e.g. â‚¹5000 / N.A." /></div>
    </div>
 
    
@@ -209,7 +208,7 @@ export const SobModal = ({ isOpen, onClose }) => {
      <div className="sect-lbl"><i className="fa fa-indian-rupee-sign"></i> Client Deal Details</div>
      <div style={{"background":"var(--bg)","border":"1px solid var(--border)","borderRadius":"var(--radius)","overflow":"hidden"}}>
       <table style={{"width":"100%","borderCollapse":"collapse"}}>
-       <thead><tr style={{"background":"var(--surface2)"}}><th style={{"padding":"8px 10px","fontSize":"10px","letterSpacing":"1px","textAlign":"left","color":"var(--text3)","textTransform":"uppercase"}}>Particulars</th><th style={{"padding":"8px 10px","fontSize":"10px","letterSpacing":"1px","textAlign":"right","color":"var(--text3)","textTransform":"uppercase"}}>Amount ₹</th></tr></thead>
+       <thead><tr style={{"background":"var(--surface2)"}}><th style={{"padding":"8px 10px","fontSize":"10px","letterSpacing":"1px","textAlign":"left","color":"var(--text3)","textTransform":"uppercase"}}>Particulars</th><th style={{"padding":"8px 10px","fontSize":"10px","letterSpacing":"1px","textAlign":"right","color":"var(--text3)","textTransform":"uppercase"}}>Amount â‚¹</th></tr></thead>
        <tbody>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"7px 10px","fontSize":"12px","color":"var(--text2)"}}>Sale Price</td><td style={{"padding":"7px 10px"}}><input type="number" id="sob_saleprice" name="sob_saleprice" value={formData['sob_saleprice'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or2)","fontFamily":"'Space Grotesk',sans-serif","fontSize":"13px","fontWeight":"700","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"7px 10px","fontSize":"12px","color":"var(--text2)"}}>TCS</td><td style={{"padding":"7px 10px"}}><input type="number" id="sob_tcs" name="sob_tcs" value={formData['sob_tcs'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--text)","fontSize":"12px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
@@ -218,7 +217,7 @@ export const SobModal = ({ isOpen, onClose }) => {
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"7px 10px","fontSize":"12px","color":"var(--text2)"}}>Extended Warranty</td><td style={{"padding":"7px 10px"}}><input type="number" id="sob_warranty" name="sob_warranty" value={formData['sob_warranty'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--text)","fontSize":"12px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"7px 10px","fontSize":"12px","color":"var(--text2)"}}>Accessories</td><td style={{"padding":"7px 10px"}}><input type="number" id="sob_acc" name="sob_acc" value={formData['sob_acc'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--text)","fontSize":"12px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"7px 10px","fontSize":"12px","color":"var(--text2)"}}>Other Charges</td><td style={{"padding":"7px 10px"}}><input type="number" id="sob_other" name="sob_other" value={formData['sob_other'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--text)","fontSize":"12px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
-        <tr style={{"borderTop":"2px solid var(--or1)","background":"var(--surface2)"}}><td style={{"padding":"9px 10px","fontSize":"13px","fontWeight":"700","color":"var(--text)","fontFamily":"'Space Grotesk',sans-serif"}}>TOTAL AMOUNT</td><td style={{"padding":"9px 10px","fontSize":"14px","fontWeight":"700","color":"var(--or2)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_total">₹ 0</td></tr>
+        <tr style={{"borderTop":"2px solid var(--or1)","background":"var(--surface2)"}}><td style={{"padding":"9px 10px","fontSize":"13px","fontWeight":"700","color":"var(--text)","fontFamily":"'Space Grotesk',sans-serif"}}>TOTAL AMOUNT</td><td style={{"padding":"9px 10px","fontSize":"14px","fontWeight":"700","color":"var(--or2)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_total">â‚¹ 0</td></tr>
        </tbody>
       </table>
      </div>
@@ -229,7 +228,7 @@ export const SobModal = ({ isOpen, onClose }) => {
      <div className="sect-lbl"><i className="fa fa-credit-card"></i> Payment Details</div>
      <div style={{"background":"var(--bg)","border":"1px solid var(--border)","borderRadius":"var(--radius)","overflow":"hidden"}}>
       <table style={{"width":"100%","borderCollapse":"collapse"}}>
-       <thead><tr style={{"background":"var(--surface2)"}}><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"left","color":"var(--text3)","textTransform":"uppercase"}}>Particulars</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"center","color":"var(--text3)","textTransform":"uppercase"}}>Date</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"right","color":"var(--bl5)","textTransform":"uppercase"}}>Online ₹</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"right","color":"var(--or3)","textTransform":"uppercase"}}>Cash ₹</th></tr></thead>
+       <thead><tr style={{"background":"var(--surface2)"}}><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"left","color":"var(--text3)","textTransform":"uppercase"}}>Particulars</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"center","color":"var(--text3)","textTransform":"uppercase"}}>Date</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"right","color":"var(--bl5)","textTransform":"uppercase"}}>Online â‚¹</th><th style={{"padding":"7px 8px","fontSize":"9px","letterSpacing":".8px","textAlign":"right","color":"var(--or3)","textTransform":"uppercase"}}>Cash â‚¹</th></tr></thead>
        <tbody>
         <tr style={{"borderTop":"1px solid var(--border)","background":"rgba(255,107,0,.04)"}}><td style={{"padding":"6px 8px","fontSize":"11px","fontWeight":"600","color":"var(--or3)"}}>Booking Amt</td><td style={{"padding":"4px 6px"}}><input type="date" id="sob_pd1_date" name="sob_pd1_date" value={formData['sob_pd1_date'] || ''} onChange={handleChange} style={{"background":"transparent","border":"none","color":"var(--text2)","fontSize":"10px","width":"100%","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd1_onl" name="sob_pd1_onl" value={formData['sob_pd1_onl'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--bl5)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd1_cash" name="sob_pd1_cash" value={formData['sob_pd1_cash'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or3)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"6px 8px","fontSize":"11px","color":"var(--text2)"}}>1st Payment</td><td style={{"padding":"4px 6px"}}><input type="date" id="sob_pd2_date" name="sob_pd2_date" value={formData['sob_pd2_date'] || ''} onChange={handleChange} style={{"background":"transparent","border":"none","color":"var(--text2)","fontSize":"10px","width":"100%","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd2_onl" name="sob_pd2_onl" value={formData['sob_pd2_onl'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--bl5)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd2_cash" name="sob_pd2_cash" value={formData['sob_pd2_cash'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or3)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
@@ -238,20 +237,20 @@ export const SobModal = ({ isOpen, onClose }) => {
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"6px 8px","fontSize":"11px","color":"var(--text2)"}}>4th Payment</td><td style={{"padding":"4px 6px"}}><input type="date" id="sob_pd5_date" name="sob_pd5_date" value={formData['sob_pd5_date'] || ''} onChange={handleChange} style={{"background":"transparent","border":"none","color":"var(--text2)","fontSize":"10px","width":"100%","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd5_onl" name="sob_pd5_onl" value={formData['sob_pd5_onl'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--bl5)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd5_cash" name="sob_pd5_cash" value={formData['sob_pd5_cash'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or3)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"6px 8px","fontSize":"11px","color":"var(--text2)"}}>Loan Disbursement</td><td style={{"padding":"4px 6px"}}><input type="date" id="sob_pd6_date" name="sob_pd6_date" value={formData['sob_pd6_date'] || ''} onChange={handleChange} style={{"background":"transparent","border":"none","color":"var(--text2)","fontSize":"10px","width":"100%","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd6_onl" name="sob_pd6_onl" value={formData['sob_pd6_onl'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--bl5)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd6_cash" name="sob_pd6_cash" value={formData['sob_pd6_cash'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or3)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
         <tr style={{"borderTop":"1px solid var(--border)"}}><td style={{"padding":"6px 8px","fontSize":"11px","color":"var(--text2)"}}>Old Car Value</td><td style={{"padding":"4px 6px"}}><input type="date" id="sob_pd7_date" name="sob_pd7_date" value={formData['sob_pd7_date'] || ''} onChange={handleChange} style={{"background":"transparent","border":"none","color":"var(--text2)","fontSize":"10px","width":"100%","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd7_onl" name="sob_pd7_onl" value={formData['sob_pd7_onl'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--bl5)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td><td style={{"padding":"4px 6px"}}><input type="number" id="sob_pd7_cash" name="sob_pd7_cash" value={formData['sob_pd7_cash'] || ''} onChange={handleChange} placeholder="0"  style={{"background":"transparent","border":"none","color":"var(--or3)","fontSize":"11px","width":"100%","textAlign":"right","outline":"none"}} /></td></tr>
-        <tr style={{"borderTop":"2px solid var(--or1)","background":"var(--surface2)"}}><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--text)","fontFamily":"'Space Grotesk',sans-serif"}}>TOTAL AMT</td><td></td><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--bl5)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_pay_onl_total">₹ 0</td><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--or2)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_pay_cash_total">₹ 0</td></tr>
+        <tr style={{"borderTop":"2px solid var(--or1)","background":"var(--surface2)"}}><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--text)","fontFamily":"'Space Grotesk',sans-serif"}}>TOTAL AMT</td><td></td><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--bl5)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_pay_onl_total">â‚¹ 0</td><td style={{"padding":"8px","fontSize":"12px","fontWeight":"700","color":"var(--or2)","fontFamily":"'Space Grotesk',sans-serif","textAlign":"right"}} id="sob_pay_cash_total">â‚¹ 0</td></tr>
        </tbody>
       </table>
      </div>
      
      <div style={{"background":"var(--surface2)","border":"1px solid var(--border2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","marginTop":"8px","display":"flex","justifyContent":"space-between","alignItems":"center"}}>
       <span style={{"fontSize":"11px","fontWeight":"700","color":"var(--text3)"}}>BALANCE PENDING</span>
-      <span id="sob_balance" style={{"fontSize":"16px","fontWeight":"700","fontFamily":"'Space Grotesk',sans-serif","color":"var(--warn)"}}>₹ 0</span>
+      <span id="sob_balance" style={{"fontSize":"16px","fontWeight":"700","fontFamily":"'Space Grotesk',sans-serif","color":"var(--warn)"}}>â‚¹ 0</span>
      </div>
     </div>
    </div>
 
    
-   <div className="grid1"><div className="fg"><label>Remarks / Notes</label><textarea id="sob_rem" name="sob_rem" value={formData['sob_rem'] || ''} onChange={handleChange} placeholder="Any additional notes…"></textarea></div></div>
+   <div className="grid1"><div className="fg"><label>Remarks / Notes</label><textarea id="sob_rem" name="sob_rem" value={formData['sob_rem'] || ''} onChange={handleChange} placeholder="Any additional notesâ€¦"></textarea></div></div>
 
   </div>
   <div className="m-foot">
@@ -263,3 +262,4 @@ export const SobModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+

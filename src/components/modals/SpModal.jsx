@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const SpModal = ({ isOpen, onClose }) => {
+export const SpModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "sp_id": "",
   "sp_inq_date": "",
@@ -76,8 +76,7 @@ export const SpModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'sp'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -87,15 +86,15 @@ export const SpModal = ({ isOpen, onClose }) => {
   return (
     <div className="overlay" id="m_sp">
  <div className="mbox" style={{"maxWidth":"960px"}}>
-  <div className="m-hdr"><div className="m-hdr-icon" style={{"background":"linear-gradient(135deg,#7C3AED,#A78BFA)"}}>📊</div><h3>AA Sale Process — Full Record</h3><button className="m-close" onClick={onClose} >✕</button></div>
+  <div className="m-hdr"><div className="m-hdr-icon" style={{"background":"linear-gradient(135deg,#7C3AED,#A78BFA)"}}>ðŸ“Š</div><h3>AA Sale Process â€” Full Record</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
   <div className="m-body">
    
    <div style={{"background":"rgba(124,58,237,.12)","border":"1px solid rgba(124,58,237,.3)","borderRadius":"8px","padding":"10px 14px","marginBottom":"16px","fontSize":"12px","color":"#C4B5FD"}}>
-    <i className="fa fa-circle-info" style={{"color":"#A78BFA"}}></i> Ek hi form mein puri sale process track karo — Inquiry se Delivery tak
+    <i className="fa fa-circle-info" style={{"color":"#A78BFA"}}></i> Ek hi form mein puri sale process track karo â€” Inquiry se Delivery tak
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>① SALES INQUIRY</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","marginBottom":"8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘  SALES INQUIRY</div>
    <div className="grid3">
     <div className="fg"><label>SP Number</label><input id="sp_id" name="sp_id" value={formData['sp_id'] || ''} onChange={handleChange} placeholder="SP-2025-0001" readOnly /></div>
     <div className="fg"><label>Inquiry Date *</label><input type="date" id="sp_inq_date" name="sp_inq_date" value={formData['sp_inq_date'] || ''} onChange={handleChange} /></div>
@@ -113,7 +112,7 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>② VEHICLE & REQUIREMENT</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘¡ VEHICLE & REQUIREMENT</div>
    <div className="grid3">
     <div className="fg"><label>Registration No.</label><input id="sp_regn" name="sp_regn" value={formData['sp_regn'] || ''} onChange={handleChange} placeholder="GJ-01-AB-1234" style={{"fontWeight":"700","color":"var(--or2)"}} /></div>
     <div className="fg"><label>Make</label><input id="sp_make" name="sp_make" value={formData['sp_make'] || ''} onChange={handleChange} placeholder="Maruti / Hyundai" /></div>
@@ -131,33 +130,33 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>③ PRICING & DEAL</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘¢ PRICING & DEAL</div>
    <div className="grid3">
-    <div className="fg"><label>Asking Price ₹</label><input type="number" id="sp_ask" name="sp_ask" value={formData['sp_ask'] || ''} onChange={handleChange} placeholder="450000" /></div>
-    <div className="fg"><label>Sale Price ₹</label><input type="number" id="sp_price" name="sp_price" value={formData['sp_price'] || ''} onChange={handleChange} placeholder="420000"  /></div>
-    <div className="fg"><label>Discount ₹</label><input type="number" id="sp_disc" name="sp_disc" value={formData['sp_disc'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>Asking Price â‚¹</label><input type="number" id="sp_ask" name="sp_ask" value={formData['sp_ask'] || ''} onChange={handleChange} placeholder="450000" /></div>
+    <div className="fg"><label>Sale Price â‚¹</label><input type="number" id="sp_price" name="sp_price" value={formData['sp_price'] || ''} onChange={handleChange} placeholder="420000"  /></div>
+    <div className="fg"><label>Discount â‚¹</label><input type="number" id="sp_disc" name="sp_disc" value={formData['sp_disc'] || ''} onChange={handleChange} placeholder="0"  /></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>RTO / Transfer Charges ₹</label><input type="number" id="sp_rto" name="sp_rto" value={formData['sp_rto'] || ''} onChange={handleChange} placeholder="5000"  /></div>
-    <div className="fg"><label>Insurance Charges ₹</label><input type="number" id="sp_ins_ch" name="sp_ins_ch" value={formData['sp_ins_ch'] || ''} onChange={handleChange} placeholder="8000"  /></div>
-    <div className="fg"><label>Other Charges ₹</label><input type="number" id="sp_other_ch" name="sp_other_ch" value={formData['sp_other_ch'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>RTO / Transfer Charges â‚¹</label><input type="number" id="sp_rto" name="sp_rto" value={formData['sp_rto'] || ''} onChange={handleChange} placeholder="5000"  /></div>
+    <div className="fg"><label>Insurance Charges â‚¹</label><input type="number" id="sp_ins_ch" name="sp_ins_ch" value={formData['sp_ins_ch'] || ''} onChange={handleChange} placeholder="8000"  /></div>
+    <div className="fg"><label>Other Charges â‚¹</label><input type="number" id="sp_other_ch" name="sp_other_ch" value={formData['sp_other_ch'] || ''} onChange={handleChange} placeholder="0"  /></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>Total Amount ₹</label><input type="number" id="sp_total" name="sp_total" value={formData['sp_total'] || ''} onChange={handleChange} placeholder="Auto-calc" readOnly style={{"color":"var(--or2)","fontWeight":"700"}} /></div>
-    <div className="fg"><label>Token Amount ₹</label><input type="number" id="sp_token" name="sp_token" value={formData['sp_token'] || ''} onChange={handleChange} placeholder="10000"  /></div>
-    <div className="fg"><label>Balance ₹</label><input type="number" id="sp_balance" name="sp_balance" value={formData['sp_balance'] || ''} onChange={handleChange} placeholder="Auto-calc" readOnly style={{"color":"#F87171","fontWeight":"700"}} /></div>
+    <div className="fg"><label>Total Amount â‚¹</label><input type="number" id="sp_total" name="sp_total" value={formData['sp_total'] || ''} onChange={handleChange} placeholder="Auto-calc" readOnly style={{"color":"var(--or2)","fontWeight":"700"}} /></div>
+    <div className="fg"><label>Token Amount â‚¹</label><input type="number" id="sp_token" name="sp_token" value={formData['sp_token'] || ''} onChange={handleChange} placeholder="10000"  /></div>
+    <div className="fg"><label>Balance â‚¹</label><input type="number" id="sp_balance" name="sp_balance" value={formData['sp_balance'] || ''} onChange={handleChange} placeholder="Auto-calc" readOnly style={{"color":"#F87171","fontWeight":"700"}} /></div>
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>④ FINANCE / LOAN</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘£ FINANCE / LOAN</div>
    <div className="grid3">
     <div className="fg"><label>Finance Required</label><select id="sp_fin_req" name="sp_fin_req" value={formData['sp_fin_req'] || ''} onChange={handleChange} ><option>No</option><option>Yes</option></select></div>
     <div className="fg"><label>Bank / NBFC Name</label><input id="sp_bank" name="sp_bank" value={formData['sp_bank'] || ''} onChange={handleChange} placeholder="HDFC / SBI / Mahindra Finance" /></div>
-    <div className="fg"><label>Loan Amount ₹</label><input type="number" id="sp_loan" name="sp_loan" value={formData['sp_loan'] || ''} onChange={handleChange} placeholder="300000" /></div>
+    <div className="fg"><label>Loan Amount â‚¹</label><input type="number" id="sp_loan" name="sp_loan" value={formData['sp_loan'] || ''} onChange={handleChange} placeholder="300000" /></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>Down Payment ₹</label><input type="number" id="sp_dp" name="sp_dp" value={formData['sp_dp'] || ''} onChange={handleChange} placeholder="120000" /></div>
-    <div className="fg"><label>EMI ₹</label><input type="number" id="sp_emi" name="sp_emi" value={formData['sp_emi'] || ''} onChange={handleChange} placeholder="8500" /></div>
+    <div className="fg"><label>Down Payment â‚¹</label><input type="number" id="sp_dp" name="sp_dp" value={formData['sp_dp'] || ''} onChange={handleChange} placeholder="120000" /></div>
+    <div className="fg"><label>EMI â‚¹</label><input type="number" id="sp_emi" name="sp_emi" value={formData['sp_emi'] || ''} onChange={handleChange} placeholder="8500" /></div>
     <div className="fg"><label>Tenure (Months)</label><input type="number" id="sp_tenure" name="sp_tenure" value={formData['sp_tenure'] || ''} onChange={handleChange} placeholder="36" /></div>
    </div>
    <div className="grid3">
@@ -167,10 +166,10 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>⑤ PAYMENT DETAILS</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘¤ PAYMENT DETAILS</div>
    <div className="grid3">
     <div className="fg"><label>Payment Mode</label><select id="sp_pay_mode" name="sp_pay_mode" value={formData['sp_pay_mode'] || ''} onChange={handleChange}><option>Cash</option><option>NEFT/RTGS</option><option>Cheque</option><option>UPI</option><option>DD</option><option>Mixed</option></select></div>
-    <div className="fg"><label>Amount Paid ₹</label><input type="number" id="sp_paid" name="sp_paid" value={formData['sp_paid'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>Amount Paid â‚¹</label><input type="number" id="sp_paid" name="sp_paid" value={formData['sp_paid'] || ''} onChange={handleChange} placeholder="0"  /></div>
     <div className="fg"><label>Cheque / UTR No.</label><input id="sp_utr" name="sp_utr" value={formData['sp_utr'] || ''} onChange={handleChange} placeholder="UTR / Cheque number" /></div>
    </div>
    <div className="grid3">
@@ -180,7 +179,7 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>⑥ DOCUMENTS</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘¥ DOCUMENTS</div>
    <div className="grid3">
     <div className="fg"><label>RC Book</label><select id="sp_rc" name="sp_rc" value={formData['sp_rc'] || ''} onChange={handleChange}><option>Pending</option><option>Original</option><option>Smart Card</option><option>Transferred</option></select></div>
     <div className="fg"><label>Insurance</label><select id="sp_ins_doc" name="sp_ins_doc" value={formData['sp_ins_doc'] || ''} onChange={handleChange}><option>Pending</option><option>Transferred</option><option>New Policy</option></select></div>
@@ -198,7 +197,7 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>⑦ DELIVERY</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘¦ DELIVERY</div>
    <div className="grid3">
     <div className="fg"><label>Booking ID</label><input id="sp_obid" name="sp_obid" value={formData['sp_obid'] || ''} onChange={handleChange} placeholder="SOB-2025-0001" /></div>
     <div className="fg"><label>Delivery Note No.</label><input id="sp_dn" name="sp_dn" value={formData['sp_dn'] || ''} onChange={handleChange} placeholder="DN-2025-0001" /></div>
@@ -211,7 +210,7 @@ export const SpModal = ({ isOpen, onClose }) => {
    </div>
 
    
-   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>⑧ CURRENT STATUS</div>
+   <div style={{"fontSize":"11px","color":"var(--or1)","fontWeight":"700","letterSpacing":".8px","textTransform":"uppercase","margin":"14px 0 8px","paddingBottom":"4px","borderBottom":"1px solid rgba(232,93,4,.3)"}}>â‘§ CURRENT STATUS</div>
    <div className="grid3">
     <div className="fg"><label>Sales Executive</label><select id="sp_exec" name="sp_exec" value={formData['sp_exec'] || ''} onChange={handleChange}><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option></select></div>
     <div className="fg"><label>Current Stage</label><select id="sp_stage" name="sp_stage" value={formData['sp_stage'] || ''} onChange={handleChange}><option>Sales Inquiry</option><option>Follow-Up</option><option>Test Drive</option><option>Closer</option><option>Order Booking</option><option>Finance</option><option>Payment</option><option>Documents</option><option>Delivery Note</option><option>Gate Pass</option><option>Delivered</option></select></div>
@@ -228,3 +227,4 @@ export const SpModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+
