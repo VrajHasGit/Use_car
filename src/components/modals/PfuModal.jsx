@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { autoFillFromInq } from '../../utils/relations';
 
-export const PfuModal = ({ isOpen, onClose, onSave, editData }) => {
+export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
   "pf_inqid": "",
   "pf_sname": "",
@@ -30,10 +31,43 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData }) => {
   "pf_rem": ""
 });
 
+  useEffect(() => {
+    if (isOpen && quickInqId) {
+      setFormData(prev => ({ ...prev, pf_inqid: quickInqId }));
+      autoFillFromInq(quickInqId).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            pf_sname: inqData.sellerName || '',
+            pf_smob: inqData.mobile || '',
+            pf_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : '',
+            pf_year: inqData.year || '',
+            pf_fuel: inqData.fuel || ''
+          }));
+        }
+      });
+    }
+  }, [isOpen, quickInqId]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'pf_inqid' && value.length >= 5) {
+      autoFillFromInq(value).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            pf_sname: inqData.sellerName || '',
+            pf_smob: inqData.mobile || '',
+            pf_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : '',
+            pf_year: inqData.year || '',
+            pf_fuel: inqData.fuel || ''
+          }));
+        }
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -47,7 +81,7 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData }) => {
   };
 
   return (
-    <div className="overlay" id="m_pfu">
+    <div className="overlay on" id="m_pfu">
  <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ“ž</div><h3>Purchase Follow-Up</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div className="grid3"><div className="fg"><label>Inquiry ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="pf_inqid" name="pf_inqid" value={formData['pf_inqid'] || ''} onChange={handleChange} placeholder="INQ-2025-0001"  /></div><div className="fg"><label>Seller Name</label><input id="pf_sname" name="pf_sname" value={formData['pf_sname'] || ''} onChange={handleChange} placeholder="Auto-filled" /></div><div className="fg"><label>Seller Mobile</label><input id="pf_smob" name="pf_smob" value={formData['pf_smob'] || ''} onChange={handleChange} type="tel" placeholder="Mobile" /></div></div>

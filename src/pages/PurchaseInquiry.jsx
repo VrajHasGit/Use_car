@@ -1,9 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
-import { today, genId, fmtDate, statusBadge, ageDays, ageBadge } from '../utils/helpers';
+import { today, genId, fmtDate, statusBadge, ageDays } from '../utils/helpers';
 import { PurInqModal } from '../components/modals/PurInqModal';
+import { ValModal } from '../components/modals/ValModal';
+import { PfuModal } from '../components/modals/PfuModal';
+import { PclModal } from '../components/modals/PclModal';
+import { StkModal } from '../components/modals/StkModal';
+import { WsModal } from '../components/modals/WsModal';
 
 const Toast = ({ message, type, onClose }) => (
   <div className={`toast ${type === 'success' ? 'suc' : type === 'error' ? 'err' : 'inf'}`} style={{ display: 'flex' }}>
@@ -16,10 +22,12 @@ const Toast = ({ message, type, onClose }) => (
 const PurchaseInquiry = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
+  const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = 'success') => {
@@ -89,11 +97,27 @@ const PurchaseInquiry = () => {
     window.open(`https://wa.me/91${rec.mobile}?text=${msg}`, '_blank');
   };
 
+  const handleReminder = async (rec) => {
+    const date = window.prompt(`Set Next Follow-Up Date for ${rec.sellerName} (YYYY-MM-DD):`, rec.nextFU || today());
+    if (date) {
+      try {
+        await updateRecord('pur_inq', rec.id, { nextFU: date });
+        await refresh('pur_inq');
+        showToast(`Reminder set for ${date}`);
+      } catch (e) {
+        showToast('Failed to set reminder', 'error');
+      }
+    }
+  };
+
+  const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
+
   const exportToExcel = () => {
-    const headers = ['Inquiry ID', 'Date', 'Source', 'Seller Name', 'Mobile', 'Make', 'Model', 'Variant', 'Year', 'KM', 'Status', 'Assigned'];
+    const headers = ['Inquiry ID', 'Date', 'Source', 'Seller Name', 'Mobile', 'Make', 'Model', 'Variant', 'Year', 'Fuel', 'Trans', 'Color', 'KM', 'Owners', 'Reg No', 'Assigned', 'Status', 'Next FU'];
     const rows = filtered.map(r => [
       r.inqId || '', r.date || '', r.source || '', r.sellerName || '', r.mobile || '',
-      r.make || '', r.model || '', r.variant || '', r.year || '', r.km || '', r.status || '', r.assigned || ''
+      r.make || '', r.model || '', r.variant || '', r.year || '', r.fuel || '', r.trans || '', r.color || '',
+      r.km || '', r.owners || '', r.regNo || '', r.assigned || '', r.status || '', r.nextFU || ''
     ]);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -103,7 +127,6 @@ const PurchaseInquiry = () => {
 
   return (
     <div className="page on" id="pg_pur_inq">
-      {/* Toast */}
       {toast && (
         <div className="toast-wrap">
           <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
@@ -112,19 +135,11 @@ const PurchaseInquiry = () => {
 
       <div className="ph">
         <div className="ph-left">
-          <h1>
-            <div className="ph-icon"><i className="fa fa-car"></i></div>
-            Purchase Inquiry
-          </h1>
+          <h1><div className="ph-icon"><i className="fa fa-car"></i></div> Purchase Inquiry</h1>
           <p>All purchase inquiries · {filtered.length} records</p>
         </div>
         <div className="ph-actions">
-          <input
-            className="srch"
-            placeholder="🔍 Search name / mobile / make…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <input className="srch" placeholder="🔍 Search name / mobile / make…" value={search} onChange={(e) => setSearch(e.target.value)} />
           <select className="flt" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Status</option>
             <option value="New">New</option>
@@ -133,113 +148,102 @@ const PurchaseInquiry = () => {
             <option value="Closed-Lost">Closed-Lost</option>
             <option value="Hold">Hold</option>
           </select>
-          <button className="btn btn-out btn-sm" onClick={exportToExcel}>
-            <i className="fa fa-file-csv"></i> Export
-          </button>
-          <button className="btn btn-or" onClick={handleAdd}>
-            <i className="fa fa-plus"></i> Add Inquiry
-          </button>
+          <button className="btn btn-out btn-sm" onClick={exportToExcel}><i className="fa fa-file-csv"></i> Export</button>
+          <button className="btn btn-or" onClick={handleAdd}><i className="fa fa-plus"></i> Add Inquiry</button>
         </div>
       </div>
 
-      {/* Modal */}
-      <PurInqModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        editData={editRecord}
-      />
+      <PurInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
+      
+      {/* Quick Action Modals */}
+      <ValModal isOpen={quickModal.type === 'val'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <PfuModal isOpen={quickModal.type === 'pfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <PclModal isOpen={quickModal.type === 'pcl'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <StkModal isOpen={quickModal.type === 'stk'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
 
-      {/* Table */}
       <div className="tc">
         <div className="tc-hdr">
           <div className="tc-title">
             <i className="fa fa-car-side" style={{ color: 'var(--or1)' }}></i> Purchase Inquiries
-            <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>
-              {inquiries.length}
-            </span>
+            <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{inquiries.length}</span>
           </div>
         </div>
-        <div className="tbl-wrap">
+        <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table id="tbl_pur">
             <thead>
               <tr>
-                <th>INQ ID</th>
+                <th>Inquiry ID</th>
                 <th>Date</th>
                 <th>Source</th>
                 <th>Seller Name</th>
                 <th>Mobile</th>
-                <th>Vehicle</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Variant</th>
+                <th>Year</th>
+                <th>Fuel</th>
+                <th>Trans.</th>
+                <th>Color</th>
                 <th>KM</th>
-                <th>Status</th>
-                <th>Next F/U</th>
+                <th>Owners</th>
+                <th>Reg No.</th>
                 <th>Assigned</th>
-                <th>Actions</th>
+                <th>Status</th>
+                <th>Next FU</th>
+                <th style={{ minWidth: 260 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length > 0 ? (
-                filtered.map(inq => {
-                  const fuDays = inq.nextFU ? ageDays(inq.nextFU) : null;
-                  const isOverdue = fuDays !== null && inq.nextFU < today() && inq.status === 'In-Progress';
-                  return (
-                    <tr key={inq.id} className={isOverdue ? 'doc-alert-row' : ''}>
-                      <td>
-                        <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>
-                          {inq.inqId || inq.id?.slice(0, 12)}
+              {filtered.length > 0 ? filtered.map(inq => {
+                const fuDays = inq.nextFU ? ageDays(inq.nextFU) : null;
+                const isOverdue = fuDays !== null && inq.nextFU < today() && inq.status === 'In-Progress';
+                return (
+                  <tr key={inq.id} className={isOverdue ? 'doc-alert-row' : ''}>
+                    <td><span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{inq.inqId || inq.id?.slice(0, 12)}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(inq.date)}</td>
+                    <td>{inq.source}</td>
+                    <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{inq.sellerName}</td>
+                    <td><a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{inq.mobile}</a></td>
+                    <td style={{ fontWeight: 600 }}>{inq.make}</td>
+                    <td>{inq.model}</td>
+                    <td>{inq.variant || '—'}</td>
+                    <td>{inq.year || '—'}</td>
+                    <td>{inq.fuel || '—'}</td>
+                    <td>{inq.trans || '—'}</td>
+                    <td>{inq.color || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{inq.km ? `${Number(inq.km).toLocaleString('en-IN')} km` : '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{inq.owners || '—'}</td>
+                    <td style={{ fontWeight: 700 }}>{inq.regNo || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{inq.assigned}</td>
+                    <td><span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {inq.nextFU ? (
+                        <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
+                          {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
+                          {fmtDate(inq.nextFU)}
                         </span>
-                      </td>
-                      <td>{fmtDate(inq.date)}</td>
-                      <td>{inq.source}</td>
-                      <td style={{ fontWeight: 600 }}>{inq.sellerName}</td>
-                      <td>
-                        <a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>
-                          {inq.mobile}
-                        </a>
-                      </td>
-                      <td>
-                        <span style={{ fontWeight: 600 }}>{inq.make}</span> {inq.model}
-                        {inq.year && <span style={{ color: 'var(--text3)', marginLeft: 4 }}>({inq.year})</span>}
-                      </td>
-                      <td>{inq.km ? `${Number(inq.km).toLocaleString('en-IN')} km` : '—'}</td>
-                      <td>
-                        <span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span>
-                      </td>
-                      <td>
-                        {inq.nextFU ? (
-                          <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
-                            {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
-                            {fmtDate(inq.nextFU)}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td>{inq.assigned}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn-icon bi-edit" title="Edit" onClick={() => handleEdit(inq)}>
-                            <i className="fa fa-pen"></i>
-                          </button>
-                          {inq.mobile && (
-                            <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
-                              style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}>
-                              <i className="fa-brands fa-whatsapp"></i>
-                            </button>
-                          )}
-                          <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}>
-                            <i className="fa fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="11" className="empty">
-                    <i className="fa fa-search"></i><br />
-                    {search || statusFilter ? 'No results match your search' : 'No purchase inquiries yet. Click "Add Inquiry" to create one.'}
-                  </td>
-                </tr>
+                      ) : '—'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                        <button className="btn-icon bi-edit" title="Edit Inquiry" onClick={() => handleEdit(inq)}><i className="fa fa-pen"></i></button>
+                        <button className="btn-icon bi-next" title="Valuation" onClick={() => setQuickModal({ type: 'val', inqId: inq.inqId || inq.id })}><i className="fa fa-magnifying-glass-dollar"></i></button>
+                        <button className="btn-icon bi-view" title="Follow Up" onClick={() => setQuickModal({ type: 'pfu', inqId: inq.inqId || inq.id })}><i className="fa fa-phone-volume"></i></button>
+                        <button className="btn-icon bi-next" title="Closure" onClick={() => setQuickModal({ type: 'pcl', inqId: inq.inqId || inq.id })}><i className="fa fa-handshake"></i></button>
+                        <button className="btn-icon bi-view" title="Add to Stock" onClick={() => setQuickModal({ type: 'stk', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(8,145,178,.1)', color: '#0891B2' }}><i className="fa fa-warehouse"></i></button>
+                        <button className="btn-icon bi-del" title="Workshop" onClick={() => setQuickModal({ type: 'ws', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(220,38,38,.1)', color: '#DC2626' }}><i className="fa fa-screwdriver-wrench"></i></button>
+                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
+                        {inq.mobile && (
+                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer' }}><i className="fa-brands fa-whatsapp"></i></button>
+                        )}
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan="19" className="empty"><i className="fa fa-search"></i><br />{search || statusFilter ? 'No results match your search' : 'No purchase inquiries yet. Click "Add Inquiry" to create one.'}</td></tr>
               )}
             </tbody>
           </table>
