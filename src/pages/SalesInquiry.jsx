@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
-import { today, genId, fmtDate, statusBadge, fmt } from '../utils/helpers';
+import { today, genId, fmtDate, statusBadge, fmt, ageDays } from '../utils/helpers';
 import { SalInqModal } from '../components/modals/SalInqModal';
+import { SfuModal } from '../components/modals/SfuModal';
+import { SclModal } from '../components/modals/SclModal';
 
 const SalesInquiry = () => {
   const { data, refresh } = useData();
@@ -12,6 +14,7 @@ const SalesInquiry = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
+  const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = 'success') => {
@@ -65,6 +68,21 @@ const SalesInquiry = () => {
     window.open(`https://wa.me/91${rec.mobile}?text=${msg}`, '_blank');
   };
 
+  const handleReminder = async (rec) => {
+    const date = window.prompt(`Set Next Follow-Up Date for ${rec.buyerName} (YYYY-MM-DD):`, rec.nextFU || today());
+    if (date) {
+      try {
+        await updateRecord('sal_inq', rec.id, { nextFU: date });
+        await refresh('sal_inq');
+        showToast(`Reminder set for ${date}`);
+      } catch (e) {
+        showToast('Failed to set reminder', 'error');
+      }
+    }
+  };
+
+  const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
+
   return (
     <div className="page on" id="pg_sal_inq">
       {toast && (
@@ -99,6 +117,10 @@ const SalesInquiry = () => {
       </div>
 
       <SalInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
+      
+      {/* Quick Action Modals */}
+      <SfuModal isOpen={quickModal.type === 'sfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <SclModal isOpen={quickModal.type === 'scl'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
 
       <div className="tc">
         <div className="tc-hdr">
@@ -107,40 +129,54 @@ const SalesInquiry = () => {
             <span style={{ background: 'var(--bl5)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{inquiries.length}</span>
           </div>
         </div>
-        <div className="tbl-wrap">
+        <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table id="tbl_sal">
             <thead>
               <tr>
                 <th>Inq ID</th><th>Date</th><th>Source</th><th>Buyer Name</th><th>Mobile</th>
-                <th>Budget</th><th>Make Pref.</th><th>Status</th><th>Next F/U</th><th>Actions</th>
+                <th>Budget</th><th>Make Pref.</th><th>Status</th><th>Next F/U</th><th style={{ minWidth: 200 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(inq => (
-                <tr key={inq.id}>
-                  <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)' }}>{inq.salId || inq.id?.slice(0, 12)}</td>
-                  <td>{fmtDate(inq.date)}</td>
-                  <td>{inq.source}</td>
-                  <td style={{ fontWeight: 600 }}>{inq.buyerName}</td>
-                  <td><a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{inq.mobile}</a></td>
-                  <td className="amt-or">{fmt(inq.budget)}</td>
-                  <td>{inq.makePref || '—'}</td>
-                  <td><span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span></td>
-                  <td>{inq.nextFU ? fmtDate(inq.nextFU) : '—'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                      {inq.mobile && (
-                        <button title="WhatsApp" onClick={() => handleWhatsApp(inq)}
-                          style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}>
-                          <i className="fa-brands fa-whatsapp"></i>
-                        </button>
-                      )}
-                      <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+              {filtered.length > 0 ? filtered.map(inq => {
+                const fuDays = inq.nextFU ? ageDays(inq.nextFU) : null;
+                const isOverdue = fuDays !== null && inq.nextFU < today() && inq.status === 'In-Progress';
+                return (
+                  <tr key={inq.id} className={isOverdue ? 'doc-alert-row' : ''}>
+                    <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)' }}>{inq.salId || inq.id?.slice(0, 12)}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(inq.date)}</td>
+                    <td>{inq.source}</td>
+                    <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{inq.buyerName}</td>
+                    <td><a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{inq.mobile}</a></td>
+                    <td className="amt-or">{fmt(inq.budget)}</td>
+                    <td>{inq.makePref || '—'}</td>
+                    <td><span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {inq.nextFU ? (
+                        <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
+                          {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
+                          {fmtDate(inq.nextFU)}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        <button className="btn-icon bi-view" title="Follow-Up" onClick={() => setQuickModal({ type: 'sfu', inqId: inq.salId || inq.id })}><i className="fa fa-phone"></i></button>
+                        <button className="btn-icon bi-next" title="Closer" onClick={() => setQuickModal({ type: 'scl', inqId: inq.salId || inq.id })}><i className="fa fa-handshake"></i></button>
+                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
+                        {inq.mobile && (
+                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
+                            style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}>
+                            <i className="fa-brands fa-whatsapp"></i>
+                          </button>
+                        )}
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr><td colSpan="10" className="empty">
                   <i className="fa fa-search"></i><br />
                   {search || statusFilter ? 'No results match your search' : 'No sales inquiries yet. Click "Add Inquiry" to create one.'}
