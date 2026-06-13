@@ -1,25 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { today } from '../../utils/helpers';
-
-const MAKES = [
-  'Maruti Suzuki', 'Hyundai', 'Tata', 'Honda', 'Toyota', 'Mahindra', 'Kia',
-  'Renault', 'Nissan', 'Ford', 'Volkswagen', 'Skoda', 'MG', 'Jeep', 'Datsun',
-  'Chevrolet', 'Fiat', 'Mitsubishi', 'BMW', 'Mercedes-Benz', 'Audi', 'Volvo',
-  'Jaguar', 'Land Rover', 'Other'
-];
-
-const MODELS = {
-  'Maruti Suzuki': ['Swift', 'Baleno', 'Alto', 'Alto K10', 'Wagon R', 'Ertiga', 'Brezza', 'Dzire', 'Celerio', 'Ignis', 'S-Cross', 'Ciaz', 'XL6', 'Grand Vitara', 'Fronx', 'Jimny'],
-  'Hyundai': ['i20', 'i10', 'Creta', 'Venue', 'Verna', 'Aura', 'Santro', 'Tucson', 'Alcazar', 'Exter'],
-  'Tata': ['Nexon', 'Harrier', 'Safari', 'Punch', 'Tiago', 'Tigor', 'Altroz', 'Hexa'],
-  'Honda': ['City', 'Amaze', 'WR-V', 'Jazz', 'HR-V', 'Elevate'],
-  'Toyota': ['Innova', 'Fortuner', 'Glanza', 'Urban Cruiser', 'Camry', 'Vellfire', 'Hyryder'],
-  'Mahindra': ['XUV700', 'XUV300', 'Thar', 'Scorpio', 'Bolero', 'Bolero Neo', 'BE6E', 'Marazzo'],
-  'Kia': ['Seltos', 'Sonet', 'Carnival', 'Carens'],
-};
-
-const YEARS = Array.from({ length: 2025 - 2000 + 1 }, (_, i) => String(2025 - i));
-const CITIES = ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar', 'Bhavnagar', 'Jamnagar', 'Junagadh', 'Anand', 'Nadiad', 'Mehsana', 'Other'];
+import { MAKES, MODELS, YEARS, CITIES, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
 const INIT = {
   source: 'Walk-in', nameSource: '', date: today(),
@@ -184,8 +165,7 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
             <div className="fg">
               <label>Fuel Type</label>
               <select name="fuel" value={formData.fuel} onChange={handleChange}>
-                <option>Petrol</option><option>Diesel</option><option>CNG</option>
-                <option>Electric</option><option>Hybrid</option><option>Petrol+CNG</option>
+                {FUELS.map(f => <option key={f}>{f}</option>)}
               </select>
             </div>
           </div>
@@ -193,15 +173,13 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
             <div className="fg">
               <label>Transmission</label>
               <select name="trans" value={formData.trans} onChange={handleChange}>
-                <option>Manual</option><option>Automatic</option><option>AMT</option><option>CVT</option><option>DCT</option>
+                {TRANS.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div className="fg">
               <label>Color</label>
               <select name="color" value={formData.color} onChange={handleChange}>
-                <option>White</option><option>Silver</option><option>Grey</option><option>Black</option>
-                <option>Red</option><option>Blue</option><option>Brown</option><option>Orange</option>
-                <option>Yellow</option><option>Green</option><option>Other</option>
+                {COLORS.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div className="fg">
@@ -213,7 +191,7 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
             <div className="fg">
               <label>Owners</label>
               <select name="owners" value={formData.owners} onChange={handleChange}>
-                <option>1st</option><option>2nd</option><option>3rd</option><option>4th+</option>
+                {OWNERS.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
             <div className="fg">

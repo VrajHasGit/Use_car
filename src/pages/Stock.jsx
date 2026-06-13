@@ -4,6 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { StkModal } from '../components/modals/StkModal';
+import { WsModal } from '../components/modals/WsModal';
+import { VtModal } from '../components/modals/VtModal';
+import { QrModal } from '../components/modals/QrModal';
 
 const Stock = () => {
   const { data, refresh } = useData();
@@ -11,6 +14,7 @@ const Stock = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quickModal, setQuickModal] = useState({ type: null, stkId: null });
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
@@ -80,6 +84,8 @@ const Stock = () => {
     }
   };
 
+  const closeQuickModal = () => setQuickModal({ type: null, stkId: null });
+
   return (
     <div className="page on" id="pg_stock">
       {toast && (
@@ -116,6 +122,11 @@ const Stock = () => {
         <StkModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />
       )}
 
+      {/* Quick Action Modals */}
+      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} quickInqId={quickModal.stkId} />
+      <VtModal isOpen={quickModal.type === 'vt'} onClose={closeQuickModal} stkId={quickModal.stkId} />
+      <QrModal isOpen={quickModal.type === 'qr'} onClose={closeQuickModal} stkId={quickModal.stkId} />
+
       <div className="tc">
         <div className="tc-hdr">
           <div className="tc-title"><i className="fa fa-warehouse" style={{ color: 'var(--or1)' }}></i> Car Stock
@@ -132,7 +143,7 @@ const Stock = () => {
             <thead>
               <tr>
                 <th>Stock ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th><th>Fuel</th>
-                <th>KM</th><th>TCP</th><th>Selling Price</th><th>Profit</th><th>Status</th><th>Actions</th>
+                <th>KM</th><th>TCP</th><th>Selling Price</th><th>Profit</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -149,8 +160,11 @@ const Stock = () => {
                   <td className={r.profit > 0 ? 'profit-pos' : r.profit < 0 ? 'profit-neg' : ''}>{fmt(r.profit)}</td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                   <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                      <button className="btn-icon bi-next" title="Workshop" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>
+                      <button className="btn-icon bi-view" title="Vehicle History Timeline" onClick={() => setQuickModal({ type: 'vt', stkId: r.stkId || r.id })}><i className="fa fa-timeline"></i></button>
+                      <button className="btn-icon" style={{ background: 'rgba(37,99,235,.1)', color: 'var(--bl5)' }} title="QR Code" onClick={() => setQuickModal({ type: 'qr', stkId: r.stkId || r.id })}><i className="fa fa-qrcode"></i></button>
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                     </div>
                   </td>
