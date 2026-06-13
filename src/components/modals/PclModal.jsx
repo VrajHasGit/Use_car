@@ -149,8 +149,4 @@ export const PclModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
       </div>
     </div>
   );
-};e"></i> Save</button></div></div>
-</div>
-  );
 };
-
