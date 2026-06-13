@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Export LocalStorage Data</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h2>Carecay ERP - Data Exporter</h2>
+  <p>Click the button below to download your `localStorage` data as a JSON file.</p>
+  <p><strong>IMPORTANT:</strong> You must open this file in the SAME browser where you normally use the Carecay ERP, but wait, opening a local file has its own origin. To export from the actual app origin, you should open the original `index.html` file, then open the Developer Tools Console (F12) and paste the following script:</p>
+  
+  <textarea rows="10" cols="80" readonly style="margin-top:20px;">
+const data = JSON.stringify(localStorage);
+const blob = new Blob([data], {type: "application/json"});
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "carecay_export.json";
+a.click();
+URL.revokeObjectURL(url);
+  </textarea>
+  <p>Once you download `carecay_export.json`, please save it in the folder `c:\Users\Naman Sinha\Desktop\Car` so we can migrate it to Firebase.</p>
+</body>
+</html>
