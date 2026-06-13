@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const GstModal = ({ isOpen, onClose }) => {
+export const GstModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "gi_type": "",
   "gi_date": "",
@@ -32,8 +32,7 @@ export const GstModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'gst'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -43,7 +42,7 @@ export const GstModal = ({ isOpen, onClose }) => {
   return (
     <div className="overlay" id="m_gst">
  <div className="mbox">
-  <div className="m-hdr"><div className="m-hdr-icon">📃</div><h3>Generate GST Invoice / Bill of Sale</h3><button className="m-close" onClick={onClose} >✕</button></div>
+  <div className="m-hdr"><div className="m-hdr-icon">ðŸ“ƒ</div><h3>Generate GST Invoice / Bill of Sale</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
   <div className="m-body">
    <div className="sect-lbl"><i className="fa fa-file-invoice"></i> Invoice Details</div>
    <div className="grid3">
@@ -73,16 +72,16 @@ export const GstModal = ({ isOpen, onClose }) => {
    </div>
    <div className="sect-lbl"><i className="fa fa-indian-rupee-sign"></i> Pricing & GST (Auto-Calc)</div>
    <div className="grid3">
-    <div className="fg"><label>Sale Price ₹ *</label><input type="number" id="gi_sp" name="gi_sp" value={formData['gi_sp'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>Sale Price â‚¹ *</label><input type="number" id="gi_sp" name="gi_sp" value={formData['gi_sp'] || ''} onChange={handleChange} placeholder="0"  /></div>
     <div className="fg"><label>GST Rate</label><select id="gi_gstrate" name="gi_gstrate" value={formData['gi_gstrate'] || ''} onChange={handleChange} >
      <option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option>
     </select></div>
-    <div className="fg"><label>GST Amount ₹ (Auto)</label><div className="calc-out" id="gi_gstamt">₹ 0</div></div>
+    <div className="fg"><label>GST Amount â‚¹ (Auto)</label><div className="calc-out" id="gi_gstamt">â‚¹ 0</div></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>CGST ₹ (Auto)</label><div className="calc-out" id="gi_cgst">₹ 0</div></div>
-    <div className="fg"><label>SGST ₹ (Auto)</label><div className="calc-out" id="gi_sgst">₹ 0</div></div>
-    <div className="fg"><label>Total Invoice Amount ₹ (Auto)</label><div className="calc-out" id="gi_total" style={{"fontSize":"16px"}}>₹ 0</div></div>
+    <div className="fg"><label>CGST â‚¹ (Auto)</label><div className="calc-out" id="gi_cgst">â‚¹ 0</div></div>
+    <div className="fg"><label>SGST â‚¹ (Auto)</label><div className="calc-out" id="gi_sgst">â‚¹ 0</div></div>
+    <div className="fg"><label>Total Invoice Amount â‚¹ (Auto)</label><div className="calc-out" id="gi_total" style={{"fontSize":"16px"}}>â‚¹ 0</div></div>
    </div>
    <div className="grid2">
     <div className="fg"><label>Remarks</label><input id="gi_rem" name="gi_rem" value={formData['gi_rem'] || ''} onChange={handleChange} placeholder="Any special notes" /></div>
@@ -98,3 +97,4 @@ export const GstModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+

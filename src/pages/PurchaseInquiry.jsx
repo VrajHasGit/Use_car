@@ -1,60 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
+import { today, genId, fmtDate, statusBadge, ageDays, ageBadge } from '../utils/helpers';
 import { PurInqModal } from '../components/modals/PurInqModal';
-import { db } from '../firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
-import { exportToExcel } from '../utils/exportData';
+
+const Toast = ({ message, type, onClose }) => (
+  <div className={`toast ${type === 'success' ? 'suc' : type === 'error' ? 'err' : 'inf'}`} style={{ display: 'flex' }}>
+    <i className={`fa ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info'}`}></i>
+    <span style={{ flex: 1 }}>{message}</span>
+    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>✕</button>
+  </div>
+);
 
 const PurchaseInquiry = () => {
-  const [inquiries, setInquiries] = useState([]);
+  const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState(null);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    // Fetch from Firestore
-    const fetchData = async () => {
-      try {
-        const q = query(collection(db, 'pur_inq'));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setInquiries(data);
-      } catch (error) {
-        console.error("Error fetching purchase inquiries: ", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
-  const filteredInquiries = inquiries.filter(inq => {
-    const matchesSearch = (inq.id || '').toLowerCase().includes(search.toLowerCase()) || 
-                          (inq.sellerName || '').toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter ? inq.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+  const inquiries = data.pur_inq || [];
+
+  const filtered = inquiries.filter(inq => {
+    const q = search.toLowerCase();
+    const matchSearch = !search ||
+      (inq.sellerName || '').toLowerCase().includes(q) ||
+      (inq.mobile || '').includes(q) ||
+      (inq.make || '').toLowerCase().includes(q) ||
+      (inq.inqId || '').toLowerCase().includes(q) ||
+      (inq.regNo || '').toLowerCase().includes(q);
+    const matchStatus = !statusFilter || inq.status === statusFilter;
+    return matchSearch && matchStatus;
   });
+
+  const handleAdd = () => { setEditRecord(null); setIsModalOpen(true); };
+  const handleEdit = (rec) => { setEditRecord(rec); setIsModalOpen(true); };
+
+  const handleSave = async (formData) => {
+    try {
+      if (editRecord) {
+        await updateRecord('pur_inq', editRecord.id, {
+          ...formData,
+          updatedBy: currentUser?.name || 'Admin',
+        });
+        showToast('Purchase inquiry updated!');
+      } else {
+        const cnt = await getNextCounter('pur');
+        const inqId = genId('INQ', cnt);
+        await addRecord('pur_inq', {
+          ...formData,
+          inqId,
+          date: formData.date || today(),
+          status: formData.status || 'New',
+          createdBy: currentUser?.name || 'Admin',
+        });
+        showToast('Purchase inquiry added!');
+      }
+      await refresh('pur_inq');
+      setIsModalOpen(false);
+    } catch (e) {
+      showToast('Failed to save: ' + e.message, 'error');
+    }
+  };
+
+  const handleDelete = async (rec) => {
+    if (!window.confirm(`Delete inquiry for ${rec.sellerName}?`)) return;
+    try {
+      await deleteRecord('pur_inq', rec.id);
+      await refresh('pur_inq');
+      showToast('Inquiry deleted.', 'info');
+    } catch (e) {
+      showToast('Delete failed.', 'error');
+    }
+  };
+
+  const handleWhatsApp = (rec) => {
+    const msg = encodeURIComponent(
+      `Hello ${rec.sellerName}, we are following up regarding your ${rec.make} ${rec.model} (${rec.year}). Please let us know if you're still interested in selling. — Carecay`
+    );
+    window.open(`https://wa.me/91${rec.mobile}?text=${msg}`, '_blank');
+  };
+
+  const exportToExcel = () => {
+    const headers = ['Inquiry ID', 'Date', 'Source', 'Seller Name', 'Mobile', 'Make', 'Model', 'Variant', 'Year', 'KM', 'Status', 'Assigned'];
+    const rows = filtered.map(r => [
+      r.inqId || '', r.date || '', r.source || '', r.sellerName || '', r.mobile || '',
+      r.make || '', r.model || '', r.variant || '', r.year || '', r.km || '', r.status || '', r.assigned || ''
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'Purchase_Inquiries.csv'; a.click();
+  };
 
   return (
     <div className="page on" id="pg_pur_inq">
+      {/* Toast */}
+      {toast && (
+        <div className="toast-wrap">
+          <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
+        </div>
+      )}
+
       <div className="ph">
         <div className="ph-left">
           <h1>
             <div className="ph-icon"><i className="fa fa-car"></i></div>
             Purchase Inquiry
           </h1>
-          <p>All Excel Fields — Inquiry ID · Source · Seller · Vehicle · Status · Follow-up</p>
+          <p>All purchase inquiries · {filtered.length} records</p>
         </div>
         <div className="ph-actions">
-          <input 
-            className="srch" 
-            placeholder="🔍 Search…" 
+          <input
+            className="srch"
+            placeholder="🔍 Search name / mobile / make…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)} 
+            onChange={(e) => setSearch(e.target.value)}
           />
-          <select 
-            className="flt" 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
+          <select className="flt" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Status</option>
             <option value="New">New</option>
             <option value="In-Progress">In-Progress</option>
@@ -62,54 +133,119 @@ const PurchaseInquiry = () => {
             <option value="Closed-Lost">Closed-Lost</option>
             <option value="Hold">Hold</option>
           </select>
-          <button className="btn btn-out btn-sm" onClick={() => exportToExcel(inquiries, 'Purchase_Inquiries.xlsx')}><i className="fa fa-file-csv"></i> Export</button>
-          <button className="btn btn-or" onClick={() => setIsModalOpen(true)}><i className="fa fa-plus"></i> Add Inquiry</button>
+          <button className="btn btn-out btn-sm" onClick={exportToExcel}>
+            <i className="fa fa-file-csv"></i> Export
+          </button>
+          <button className="btn btn-or" onClick={handleAdd}>
+            <i className="fa fa-plus"></i> Add Inquiry
+          </button>
         </div>
       </div>
-      <PurInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {/* Modal */}
+      <PurInqModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        editData={editRecord}
+      />
+
+      {/* Table */}
       <div className="tc">
         <div className="tc-hdr">
-          <div className="tc-title">Purchase Inquiries</div>
+          <div className="tc-title">
+            <i className="fa fa-car-side" style={{ color: 'var(--or1)' }}></i> Purchase Inquiries
+            <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>
+              {inquiries.length}
+            </span>
+          </div>
         </div>
         <div className="tbl-wrap">
           <table id="tbl_pur">
             <thead>
               <tr>
-                <th>Inquiry ID</th>
+                <th>INQ ID</th>
                 <th>Date</th>
                 <th>Source</th>
                 <th>Seller Name</th>
                 <th>Mobile</th>
-                <th>Make</th>
-                <th>Model</th>
+                <th>Vehicle</th>
+                <th>KM</th>
                 <th>Status</th>
+                <th>Next F/U</th>
+                <th>Assigned</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredInquiries.length > 0 ? (
-                filteredInquiries.map(inq => (
-                  <tr key={inq.id}>
-                    <td>{inq.inqId || inq.id}</td>
-                    <td>{inq.date}</td>
-                    <td>{inq.source}</td>
-                    <td>{inq.sellerName}</td>
-                    <td>{inq.mobile}</td>
-                    <td>{inq.make}</td>
-                    <td>{inq.model}</td>
-                    <td><span className={`badge b-${(inq.status || '').toLowerCase().replace(' ', '-')}`}>{inq.status}</span></td>
-                    <td>
-                      <button className="btn-icon bi-edit" title="Edit"><i className="fa fa-pen"></i></button>
-                    </td>
-                  </tr>
-                ))
+              {filtered.length > 0 ? (
+                filtered.map(inq => {
+                  const fuDays = inq.nextFU ? ageDays(inq.nextFU) : null;
+                  const isOverdue = fuDays !== null && inq.nextFU < today() && inq.status === 'In-Progress';
+                  return (
+                    <tr key={inq.id} className={isOverdue ? 'doc-alert-row' : ''}>
+                      <td>
+                        <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>
+                          {inq.inqId || inq.id?.slice(0, 12)}
+                        </span>
+                      </td>
+                      <td>{fmtDate(inq.date)}</td>
+                      <td>{inq.source}</td>
+                      <td style={{ fontWeight: 600 }}>{inq.sellerName}</td>
+                      <td>
+                        <a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>
+                          {inq.mobile}
+                        </a>
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{inq.make}</span> {inq.model}
+                        {inq.year && <span style={{ color: 'var(--text3)', marginLeft: 4 }}>({inq.year})</span>}
+                      </td>
+                      <td>{inq.km ? `${Number(inq.km).toLocaleString('en-IN')} km` : '—'}</td>
+                      <td>
+                        <span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span>
+                      </td>
+                      <td>
+                        {inq.nextFU ? (
+                          <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
+                            {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
+                            {fmtDate(inq.nextFU)}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td>{inq.assigned}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn-icon bi-edit" title="Edit" onClick={() => handleEdit(inq)}>
+                            <i className="fa fa-pen"></i>
+                          </button>
+                          {inq.mobile && (
+                            <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
+                              style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}>
+                              <i className="fa-brands fa-whatsapp"></i>
+                            </button>
+                          )}
+                          <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}>
+                            <i className="fa fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan="9" className="empty">No inquiries found</td>
+                  <td colSpan="11" className="empty">
+                    <i className="fa fa-search"></i><br />
+                    {search || statusFilter ? 'No results match your search' : 'No purchase inquiries yet. Click "Add Inquiry" to create one.'}
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+        <div className="tc-foot">
+          <span className="pg-info">Showing {filtered.length} of {inquiries.length} inquiries</span>
         </div>
       </div>
     </div>

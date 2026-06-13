@@ -5,8 +5,7 @@ import Topbar from './Topbar';
 
 const Layout = () => {
   const [isSlim, setIsSlim] = useState(false);
-
-  const toggleSidebar = () => setIsSlim(!isSlim);
+  const toggleSidebar = () => setIsSlim(s => !s);
 
   return (
     <>

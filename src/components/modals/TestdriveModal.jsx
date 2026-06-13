@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const TestdriveModal = ({ isOpen, onClose }) => {
+export const TestdriveModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "td_date": "",
   "td_time": "",
@@ -30,8 +30,7 @@ export const TestdriveModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'testdrive'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -40,7 +39,7 @@ export const TestdriveModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="overlay" id="m_testdrive">
- <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">🚗</div><h3>Schedule Test Drive</h3><button className="m-close" onClick={onClose} >✕</button></div>
+ <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸš—</div><h3>Schedule Test Drive</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
   <div className="grid3"><div className="fg"><label>Date *</label><input type="date" id="td_date" name="td_date" value={formData['td_date'] || ''} onChange={handleChange} /></div><div className="fg"><label>Time *</label><input type="time" id="td_time" name="td_time" value={formData['td_time'] || ''} onChange={handleChange} value="10:00" /></div><div className="fg"><label>Duration</label><select id="td_dur" name="td_dur" value={formData['td_dur'] || ''} onChange={handleChange}><option>15 mins</option><option>30 mins</option><option>45 mins</option><option>60 mins</option></select></div></div>
   <div className="grid3"><div className="fg"><label>Customer Name *</label><input id="td_cname" name="td_cname" value={formData['td_cname'] || ''} onChange={handleChange} placeholder="Customer name" /></div><div className="fg"><label>Mobile *</label><input type="tel" id="td_mob" name="td_mob" value={formData['td_mob'] || ''} onChange={handleChange} placeholder="10-digit mobile" maxLength="10" /></div><div className="fg"><label>Sales Inquiry ID</label><input id="td_sinid" name="td_sinid" value={formData['td_sinid'] || ''} onChange={handleChange} placeholder="SIN-2025-0001" /></div></div>
@@ -53,3 +52,4 @@ export const TestdriveModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+

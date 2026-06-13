@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const FinModal = ({ isOpen, onClose }) => {
+export const FinModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "fin_date": "",
   "fin_cname": "",
@@ -31,8 +31,7 @@ export const FinModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'fin'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -42,7 +41,7 @@ export const FinModal = ({ isOpen, onClose }) => {
   return (
     <div className="overlay" id="m_fin">
  <div className="mbox">
-  <div className="m-hdr"><div className="m-hdr-icon">🏦</div><h3>Finance / Loan File</h3><button className="m-close" onClick={onClose} >✕</button></div>
+  <div className="m-hdr"><div className="m-hdr-icon">ðŸ¦</div><h3>Finance / Loan File</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
   <div className="m-body">
    <div className="sect-lbl"><i className="fa fa-user"></i> Customer & Vehicle</div>
    <div className="grid3">
@@ -63,20 +62,20 @@ export const FinModal = ({ isOpen, onClose }) => {
      <option>Mahindra Finance</option><option>Shriram Finance</option><option>HDB Financial</option>
      <option>Bajaj Finserv</option><option>Cholamandalam</option><option>IDFC First</option><option>Other</option>
     </select></div>
-    <div className="fg"><label>Vehicle Sale Price ₹</label><input type="number" id="fin_sp" name="fin_sp" value={formData['fin_sp'] || ''} onChange={handleChange} placeholder="0"  /></div>
-    <div className="fg"><label>Down Payment ₹</label><input type="number" id="fin_dp" name="fin_dp" value={formData['fin_dp'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>Vehicle Sale Price â‚¹</label><input type="number" id="fin_sp" name="fin_sp" value={formData['fin_sp'] || ''} onChange={handleChange} placeholder="0"  /></div>
+    <div className="fg"><label>Down Payment â‚¹</label><input type="number" id="fin_dp" name="fin_dp" value={formData['fin_dp'] || ''} onChange={handleChange} placeholder="0"  /></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>Loan Amount ₹ (Auto)</label><div className="calc-out" id="fin_lamt">₹ 0</div></div>
+    <div className="fg"><label>Loan Amount â‚¹ (Auto)</label><div className="calc-out" id="fin_lamt">â‚¹ 0</div></div>
     <div className="fg"><label>Rate of Interest % (p.a.)</label><input type="number" id="fin_roi" name="fin_roi" value={formData['fin_roi'] || ''} onChange={handleChange} placeholder="9.5" step="0.1"  /></div>
     <div className="fg"><label>Tenure (Months)</label><select id="fin_ten" name="fin_ten" value={formData['fin_ten'] || ''} onChange={handleChange} >
      <option>12</option><option>18</option><option>24</option><option>36</option><option>48</option><option>60</option><option>72</option><option>84</option>
     </select></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>EMI ₹ (Auto)</label><div className="calc-out" id="fin_emi">₹ 0</div></div>
-    <div className="fg"><label>Total Interest ₹ (Auto)</label><div className="calc-out" id="fin_tint">₹ 0</div></div>
-    <div className="fg"><label>Total Payable ₹ (Auto)</label><div className="calc-out" id="fin_tpay">₹ 0</div></div>
+    <div className="fg"><label>EMI â‚¹ (Auto)</label><div className="calc-out" id="fin_emi">â‚¹ 0</div></div>
+    <div className="fg"><label>Total Interest â‚¹ (Auto)</label><div className="calc-out" id="fin_tint">â‚¹ 0</div></div>
+    <div className="fg"><label>Total Payable â‚¹ (Auto)</label><div className="calc-out" id="fin_tpay">â‚¹ 0</div></div>
    </div>
    <div className="sect-lbl"><i className="fa fa-file-signature"></i> Application & Status</div>
    <div className="grid3">
@@ -94,3 +93,4 @@ export const FinModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+

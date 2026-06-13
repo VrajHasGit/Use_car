@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export const ObModal = ({ isOpen, onClose }) => {
+export const ObModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
   "ob_clid": "",
   "ob_inqid": "",
@@ -66,8 +66,7 @@ export const ObModal = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     try {
       await addDoc(collection(db, 'ob'), { ...formData, createdAt: new Date().toISOString() });
-      alert('Record saved successfully!');
-      onClose();
+      if (onSave) { await onSave(formData); } else { onClose(); }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -76,9 +75,9 @@ export const ObModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="overlay" id="m_ob">
- <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">📝</div><h3>Purchase Order Booking</h3><button className="m-close" onClick={onClose} >✕</button></div>
+ <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ“</div><h3>Purchase Order Booking</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
  <div className="m-body">
-  <div className="grid3"><div className="fg"><label>Closer ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="ob_clid" name="ob_clid" value={formData['ob_clid'] || ''} onChange={handleChange} placeholder="PCL-2025-0001"  /></div><div className="fg"><label>Inquiry ID <span style={{"color":"var(--bl5)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="ob_inqid" name="ob_inqid" value={formData['ob_inqid'] || ''} onChange={handleChange} placeholder="INQ-2025-0001"  /></div><div className="fg"><label>Booking Date</label><input type="date" id="ob_date" name="ob_date" value={formData['ob_date'] || ''} onChange={handleChange} /></div></div>
+  <div className="grid3"><div className="fg"><label>Closer ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="ob_clid" name="ob_clid" value={formData['ob_clid'] || ''} onChange={handleChange} placeholder="PCL-2025-0001"  /></div><div className="fg"><label>Inquiry ID <span style={{"color":"var(--bl5)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="ob_inqid" name="ob_inqid" value={formData['ob_inqid'] || ''} onChange={handleChange} placeholder="INQ-2025-0001"  /></div><div className="fg"><label>Booking Date</label><input type="date" id="ob_date" name="ob_date" value={formData['ob_date'] || ''} onChange={handleChange} /></div></div>
   <div className="sect-lbl"><i className="fa fa-user"></i> Client Details</div>
   <div className="grid3"><div className="fg"><label>Client Name *</label><input id="ob_cname" name="ob_cname" value={formData['ob_cname'] || ''} onChange={handleChange} placeholder="Full name" /></div><div className="fg"><label>Contact No. *</label><input id="ob_cont" name="ob_cont" value={formData['ob_cont'] || ''} onChange={handleChange} type="tel" placeholder="Mobile" /></div><div className="fg"><label>Email ID</label><input id="ob_email" name="ob_email" value={formData['ob_email'] || ''} onChange={handleChange} type="email" placeholder="Email" /></div></div>
   <div className="grid2"><div className="fg"><label>Client Address</label><input id="ob_addr" name="ob_addr" value={formData['ob_addr'] || ''} onChange={handleChange} placeholder="Address" /></div><div className="fg"><label>Branch</label><select id="ob_branch" name="ob_branch" value={formData['ob_branch'] || ''} onChange={handleChange}><option>SG Highway</option><option>Vastral</option><option>Head Office</option></select></div></div>
@@ -89,14 +88,14 @@ export const ObModal = ({ isOpen, onClose }) => {
   <div className="grid3"><div className="fg"><label>Insurance Type</label><select id="ob_instype" name="ob_instype" value={formData['ob_instype'] || ''} onChange={handleChange}><option>Comprehensive</option><option>Third Party</option><option>Zero Dep</option></select></div><div className="fg"><label>Name in Insurance</label><input id="ob_insname" name="ob_insname" value={formData['ob_insname'] || ''} onChange={handleChange} placeholder="Owner name" /></div><div className="fg"><label>Insurance Validity</label><input type="date" id="ob_insval" name="ob_insval" value={formData['ob_insval'] || ''} onChange={handleChange} /></div></div>
   <div className="grid3"><div className="fg"><label>Name in RTO Book</label><input id="ob_rtoname" name="ob_rtoname" value={formData['ob_rtoname'] || ''} onChange={handleChange} placeholder="RC owner name" /></div><div className="fg"><label>HPA Bank Name</label><input id="ob_hpa" name="ob_hpa" value={formData['ob_hpa'] || ''} onChange={handleChange} placeholder="Financer" /></div><div className="fg"><label>Valuator Name</label><select id="ob_val" name="ob_val" value={formData['ob_val'] || ''} onChange={handleChange}><option value="">-- Select Valuator --</option><option>Rizwan Sandhi</option><option>Spinny</option><option>Car24</option><option>Other</option></select></div></div>
   <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Calculation (Auto)</div>
-  <div className="grid3"><div className="fg"><label>Purchase Price ₹</label><input type="number" id="ob_pp" name="ob_pp" value={formData['ob_pp'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Refurbishment Cost ₹</label><input type="number" id="ob_rc" name="ob_rc" value={formData['ob_rc'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>RTO Challan Amount ₹</label><input type="number" id="ob_rto" name="ob_rto" value={formData['ob_rto'] || ''} onChange={handleChange} placeholder="0"  /></div></div>
-  <div className="grid3"><div className="fg"><label>Cash ₹</label><input type="number" id="ob_cash" name="ob_cash" value={formData['ob_cash'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Online ₹</label><input type="number" id="ob_online" name="ob_online" value={formData['ob_online'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Other Costs ₹</label><input type="number" id="ob_oth" name="ob_oth" value={formData['ob_oth'] || ''} onChange={handleChange} placeholder="0"  /></div></div>
+  <div className="grid3"><div className="fg"><label>Purchase Price â‚¹</label><input type="number" id="ob_pp" name="ob_pp" value={formData['ob_pp'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Refurbishment Cost â‚¹</label><input type="number" id="ob_rc" name="ob_rc" value={formData['ob_rc'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>RTO Challan Amount â‚¹</label><input type="number" id="ob_rto" name="ob_rto" value={formData['ob_rto'] || ''} onChange={handleChange} placeholder="0"  /></div></div>
+  <div className="grid3"><div className="fg"><label>Cash â‚¹</label><input type="number" id="ob_cash" name="ob_cash" value={formData['ob_cash'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Online â‚¹</label><input type="number" id="ob_online" name="ob_online" value={formData['ob_online'] || ''} onChange={handleChange} placeholder="0"  /></div><div className="fg"><label>Other Costs â‚¹</label><input type="number" id="ob_oth" name="ob_oth" value={formData['ob_oth'] || ''} onChange={handleChange} placeholder="0"  /></div></div>
   <div className="calc-panel">
-   <div className="calc-row"><span className="cl">Purchase Price</span><span id="ob_s1">₹ 0</span></div>
-   <div className="calc-row"><span className="cl">Refurbishment</span><span id="ob_s2">₹ 0</span></div>
-   <div className="calc-row"><span className="cl">RTO Challan</span><span id="ob_s3">₹ 0</span></div>
-   <div className="calc-row"><span className="cl">Other Costs</span><span id="ob_s4">₹ 0</span></div>
-   <div className="calc-row"><span>TOTAL COST</span><span id="ob_total" style={{"color":"var(--or2)"}}>₹ 0</span></div>
+   <div className="calc-row"><span className="cl">Purchase Price</span><span id="ob_s1">â‚¹ 0</span></div>
+   <div className="calc-row"><span className="cl">Refurbishment</span><span id="ob_s2">â‚¹ 0</span></div>
+   <div className="calc-row"><span className="cl">RTO Challan</span><span id="ob_s3">â‚¹ 0</span></div>
+   <div className="calc-row"><span className="cl">Other Costs</span><span id="ob_s4">â‚¹ 0</span></div>
+   <div className="calc-row"><span>TOTAL COST</span><span id="ob_total" style={{"color":"var(--or2)"}}>â‚¹ 0</span></div>
   </div>
   <div className="grid3" style={{"marginTop":"14px"}}><div className="fg"><label>Broker Name</label><input id="ob_brkname" name="ob_brkname" value={formData['ob_brkname'] || ''} onChange={handleChange} placeholder="Broker" /></div><div className="fg"><label>Broker No.</label><input id="ob_brkno" name="ob_brkno" value={formData['ob_brkno'] || ''} onChange={handleChange} type="tel" placeholder="Mobile" /></div><div className="fg"><label>Source Channel</label><select id="ob_src" name="ob_src" value={formData['ob_src'] || ''} onChange={handleChange}><option>OLX</option><option>CarDekho</option><option>Walk-in</option><option>Reference</option><option>Social Media</option></select></div></div>
   <div className="grid2"><div className="fg"><label>NOC / Outstanding Amount</label><input id="ob_noc" name="ob_noc" value={formData['ob_noc'] || ''} onChange={handleChange} placeholder="NOC details" /></div><div className="fg"><label>Remark</label><input id="ob_rem" name="ob_rem" value={formData['ob_rem'] || ''} onChange={handleChange} placeholder="Notes" /></div></div>
@@ -127,3 +126,4 @@ export const ObModal = ({ isOpen, onClose }) => {
 </div>
   );
 };
+
