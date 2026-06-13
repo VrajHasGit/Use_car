@@ -66,7 +66,7 @@ const PurchaseFollowUp = () => {
                   <td>{r.nextFU ? fmtDate(r.nextFU) : '—'}</td>
                   <td>{r.notes || '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       {r.mobile && <button title="WhatsApp" onClick={() => handleWhatsApp(r)} style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}><i className="fa-brands fa-whatsapp"></i></button>}
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>

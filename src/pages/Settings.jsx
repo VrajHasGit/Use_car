@@ -3,14 +3,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSettings, saveSettings, addRecord, updateRecord, deleteRecord } from '../services/db';
 import { seedFirestore } from '../utils/seedData';
+import { exportMultipleToExcel } from '../utils/exportData';
 import { today, fmt } from '../utils/helpers';
+
 
 /* ── Theme + Font meta ─────────────────────────────────────── */
 const THEMES = [
-  { id: 'obsidian', name: 'OBSIDIAN FLEET', desc: 'Dark / Gold', sidebar: '#0D0F14', content: '#14171F', accent: '#C8A84B' },
-  { id: 'slate',    name: 'SLATE MERIDIAN', desc: 'Light / Navy', sidebar: '#1B3A6B', content: '#F4F5F8', accent: '#1B3A6B' },
-  { id: 'carbon',   name: 'CARBON SPORT',   desc: 'Dark / Crimson', sidebar: '#080808', content: '#111111', accent: '#E63946' },
-  { id: 'pearl',    name: 'PEARL SUMMIT',   desc: 'Soft / Steel Blue', sidebar: '#2E5F8A', content: '#FAFAFA', accent: '#2E5F8A' },
+  { id: 'black-darkblue', name: 'OBSIDIAN', desc: 'Dark / Blue', sidebar: '#000000', content: '#04060D', accent: '#1A56DB' },
+  { id: 'navy-white', name: 'NAVY MERIDIAN', desc: 'Light / Navy', sidebar: '#1B2A4A', content: '#F4F7FC', accent: '#1D4ED8' },
+  { id: 'black-gold', name: 'OBSIDIAN GOLD', desc: 'Light / Gold', sidebar: '#111111', content: '#F7F4EC', accent: '#B8860B' },
+  { id: 'darkblue-orange', name: 'APOLLO VUE', desc: 'Light / Orange', sidebar: '#0D2B4E', content: '#F0F5FF', accent: '#E85D04' },
+  { id: 'white-green', name: 'EVERGREEN', desc: 'Light / Green', sidebar: '#0D2B22', content: '#F0F5F4', accent: '#059669' },
+  { id: 'grey-blue', name: 'STEEL STORM', desc: 'Light / Grey Blue', sidebar: '#1A2638', content: '#F2F5F8', accent: '#3D5A80' },
+  { id: 'maroon-cream', name: 'CRIMSON VELVET', desc: 'Light / Maroon', sidebar: '#2D0B11', content: '#FDF8F0', accent: '#7B1D2C' }
 ];
 const FONTS = [
   { id: 'inter', name: 'INTER SYSTEM',       desc: 'Dashboard-first', sample: 'Aa' },
@@ -75,7 +80,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
 
   // Theme/Font state (live from body attributes)
-  const [activeTheme, setActiveTheme] = useState(document.body.getAttribute('data-theme') || 'obsidian');
+  const [activeTheme, setActiveTheme] = useState(document.body.getAttribute('data-theme') || 'black-darkblue');
   const [activeFont, setActiveFont] = useState(document.body.getAttribute('data-font') || 'inter');
 
   // GST state
@@ -495,8 +500,11 @@ const Settings = () => {
                 <i className="fa fa-circle-info" style={{ color: 'var(--danger)', marginRight: 6 }}></i>
                 These operations affect the live Firestore database. Use with caution.
               </div>
-              <button className="btn btn-out" onClick={handleSeed} disabled={seeding} style={{ fontSize: 11, width: '100%' }}>
+              <button className="btn btn-out" onClick={handleSeed} disabled={seeding} style={{ fontSize: 11, width: '100%', marginBottom: 12 }}>
                 {seeding ? <><i className="fa fa-spinner fa-spin"></i> Seeding…</> : <><i className="fa fa-database"></i> Re-Seed Firestore (Sample Data)</>}
+              </button>
+              <button className="btn" onClick={() => exportMultipleToExcel(data, `carecay_full_backup_${today()}.xlsx`)} style={{ fontSize: 11, width: '100%', background: 'var(--bl5)', color: '#fff', border: 'none' }}>
+                <i className="fa fa-file-export"></i> Export Full System Data (Excel)
               </button>
             </div>
           </div>

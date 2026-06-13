@@ -266,7 +266,7 @@ const Workshop = () => {
                       <td><span className={`badge ${r.jStat === 'Open' ? 'b-open' : r.jStat === 'In Process' ? 'b-prog' : 'b-complete'}`}>{r.jStat}</span></td>
                       <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.notes}>{r.notes || '—'}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                           <button className="btn-icon" title="Tasks / Expand" onClick={() => setExpandedId(isExpanded ? null : r.id)}
                             style={{ background: isExpanded ? 'rgba(200,168,75,.15)' : 'rgba(74,124,222,.1)', color: isExpanded ? 'var(--or1)' : 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>

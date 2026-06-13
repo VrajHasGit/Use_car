@@ -293,7 +293,7 @@ const SalesInquiry = () => {
                       ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>No log</span>}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon" title="Log Call / Interaction" onClick={() => setLogCallRec(inq)}
                           style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
