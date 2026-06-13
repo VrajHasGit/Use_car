@@ -94,7 +94,9 @@ const Sidebar = ({ isSlim }) => {
           {navItem('/gst-invoice', 'fa fa-file-invoice', 'GST Invoice')}
           {navItem('/targets', 'fa fa-bullseye', 'Targets & Achievements')}
           {navItem('/emp-perf', 'fa fa-chart-line', 'Employee Performance')}
+          {navItem('/tasks', 'fa fa-list-check', 'Daily Tasks')}
         </>}
+
 
         {/* MANAGEMENT (ADMIN ONLY) */}
         {isAdmin && <>

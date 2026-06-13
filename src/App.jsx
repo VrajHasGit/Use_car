@@ -33,6 +33,7 @@ import EmpPerf from './pages/EmpPerf';
 import UserMgmt from './pages/UserMgmt';
 import TestDrive from './pages/TestDrive';
 import Documents from './pages/Documents';
+import Tasks from './pages/Tasks';
 
 import './index.css';
 
@@ -93,6 +94,7 @@ function AppInner() {
         <Route path="user-mgmt" element={<UserMgmt />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="tasks" element={<Tasks />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
