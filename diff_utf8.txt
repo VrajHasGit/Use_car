@@ -1,0 +1,939 @@
+﻿diff --git a/index.html b/index.html
+index 5ffff6c..55bd12f 100644
+--- a/index.html
++++ b/index.html
+@@ -539,31 +539,31 @@ tbody tr:hover{background:#F8FBFF}
+   <!-- PURCHASE PIPELINE -->
+   <div class="sb-sec" data-role="purchase admin" style="color:rgba(255,160,80,.7)">Γ¼ç PURCHASE PIPELINE</div>
+   <div class="sb-item" onclick="nav('pur_inq',this)" data-role="purchase admin"><i class="fa fa-car-side sb-ico"></i><span class="sb-lbl">Purchase Inquiry</span><span class="sb-badge" id="bdg_pur">0</span></div>
+-  <div class="sb-item" onclick="nav('valuation',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-magnifying-glass-dollar sb-ico"></i><span class="sb-lbl">Valuation</span><span class="sb-badge" id="bdg_val">0</span></div>
+-  <div class="sb-item" onclick="nav('pur_follow',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-phone-volume sb-ico"></i><span class="sb-lbl">Purchase Follow-Up</span><span class="sb-badge" id="bdg_pfu">0</span></div>
+-  <div class="sb-item" onclick="nav('pur_closer',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-handshake sb-ico"></i><span class="sb-lbl">Purchase Closer</span><span class="sb-badge" id="bdg_pcl">0</span></div>
+-  <div class="sb-item" onclick="nav('pur_booking',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-file-pen sb-ico"></i><span class="sb-lbl">Order Booking</span><span class="sb-badge" id="bdg_ob">0</span></div>
+-  <div class="sb-item" onclick="nav('payment',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-money-bill-wave sb-ico"></i><span class="sb-lbl">Purchase Payment</span><span class="sb-badge" id="bdg_paypur">0</span></div>
+-  <div class="sb-item" onclick="nav('documents',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-file-contract sb-ico"></i><span class="sb-lbl">Documents</span><span class="sb-badge" id="bdg_docpur">0</span></div>
++  <div class="sb-item" onclick="nav('valuation',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-magnifying-glass-dollar sb-ico"></i><span class="sb-lbl">Valuation</span></div>
++  <div class="sb-item" onclick="nav('pur_follow',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-phone-volume sb-ico"></i><span class="sb-lbl">Purchase Follow-Up</span></div>
++  <div class="sb-item" onclick="nav('pur_closer',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-handshake sb-ico"></i><span class="sb-lbl">Purchase Closer</span></div>
++  <div class="sb-item" onclick="nav('pur_booking',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-file-pen sb-ico"></i><span class="sb-lbl">Order Booking</span></div>
++  <div class="sb-item" onclick="nav('payment',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-money-bill-wave sb-ico"></i><span class="sb-lbl">Purchase Payment</span></div>
++  <div class="sb-item" onclick="nav('documents',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-file-contract sb-ico"></i><span class="sb-lbl">Documents</span></div>
++  <div class="sb-item" onclick="nav('stock',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-warehouse sb-ico"></i><span class="sb-lbl">Car Stock</span></div>
++  <div class="sb-item" onclick="nav('workshop',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-screwdriver-wrench sb-ico"></i><span class="sb-lbl">Workshop / Refurb</span><span class="sb-badge" id="bdg_ws">0</span></div>
+   <div class="sb-item" onclick="nav('expenses',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-receipt sb-ico"></i><span class="sb-lbl">Expenses</span></div>
+-  <div class="sb-item" onclick="nav('reports',this)" data-role="admin" style="padding-left:22px"><i class="fa fa-chart-bar sb-ico"></i><span class="sb-lbl">Reports</span></div>
++  <div class="sb-item" onclick="nav('reports',this)" data-role="purchase admin" style="padding-left:22px"><i class="fa fa-chart-bar sb-ico"></i><span class="sb-lbl">Reports</span></div>
+ 
+   <!-- SALES PIPELINE -->
+   <div class="sb-sec" data-role="sales admin" style="color:rgba(80,160,255,.7)">Γ¼ç SALES PIPELINE</div>
+   <div class="sb-item" onclick="nav('sal_inq',this)" data-role="sales admin"><i class="fa fa-tags sb-ico"></i><span class="sb-lbl">Sales Inquiry</span><span class="sb-badge" id="bdg_sal">0</span></div>
+-  <div class="sb-item" onclick="nav('sal_follow',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-comments sb-ico"></i><span class="sb-lbl">Sales Follow-Up</span><span class="sb-badge" id="bdg_sfu">0</span></div>
+-  <div class="sb-item" onclick="nav('test_drive',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-road sb-ico"></i><span class="sb-lbl">Test Drive</span><span class="sb-badge" id="bdg_td">0</span></div>
+-  <div class="sb-item" onclick="nav('sal_closer',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-trophy sb-ico"></i><span class="sb-lbl">Sales Closer</span><span class="sb-badge" id="bdg_scl">0</span></div>
+-  <div class="sb-item" onclick="nav('sal_booking',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-clipboard-list sb-ico"></i><span class="sb-lbl">Sales Order Booking</span><span class="sb-badge" id="bdg_sob">0</span></div>
+-  <div class="sb-item" onclick="nav('finance',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-landmark sb-ico"></i><span class="sb-lbl">Finance / Loan</span><span class="sb-badge" id="bdg_fin">0</span></div>
+-  <div class="sb-item" onclick="nav('payment',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-credit-card sb-ico"></i><span class="sb-lbl">Sale Payment</span><span class="sb-badge" id="bdg_paysal">0</span></div>
+-  <div class="sb-item" onclick="nav('documents',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-file-contract sb-ico"></i><span class="sb-lbl">Sale Documents</span><span class="sb-badge" id="bdg_docsal">0</span></div>
+-  <div class="sb-item" onclick="nav('stock',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-warehouse sb-ico"></i><span class="sb-lbl">Car Stock</span><span class="sb-badge" id="bdg_stk">0</span></div>
+-  <div class="sb-item" onclick="nav('workshop',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-screwdriver-wrench sb-ico"></i><span class="sb-lbl">Workshop / Refurb</span><span class="sb-badge" id="bdg_ws">0</span></div>
+-  <div class="sb-item" onclick="nav('gate_pass',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-door-open sb-ico"></i><span class="sb-lbl">Gate Pass</span><span class="sb-badge" id="bdg_gp">0</span></div>
+-  <div class="sb-item" onclick="nav('delivery_note',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-file-lines sb-ico"></i><span class="sb-lbl">Delivery Note</span><span class="sb-badge" id="bdg_dn">0</span></div>
+-  <div class="sb-item" onclick="nav('delivery',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-truck sb-ico"></i><span class="sb-lbl">Delivery</span><span class="sb-badge" id="bdg_del">0</span></div>
+-  <div class="sb-item" onclick="openM('m_feedback','')" data-role="sales admin" style="padding-left:22px"><i class="fa fa-star sb-ico"></i><span class="sb-lbl">Feedback / Referral</span></div>
++  <div class="sb-item" onclick="nav('sal_follow',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-comments sb-ico"></i><span class="sb-lbl">Sales Follow-Up</span></div>
++  <div class="sb-item" onclick="nav('test_drive',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-road sb-ico"></i><span class="sb-lbl">Test Drive</span></div>
++  <div class="sb-item" onclick="nav('stock',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-warehouse sb-ico"></i><span class="sb-lbl">Car Stock</span></div>
++  <div class="sb-item" onclick="nav('sal_closer',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-trophy sb-ico"></i><span class="sb-lbl">Sales Closer</span></div>
++  <div class="sb-item" onclick="nav('sal_booking',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-clipboard-list sb-ico"></i><span class="sb-lbl">Sales Order Booking</span></div>
++  <div class="sb-item" onclick="nav('finance',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-landmark sb-ico"></i><span class="sb-lbl">Finance / Loan</span></div>
++  <div class="sb-item" onclick="nav('payment',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-credit-card sb-ico"></i><span class="sb-lbl">Sale Payment</span></div>
++  <div class="sb-item" onclick="nav('documents',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-file-contract sb-ico"></i><span class="sb-lbl">Sale Documents</span></div>
++  <div class="sb-item" onclick="nav('delivery_note',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-file-lines sb-ico"></i><span class="sb-lbl">Delivery Note</span></div>
++  <div class="sb-item" onclick="nav('gate_pass',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-door-open sb-ico"></i><span class="sb-lbl">Gate Pass</span></div>
++  <div class="sb-item" onclick="nav('delivery',this)" data-role="sales admin" style="padding-left:22px"><i class="fa fa-truck sb-ico"></i><span class="sb-lbl">Delivery</span></div>
+   <div class="sb-item" onclick="nav('sale_process',this)" data-role="sales admin"><i class="fa fa-diagram-project sb-ico" style="color:#A78BFA"></i><span class="sb-lbl">AA Sale Process</span></div>
+ 
+   <!-- SALES TOOLS -->
+@@ -1321,23 +1321,17 @@ tbody tr:hover{background:#F8FBFF}
+ 
+ <!-- ΓöÇΓöÇ REPORTS ΓöÇΓöÇ -->
+ <div class="page" id="pg_reports">
+- <div class="ph"><div class="ph-left"><h1><div class="ph-icon"><i class="fa fa-chart-bar"></i></div>Reports & Analytics</h1><p>Purchase Report ┬╖ Sales Report ┬╖ Outstanding Report ┬╖ Monthly Summary</p></div>
+-  <div class="ph-actions"><button class="btn btn-out btn-sm" onclick="loadPresentationDemoData()"><i class="fa fa-database"></i> Load Sample Data (Presentation)</button><button class="btn btn-out btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button><button class="btn btn-out btn-sm" onclick="expCurrent()"><i class="fa fa-file-csv"></i> Export</button></div>
++ <div class="ph"><div class="ph-left"><h1><div class="ph-icon"><i class="fa fa-chart-bar"></i></div>Reports & Analytics</h1><p>Purchase Report ┬╖ Outstanding Report ┬╖ Monthly Summary</p></div>
++  <div class="ph-actions"><button class="btn btn-out btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button><button class="btn btn-out btn-sm" onclick="expCurrent()"><i class="fa fa-file-csv"></i> Export</button></div>
+  </div>
+- <!-- 4 Main Report Cards -->
+- <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
++ <!-- 3 Main Report Cards -->
++ <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+   <div onclick="showRpt('pur_report')" style="background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.02));border:1px solid rgba(37,99,235,.25);border-radius:var(--radius);padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <div style="font-size:32px;margin-bottom:8px">≡ƒÜù</div>
+    <div style="font-size:14px;font-weight:800;color:var(--bl5)">Purchase Report</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">Inquiry ΓåÆ Valuation ΓåÆ Follow-Up ΓåÆ Closer ΓåÆ OB pipeline full view</div>
+    <div style="margin-top:12px;font-size:11px;background:rgba(37,99,235,.1);color:var(--bl5);border-radius:8px;padding:3px 10px;display:inline-block">${DB.pur_inq.length} Inquiries</div>
+   </div>
+-  <div onclick="showRpt('sal_report')" style="background:linear-gradient(135deg,rgba(232,93,4,.08),rgba(232,93,4,.02));border:1px solid rgba(232,93,4,.25);border-radius:var(--radius);padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+-   <div style="font-size:32px;margin-bottom:8px">≡ƒÅ╖∩╕Å</div>
+-   <div style="font-size:14px;font-weight:800;color:var(--or1)">Sales Report</div>
+-   <div style="font-size:11px;color:var(--text3);margin-top:4px">Inquiry ΓåÆ Follow-Up ΓåÆ Closer ΓåÆ SOB ΓåÆ Delivery pipeline full view</div>
+-   <div style="margin-top:12px;font-size:11px;background:rgba(232,93,4,.1);color:var(--or1);border-radius:8px;padding:3px 10px;display:inline-block">${DB.sal_inq.length} Inquiries</div>
+-  </div>
+   <div onclick="showRpt('outstanding')" style="background:linear-gradient(135deg,rgba(255,107,0,.08),rgba(255,107,0,.02));border:1px solid rgba(255,107,0,.25);border-radius:var(--radius);padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <div style="font-size:32px;margin-bottom:8px">ΓÅ│</div>
+    <div style="font-size:14px;font-weight:800;color:var(--or1)">Outstanding Report</div>
+@@ -2403,7 +2397,7 @@ tbody tr:hover{background:#F8FBFF}
+   </div>
+   <div class="grid3" style="margin-top:14px"><div class="fg"><label>Hold Payment</label><input id="py_hold" placeholder="NOC / RC / Key pending?"></div><div class="fg"><label>Authorized By</label><select id="py_auth"><option>Admin</option><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option></select></div><div class="fg"><label>Remarks</label><input id="py_rem" placeholder="Notes"></div></div>
+  </div>
+- <div class="m-foot"><button class="btn btn-out" onclick="closeM('m_pay')">Cancel</button><button class="btn btn-bl" onclick="printVechanKhat()"><i class="fa fa-file-contract"></i> α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ / Delivery Note (Purchase)</button><button class="btn btn-bl" onclick="printSaleVechanKhat()"><i class="fa fa-file-contract"></i> α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ / Delivery Note (Sale)</button><button class="btn btn-or" onclick="saveRec('pay')"><i class="fa fa-save"></i> Record Payment</button></div></div>
++ <div class="m-foot"><button class="btn btn-out" onclick="closeM('m_pay')">Cancel</button><button class="btn btn-bl" onclick="printVechanKhat()"><i class="fa fa-file-contract"></i> α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ / Delivery Note</button><button class="btn btn-or" onclick="saveRec('pay')"><i class="fa fa-save"></i> Record Payment</button></div></div>
+ </div>
+ 
+ <!-- ΓöÇΓöÇ DELIVERY NOTE MODAL ΓöÇΓöÇ -->
+@@ -2470,18 +2464,13 @@ tbody tr:hover{background:#F8FBFF}
+    </fieldset>
+    <div class="grid3">
+     <div class="fg"><label>Delivered By</label><select id="dn_by"><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option></select></div>
+-    <div class="fg"><label>Delivery Time</label><input type="time" id="dn_time"></div>
+     <div class="fg"><label>Status</label><select id="dn_stat"><option>Draft</option><option>Issued</option><option>Signed</option></select></div>
+-   </div>
+-   <div class="grid3">
+-    <div class="fg" style="flex:2"><label>Customer Signature (Name / Note)</label><input id="dn_sign" placeholder="Customer signature confirmation"></div>
+     <div class="fg"><label>Remarks</label><input id="dn_rem" placeholder="Notes / pending items"></div>
+    </div>
+   </div>
+   <div class="m-foot">
+    <button class="btn btn-out" onclick="closeM('m_dn')">Cancel</button>
+    <button class="btn btn-bl" onclick="printDeliveryNote()"><i class="fa fa-print"></i> Print</button>
+-   <button class="btn btn-bl" onclick="printSaleVechanKhat()"><i class="fa fa-file-contract"></i> α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ / Delivery Note (Sale)</button>
+    <button class="btn btn-or" onclick="saveRec('dn')"><i class="fa fa-save"></i> Save</button>
+   </div>
+  </div>
+@@ -3080,41 +3069,6 @@ const DB={
+ let CU={name:'Admin',role:'Admin'};
+ let editId=null, editColl=null;
+ 
+-/* ΓöÇΓöÇ PERSISTENT STORAGE (localStorage) ΓöÇΓöÇ */
+-const CC_DB_KEY='cc_db_data';
+-const CC_DB_VERSION='2'; // bump ΓåÆ purges old saved demo data once
+-(function(){
+-  try{
+-    const v=localStorage.getItem('cc_db_version');
+-    if(v!==CC_DB_VERSION){
+-      localStorage.removeItem(CC_DB_KEY); // clear any old demo/sample data
+-      localStorage.setItem('cc_db_version', CC_DB_VERSION);
+-    }
+-  }catch(e){}
+-})();
+-function saveDB(){
+-  try{localStorage.setItem(CC_DB_KEY, JSON.stringify(DB));}catch(e){console.error('saveDB error:',e);}
+-}
+-function loadDB(){
+-  try{
+-    const raw=localStorage.getItem(CC_DB_KEY);
+-    if(!raw) return false;
+-    const saved=JSON.parse(raw);
+-    if(!saved || typeof saved!=='object') return false;
+-    Object.keys(DB).forEach(k=>{
+-      if(saved[k]!==undefined){
+-        if(Array.isArray(DB[k])) DB[k]=Array.isArray(saved[k])?saved[k]:DB[k];
+-        else if(k==='cnt') DB.cnt=Object.assign(DB.cnt, saved.cnt||{});
+-        else DB[k]=saved[k];
+-      }
+-    });
+-    return true;
+-  }catch(e){console.error('loadDB error:',e);return false;}
+-}
+-// Auto-save periodically and on unload so no data is ever lost
+-setInterval(saveDB, 4000);
+-window.addEventListener('beforeunload', saveDB);
+-
+ /* ΓöÇΓöÇ HELPERS ΓöÇΓöÇ */
+ const $=id=>document.getElementById(id);
+ const v=id=>{const e=$(id);return e?e.value:''};
+@@ -3162,8 +3116,7 @@ function doLogin(){
+     if($('sbAv'))$('sbAv').textContent=CU.name[0].toUpperCase();
+     if($('sbUname'))$('sbUname').textContent=CU.name;
+     if($('sbRole'))$('sbRole').textContent=CU.role;
+-    initDropdowns();if(!loadDB()){initDemo();}
+-    updateBadges();
++    initDropdowns();initDemo();
+     // Route to role-specific dashboard
+     if(loginMode==='purchase'){
+       renderPurDash();
+@@ -3211,23 +3164,6 @@ function nav(id,el){
+   $('tbBc').innerHTML=`<i class="fa fa-home"></i><i class="fa fa-chevron-right" style="font-size:8px"></i><span>${TITLES[id]||id}</span>`;
+   const renders={dashboard:renderDash,pur_dashboard:renderPurDash,sal_dashboard:renderSalDash,pur_inq:renderPurInq,valuation:renderVal,pur_follow:renderPFU,pur_closer:renderPCL,pur_booking:renderOB,sal_inq:renderSalInq,sal_follow:renderSFU,sal_closer:renderSCL,sal_booking:renderSOB,stock:renderStk,workshop:renderWS,payment:renderPay,delivery:renderDel,delivery_note:renderDeliveryNote,gate_pass:renderGatePass,sale_process:renderSaleProcess,documents:renderDoc,customers:renderCust,test_drive:renderTD,emp_perf:renderEmpPerf,user_mgmt:renderUserMgmt};
+   if(renders[id])renders[id]();
+-  // Auto-notification: opening a pipeline stage marks its pending records as seen
+-  if(id==='valuation') markStageSeen(DB.val);
+-  else if(id==='pur_follow') markStageSeen(DB.pfu);
+-  else if(id==='pur_closer') markStageSeen(DB.pcl);
+-  else if(id==='pur_booking') markStageSeen(DB.ob);
+-  else if(id==='payment') markStageSeen(DB.pay);
+-  else if(id==='documents') markStageSeen(DB.doc);
+-  else if(id==='sal_follow') markStageSeen(DB.sfu);
+-  else if(id==='test_drive') markStageSeen(DB.td);
+-  else if(id==='sal_closer') markStageSeen(DB.scl);
+-  else if(id==='sal_booking') markStageSeen(DB.sob);
+-  else if(id==='finance') markStageSeen(DB.fin);
+-  else if(id==='stock') markStageSeen(DB.stk);
+-  else if(id==='workshop') markStageSeen(DB.ws);
+-  else if(id==='gate_pass') markStageSeen(DB.gp);
+-  else if(id==='delivery_note') markStageSeen(DB.dn);
+-  else if(id==='delivery') markStageSeen(DB.del);
+ }
+ 
+ /* ΓöÇΓöÇ DROPDOWNS INIT ΓöÇΓöÇ */
+@@ -3361,20 +3297,12 @@ function saveRec(type){
+       remarks:v('sob_rem'), status:'Confirmed',
+     }),
+     cust:()=>({id:genId('CUST',++DB.cnt.cust),type:v('cu_type'),name:v('cu_name'),mobile:v('cu_mob'),altMobile:v('cu_amob'),email:v('cu_email'),city:v('cu_city'),state:v('cu_state'),pin:v('cu_pin'),address:v('cu_addr'),txns:0}),
+-    dn:()=>({id:genId('DN',++DB.cnt.dn),obId:v('dn_obid'),date:v('dn_date')||today(),cname:v('dn_cname'),mob:v('dn_mob'),addr:v('dn_addr'),regn:v('dn_regn'),mm:v('dn_mm'),yrclr:v('dn_yrclr'),km:v('dn_km'),fuel:v('dn_fuel'),bat:v('dn_bat'),keys:v('dn_keys'),tools:v('dn_tools'),spare:v('dn_spare'),jack:v('dn_jack'),manual:v('dn_manual'),acc:v('dn_acc'),rc:v('dn_rc'),ins:v('dn_ins'),puc:v('dn_puc'),f28:v('dn_f28'),f29:v('dn_f29'),f30:v('dn_f30'),insExp:v('dn_ins_exp'),pucExp:v('dn_puc_exp'),fcExp:v('dn_fc_exp'),by:v('dn_by'),time:v('dn_time'),sign:v('dn_sign'),status:v('dn_stat'),rem:v('dn_rem')}),
++    dn:()=>({id:genId('DN',++DB.cnt.dn),obId:v('dn_obid'),date:v('dn_date')||today(),cname:v('dn_cname'),mob:v('dn_mob'),addr:v('dn_addr'),regn:v('dn_regn'),mm:v('dn_mm'),yrclr:v('dn_yrclr'),km:v('dn_km'),fuel:v('dn_fuel'),bat:v('dn_bat'),keys:v('dn_keys'),tools:v('dn_tools'),spare:v('dn_spare'),jack:v('dn_jack'),manual:v('dn_manual'),acc:v('dn_acc'),rc:v('dn_rc'),ins:v('dn_ins'),puc:v('dn_puc'),f28:v('dn_f28'),f29:v('dn_f29'),f30:v('dn_f30'),insExp:v('dn_ins_exp'),pucExp:v('dn_puc_exp'),fcExp:v('dn_fc_exp'),by:v('dn_by'),status:v('dn_stat'),rem:v('dn_rem')}),
+     gp:()=>({id:genId('GP',++DB.cnt.gp),date:v('gp_date')||today(),purpose:v('gp_purpose'),refId:v('gp_refid'),regn:v('gp_regn'),mm:v('gp_mm'),gpOut:v('gp_out'),gpExpRet:v('gp_exp_ret'),gpIn:v('gp_in'),kmOut:v('gp_km_out'),kmIn:v('gp_km_in'),fuelOut:v('gp_fuel'),dname:v('gp_dname'),dmob:v('gp_dmob'),dl:v('gp_dl'),dest:v('gp_dest'),auth:v('gp_auth'),status:v('gp_stat'),rem:v('gp_rem')}),
+     sp:()=>{const price=+v('sp_price')||0,disc=+v('sp_disc')||0,rto=+v('sp_rto')||0,insCh=+v('sp_ins_ch')||0,otherCh=+v('sp_other_ch')||0,total=price-disc+rto+insCh+otherCh,paid=+v('sp_paid')||0,token=+v('sp_token')||0;return{id:genId('SP',++DB.cnt.sp),inqDate:v('sp_inq_date')||today(),branch:v('sp_branch'),cname:v('sp_cname'),mob:v('sp_mob'),email:v('sp_email'),addr:v('sp_addr'),city:v('sp_city'),src:v('sp_src'),regn:v('sp_regn'),make:v('sp_make'),model:v('sp_model'),variant:v('sp_variant'),year:v('sp_year'),color:v('sp_color'),fuel:v('sp_fuel'),trans:v('sp_trans'),km:v('sp_km'),ask:+v('sp_ask')||0,price,disc,rto,insCh,otherCh,total,token,paid,balance:total-token-paid,payMode:v('sp_pay_mode'),utr:v('sp_utr'),payBank:v('sp_pay_bank'),payDate:v('sp_pay_date'),payStat:v('sp_pay_stat'),finReq:v('sp_fin_req'),bank:v('sp_bank'),loan:+v('sp_loan')||0,dp:+v('sp_dp')||0,emi:+v('sp_emi')||0,tenure:v('sp_tenure'),roi:v('sp_roi'),caseNo:v('sp_case'),finStat:v('sp_fin_stat'),rc:v('sp_rc'),insDoc:v('sp_ins_doc'),pucDoc:v('sp_puc_doc'),f29:v('sp_f29'),f30:v('sp_f30'),noc:v('sp_noc'),pan:v('sp_pan'),aadh:v('sp_aadh'),insExp:v('sp_ins_exp'),obid:v('sp_obid'),dnNo:v('sp_dn'),gpNo:v('sp_gp'),delExp:v('sp_del_exp'),delAct:v('sp_del_act'),delBy:v('sp_del_by'),exec:v('sp_exec'),stage:v('sp_stage'),priority:v('sp_priority'),rem:v('sp_rem')}},
+   };
+   if(!map[type]){toast('Unknown record type','err');return}
+   const rec=map[type]();
+-  // ID counter rollback map ΓÇö used if validation fails so ID numbers don't get skipped
+-  const CNT_KEY={pur_inq:'pur',val:'val',pfu:'pfu',pcl:'pcl',ob:'ob',sal_inq:'sal',sfu:'sfu',scl:'scl',sob:'sob',stk:'stk',ws:'ws',pay:'pay',del:'del',doc:'doc',cust:'cust',dn:'dn',gp:'gp',sp:'sp'};
+-  function rollbackCnt(){
+-    // Only roll back for NEW records (not edits ΓÇö edits keep the original ID, no counter was consumed)
+-    if(editId && editColl===type) return;
+-    const k=CNT_KEY[type];
+-    if(k && DB.cnt[k]>0) DB.cnt[k]--;
+-  }
+   // validate required
+   const req={pur_inq:'sellerName',sal_inq:'buyerName',stk:'regNo',ws:'vNum',pay:'amt',cust:'name',val:'inqId'};
+   if(req[type]&&!rec[req[type]]){
+@@ -3382,22 +3310,11 @@ function saveRec(type){
+     toast('Γ¥î Required: '+( labels[req[type]]||req[type]),'err');
+     // Highlight the field
+     if(type==='val'){const el=$('v_inqid');if(el){el.style.borderColor='var(--danger)';el.style.background='rgba(220,38,38,.08)';el.focus();setTimeout(()=>{el.style.borderColor='';el.style.background='';},3000);}}
+-    rollbackCnt();
+     return;
+   }
+   // Mobile 10-digit validation
+   if((type==='pur_inq'||type==='sal_inq'||type==='cust')&&rec.mobile&&rec.mobile.length>0&&rec.mobile.replace(/[^0-9]/g,'').length!==10){
+-    toast('Γ¥î Mobile number must be exactly 10 digits!','err');rollbackCnt();return;
+-  }
+-  // Delivery stage allowed only after Delivery Note is completed (Signed)
+-  if(type==='del' && !(editId && editColl==='del')){
+-    const obid=(rec.obId||'').trim();
+-    const dnRec=obid?DB.dn.find(d=>d.obId===obid):null;
+-    if(!dnRec || dnRec.status!=='Signed'){
+-      toast('Γ¥î Delivery Note pehla complete (Signed) karo, pachi j Delivery stage ma move kari shakay!','err');
+-      rollbackCnt();
+-      return;
+-    }
++    toast('Γ¥î Mobile number must be exactly 10 digits!','err');return;
+   }
+ 
+   // ΓöÇΓöÇ EDIT MODE: update existing record ΓöÇΓöÇ
+@@ -3432,18 +3349,6 @@ function saveRec(type){
+       if(type==='pcl'){
+         const alreadyOB=DB.ob.some(o=>o.closerId===rec.id);
+         if(!alreadyOB) setTimeout(()=>autoCascade('pcl',rec),400);
+-        else if((+rec.price||0)!==(+prevRec.price||0)){
+-          // Final Amount changed ΓåÆ auto-update linked Order Booking & Payment amounts
+-          const linkedOB=DB.ob.find(o=>o.closerId===rec.id);
+-          if(linkedOB){
+-            linkedOB.pp=rec.price||0;
+-            linkedOB.total=(rec.price||0)+(linkedOB.rc||0)+(linkedOB.rto||0)+(linkedOB.other||0);
+-            renderOB();
+-            DB.pay.filter(p=>p.obId===linkedOB.id&&p.type==='purchase').forEach(p=>{p.total=linkedOB.pp;});
+-            renderPay();
+-            toast('≡ƒöä Final Amount updated ΓÇö Order Booking & Payment auto-synced','suc');
+-          }
+-        }
+       }
+       // OB edit ΓåÆ Payment+Doc auto-create (sirf pehli vaar)
+       if(type==='ob'){
+@@ -3454,7 +3359,6 @@ function saveRec(type){
+       if(type==='sob'){
+         setTimeout(()=>autoCascade('sob_saved', rec), 400);
+       }
+-      saveDB();
+       return;
+     }
+   }
+@@ -3483,7 +3387,6 @@ function saveRec(type){
+   if(type==='stk' && rec.status==='Ready for Sale'){
+     setTimeout(()=>autoCascade('stk_ready', rec), 500);
+   }
+-  saveDB();
+ }
+ 
+ /* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+@@ -4046,46 +3949,6 @@ function updateBadges(){
+   $('bdg_pur').textContent=DB.pur_inq.filter(r=>r.status==='New'||r.status==='In-Progress').length;
+   $('bdg_sal').textContent=DB.sal_inq.filter(r=>r.status==='New'||r.status==='In-Progress').length;
+   $('bdg_ws').textContent=DB.ws.filter(r=>r.jStat!=='Complete').length;
+-  // Purchase pipeline ΓÇö auto notification pending counts (new/unseen records in each stage)
+-  setBdg('bdg_val', DB.val.filter(r=>!r._seen).length);
+-  setBdg('bdg_pfu', DB.pfu.filter(r=>!r._seen).length);
+-  setBdg('bdg_pcl', DB.pcl.filter(r=>!r._seen).length);
+-  setBdg('bdg_ob',  DB.ob.filter(r=>!r._seen).length);
+-  setBdg('bdg_paypur', DB.pay.filter(r=>r.type==='purchase'&&!r._seen).length);
+-  setBdg('bdg_docpur', DB.doc.filter(r=>r.type==='purchase'&&!r._seen).length);
+-  // Sales pipeline ΓÇö auto notification pending counts (new/unseen records in each stage)
+-  setBdg('bdg_sfu', DB.sfu.filter(r=>!r._seen).length);
+-  setBdg('bdg_td',  (DB.td||[]).filter(r=>!r._seen).length);
+-  setBdg('bdg_scl', DB.scl.filter(r=>!r._seen).length);
+-  setBdg('bdg_sob', DB.sob.filter(r=>!r._seen).length);
+-  setBdg('bdg_fin', (DB.fin||[]).filter(r=>!r._seen).length);
+-  setBdg('bdg_paysal', DB.pay.filter(r=>r.type==='sale'&&!r._seen).length);
+-  setBdg('bdg_docsal', DB.doc.filter(r=>r.type==='sale'&&!r._seen).length);
+-  setBdg('bdg_stk', DB.stk.filter(r=>!r._seen).length);
+-  setBdg('bdg_ws',  DB.ws.filter(r=>!r._seen).length);
+-  setBdg('bdg_gp',  DB.gp.filter(r=>!r._seen).length);
+-  setBdg('bdg_dn',  DB.dn.filter(r=>!r._seen).length);
+-  setBdg('bdg_del', DB.del.filter(r=>!r._seen).length);
+-  setBdg('bdg_totalpending', getTotalPendingTasks());
+-  const tpEl=$('kpi_total_pending');if(tpEl)tpEl.textContent=getTotalPendingTasks();
+-}
+-function getTotalPendingTasks(){
+-  return DB.val.filter(r=>!r._seen).length + DB.pfu.filter(r=>!r._seen).length +
+-    DB.pcl.filter(r=>!r._seen).length + DB.ob.filter(r=>!r._seen).length +
+-    DB.pay.filter(r=>r.type==='purchase'&&!r._seen).length + DB.doc.filter(r=>r.type==='purchase'&&!r._seen).length +
+-    DB.sfu.filter(r=>!r._seen).length + (DB.td||[]).filter(r=>!r._seen).length +
+-    DB.scl.filter(r=>!r._seen).length + DB.sob.filter(r=>!r._seen).length +
+-    (DB.fin||[]).filter(r=>!r._seen).length + DB.pay.filter(r=>r.type==='sale'&&!r._seen).length +
+-    DB.doc.filter(r=>r.type==='sale'&&!r._seen).length + DB.stk.filter(r=>!r._seen).length +
+-    DB.ws.filter(r=>!r._seen).length + DB.gp.filter(r=>!r._seen).length +
+-    DB.dn.filter(r=>!r._seen).length + DB.del.filter(r=>!r._seen).length;
+-}
+-function setBdg(id,n){const el=$(id);if(!el)return;el.textContent=n;el.style.display=n>0?'':'none'}
+-// Mark all records in a stage as seen (called when user opens that stage) ΓåÆ badge count reduces
+-function markStageSeen(arr,filterFn){
+-  let changed=false;
+-  arr.forEach(r=>{if(!r._seen&&(!filterFn||filterFn(r))){r._seen=true;changed=true;}});
+-  if(changed){updateBadges();saveDB();}
+ }
+ 
+ /* ΓöÇΓöÇ ACTIONS CELL ΓöÇΓöÇ */
+@@ -4246,54 +4109,24 @@ function fillModal(coll, r){
+     sv('ws_pstat',r.pStat);sv('ws_jstat',r.jStat);sv('ws_rem',r.remarks);
+     calcWS();
+   } else if(coll==='pay'){
+-    sv('py_obid',r.obId||r.sobId);sv('py_name',r.name);sv('py_regn',r.regNo);sv('py_date',r.date);
++    sv('py_obid',r.obId);sv('py_name',r.name);sv('py_regn',r.regNo);sv('py_date',r.date);
+     sv('py_type',r.type);sv('py_mode',r.mode);sv('py_ref',r.ref);
+     sv('py_bank',r.bank);sv('py_pto',r.pTo);sv('py_pby',r.pBy);
+     sv('py_amt',r.amt);sv('py_total',r.total);sv('py_prev',r.prev);
+     sv('py_hold',r.hold);sv('py_auth',r.auth);sv('py_rem',r.remarks);
+-    // Restore Car Details / Contact / Finance ΓÇö looked up from linked Order Booking or SOB
+-    const linkOB=DB.ob.find(o=>o.id===r.obId);
+-    const linkSOB=DB.sob.find(s=>s.id===(r.sobId||r.obId));
+-    if(linkOB){
+-      sv('py_mm', r.mm||linkOB.mm||'');
+-      sv('py_contact', r.contact||linkOB.contact||'');
+-    } else if(linkSOB){
+-      sv('py_mm', r.mm||linkSOB.mm+(linkSOB.year?' '+linkSOB.year:'')+(linkSOB.color?' / '+linkSOB.color:''));
+-      sv('py_contact', r.contact||linkSOB.contact||'');
+-      sv('py_finbank', r.finBank||linkSOB.finBank||'');
+-      sv('py_finamt', r.finAmt||0);
+-    } else {
+-      sv('py_mm', r.mm||'');
+-      sv('py_contact', r.contact||'');
+-      sv('py_finbank', r.finBank||'');
+-      sv('py_finamt', r.finAmt||0);
+-    }
+     calcPay();
+   } else if(coll==='del'){
+     sv('dl_obid',r.obId);sv('dl_cname',r.cust);sv('dl_veh',r.vehicle);
+     sv('dl_exp',r.exp);sv('dl_act',r.act);sv('dl_by',r.by);
+     sv('dl_stat',r.status);sv('dl_rem',r.remarks);
+   } else if(coll==='doc'){
+-    sv('dc_obid',r.obId||r.sobId);sv('dc_regn',r.regNo);sv('dc_date',r.date);
++    sv('dc_obid',r.obId);sv('dc_regn',r.regNo);sv('dc_date',r.date);
+     sv('dc_rc',r.rc);sv('dc_ins',r.ins);sv('dc_puc',r.puc);sv('dc_pan',r.pan);
+     sv('dc_adh',r.adh);sv('dc_f29',r.f29);sv('dc_f30',r.f30);sv('dc_f28',r.f28);
+     sv('dc_f35',r.f35);sv('dc_noc',r.noc);sv('dc_gst',r.gst);sv('dc_svc',r.svc);
+     sv('dc_inv',r.inv);sv('dc_key',r.key);sv('dc_book',r.book);
+     sv('dc_stat',r.status);sv('dc_pucval',r.pucVal);sv('dc_miss',r.miss);
+     sv('dc_verby',r.verBy);sv('dc_verdate',r.verDate);sv('dc_rem',r.remarks);
+-    // Restore Customer Name / Car Details ΓÇö looked up from linked Order Booking or SOB
+-    const dlinkOB=DB.ob.find(o=>o.id===r.obId);
+-    const dlinkSOB=DB.sob.find(s=>s.id===(r.sobId||r.obId));
+-    if(dlinkOB){
+-      sv('dc_cname', dlinkOB.client||'');
+-      sv('dc_carinfo', (dlinkOB.mm||'')+(dlinkOB.year?' ┬╖ '+dlinkOB.year:'')+(dlinkOB.regNo||r.regNo?' ┬╖ '+(dlinkOB.regNo||r.regNo):''));
+-    } else if(dlinkSOB){
+-      sv('dc_cname', dlinkSOB.cname||'');
+-      sv('dc_carinfo', (dlinkSOB.mm||'')+(dlinkSOB.year?' ┬╖ '+dlinkSOB.year:'')+(dlinkSOB.regNo||r.regNo?' ┬╖ '+(dlinkSOB.regNo||r.regNo):''));
+-    } else {
+-      sv('dc_cname', '');
+-      sv('dc_carinfo', r.regNo?(' ┬╖ '+r.regNo):'');
+-    }
+   } else if(coll==='cust'){
+     sv('cu_type',r.type);sv('cu_name',r.name);sv('cu_mob',r.mobile);
+     sv('cu_amob',r.altMobile);sv('cu_email',r.email);sv('cu_city',r.city);
+@@ -4414,6 +4247,8 @@ function quickBtns(coll,id){
+     ],
+     ob:[
+       `<button class="btn-icon bi-next" onclick="quickOpen('m_pay','py_obid','${id}')" title="Γ₧í Payment"><i class="fa fa-indian-rupee-sign"></i></button>`,
++      `<button class="btn-icon bi-next" onclick="quickOpen('m_del','dl_obid','${id}')" title="Γ₧í Delivery"><i class="fa fa-truck"></i></button>`,
++      `<button class="btn-icon bi-next" onclick="quickOpen('m_doc','dc_obid','${id}')" title="Γ₧í Documents"><i class="fa fa-file-lines"></i></button>`,
+     ],
+     sal_inq:[
+       `<button class="btn-icon bi-next" onclick="quickOpen('m_sfu','sf_inqid','${id}')" title="Γ₧í Follow-Up"><i class="fa fa-phone"></i></button>`,
+@@ -4739,7 +4574,6 @@ function renderPurDash(){
+     {i:'≡ƒöº',v:wsPend,l:'Workshop Pending',trend:'Active Jobs',up:false},
+     {i:'≡ƒÅ¡',v:stockReady,l:'Ready for Sale',trend:'In Stock',up:true},
+     {i:'ΓÜÖ∩╕Å',v:stockRefurb,l:'Under Refurb',trend:'In Workshop',up:false},
+-    {i:'≡ƒöö',v:getTotalPendingTasks(),l:'Total Pending Tasks',trend:'Action Needed',up:false},
+   ].map(k=>`<div class="kpi"><div class="kpi-icon">${k.i}</div><div class="kpi-val">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-trend ${k.up?'up':'dn'}"><i class="fa fa-arrow-${k.up?'up':'down'}"></i> ${k.trend}</div></div>`).join('');
+   const plEl=$('pl_pur_grid');
+   if(plEl)plEl.innerHTML=[
+@@ -4786,7 +4620,6 @@ function renderSalDash(){
+     {i:'≡ƒÜÜ',v:pendDel,l:'Pending Delivery',trend:'To Deliver',up:false},
+     {i:'≡ƒÅ¡',v:availStk,l:'Available Stock',trend:'Ready to Sell',up:true},
+     {i:'≡ƒÆ░',v:fmt(totalSale),l:'Total Revenue',trend:'Closers',up:true},
+-    {i:'≡ƒöö',v:getTotalPendingTasks(),l:'Total Pending Tasks',trend:'Action Needed',up:false},
+   ].map(k=>`<div class="kpi"><div class="kpi-icon">${k.i}</div><div class="kpi-val">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-trend ${k.up?'up':'dn'}"><i class="fa fa-arrow-${k.up?'up':'down'}"></i> ${k.trend}</div></div>`).join('');
+   const plEl=$('pl_sal_grid');
+   if(plEl)plEl.innerHTML=[
+@@ -4811,39 +4644,7 @@ function renderSalDash(){
+ /* ΓöÇΓöÇ REPORTS ΓöÇΓöÇ */
+ function showRpt(t){
+   const el=$('rpt_output');
+-  if(t==='pur_report'){
+-    const rows=DB.pur_inq.map(r=>{
+-      const val=DB.val.find(v=>v.inqId===r.id);
+-      const pcl=DB.pcl.find(p=>p.inqId===r.id);
+-      const ob=pcl?DB.ob.find(o=>o.closerId===pcl.id):null;
+-      return `<tr><td>${r.id}</td><td>${r.date}</td><td><b>${r.sellerName}</b></td><td>${r.make} ${r.model} ${r.year}</td><td>${r.regNo||'-'}</td><td>${badge(r.status)}</td><td>${val?badge(val.status):'-'}</td><td>${pcl?fmt(pcl.price):'-'}</td><td>${ob?fmt(ob.total):'-'}</td><td>${r.assigned||'-'}</td></tr>`;
+-    }).join('')||'<tr><td colspan="10" class="empty">No purchase inquiries yet</td></tr>';
+-    const totalPur=DB.pcl.reduce((a,r)=>a+(r.price||0),0);
+-    el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+-      <div class="kpi"><div class="kpi-icon">≡ƒÜù</div><div class="kpi-val">${DB.pur_inq.length}</div><div class="kpi-lbl">Total Inquiries</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒöì</div><div class="kpi-val">${DB.val.length}</div><div class="kpi-lbl">Valuations Done</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒñ¥</div><div class="kpi-val">${DB.pcl.length}</div><div class="kpi-lbl">Closers Confirmed</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒÆ░</div><div class="kpi-val">${fmt(totalPur)}</div><div class="kpi-lbl">Total Purchase Value</div></div>
+-    </div>
+-    <div class="tc"><div class="tc-hdr"><div class="tc-title">≡ƒÜù Purchase Report ΓÇö Inquiry ΓåÆ Valuation ΓåÆ Closer ΓåÆ Order Booking</div><div class="tc-acts"><button class="btn btn-out btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button><button class="btn btn-out btn-sm" onclick="expTable('rpt_tbl')"><i class="fa fa-file-csv"></i> Export</button></div></div>
+-    <div class="tbl-wrap"><table id="rpt_tbl"><thead><tr><th>Inquiry ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Reg No.</th><th>Status</th><th>Valuation</th><th>Closer Price Γé╣</th><th>OB Total Γé╣</th><th>Assigned</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+-  } else if(t==='sal_report'){
+-    const rows=DB.sal_inq.map(r=>{
+-      const scl=DB.scl.find(s=>s.inqId===r.id);
+-      const sob=scl?DB.sob.find(o=>o.sclId===scl.id):null;
+-      const del=sob?DB.del.find(d=>d.sobId===sob.id):null;
+-      return `<tr><td>${r.id}</td><td>${r.date}</td><td><b>${r.buyerName}</b></td><td>${r.make||'-'} ${r.model||''}</td><td>${fmt(r.budget)}</td><td>${badge(r.status)}</td><td>${scl?fmt(scl.final):'-'}</td><td>${sob?fmt(sob.totalAmt):'-'}</td><td>${del?badge(del.status):'-'}</td><td>${r.assigned||'-'}</td></tr>`;
+-    }).join('')||'<tr><td colspan="10" class="empty">No sales inquiries yet</td></tr>';
+-    const totalSale=DB.scl.reduce((a,r)=>a+(r.final||0),0);
+-    el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+-      <div class="kpi"><div class="kpi-icon">≡ƒÅ╖∩╕Å</div><div class="kpi-val">${DB.sal_inq.length}</div><div class="kpi-lbl">Total Inquiries</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒÅå</div><div class="kpi-val">${DB.scl.length}</div><div class="kpi-lbl">Closers Confirmed</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒôï</div><div class="kpi-val">${DB.sob.length}</div><div class="kpi-lbl">Order Bookings</div></div>
+-      <div class="kpi"><div class="kpi-icon">≡ƒÆ░</div><div class="kpi-val">${fmt(totalSale)}</div><div class="kpi-lbl">Total Sale Value</div></div>
+-    </div>
+-    <div class="tc"><div class="tc-hdr"><div class="tc-title">≡ƒÅ╖∩╕Å Sales Report ΓÇö Inquiry ΓåÆ Closer ΓåÆ Order Booking ΓåÆ Delivery</div><div class="tc-acts"><button class="btn btn-out btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button><button class="btn btn-out btn-sm" onclick="expTable('rpt_tbl')"><i class="fa fa-file-csv"></i> Export</button></div></div>
+-    <div class="tbl-wrap"><table id="rpt_tbl"><thead><tr><th>Inquiry ID</th><th>Date</th><th>Buyer</th><th>Vehicle</th><th>Budget Γé╣</th><th>Status</th><th>Closer Price Γé╣</th><th>SOB Total Γé╣</th><th>Delivery</th><th>Assigned</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+-  } else if(t==='profit'){
++  if(t==='profit'){
+     el.innerHTML=`<div class="tc"><div class="tc-hdr"><div class="tc-title">≡ƒÆ░ Profit & Loss Report</div><div class="tc-acts"><button class="btn btn-out btn-sm" onclick="window.print()"><i class="fa fa-print"></i> Print</button><button class="btn btn-out btn-sm" onclick="expTable('rpt_tbl')"><i class="fa fa-file-csv"></i> Export</button></div></div><div class="tbl-wrap"><table id="rpt_tbl"><thead><tr><th>Stock ID</th><th>Vehicle</th><th>Purchase Γé╣</th><th>Refurb Γé╣</th><th>Total Cost Γé╣</th><th>Sale Price Γé╣</th><th>Profit/Loss Γé╣</th><th>Margin %</th></tr></thead><tbody>${DB.stk.map(r=>{const m=r.tcp>0?((r.profit/r.tcp)*100).toFixed(1):0;return`<tr><td>${r.id}</td><td>${r.make} ${r.model} ${r.year}</td><td>${fmt(r.pp)}</td><td>${fmt(r.refurb)}</td><td class="amt-or">${fmt(r.tcp)}</td><td>${fmt(r.sp)}</td><td class="${r.profit>=0?'profit-pos':'profit-neg'}">${fmt(r.profit)}</td><td class="${r.profit>=0?'profit-pos':'profit-neg'}">${m}%</td></tr>`}).join('')||'<tr><td colspan="8" class="empty">No stock data</td></tr>'}</tbody></table></div></div>`;
+   } else if(t==='payment'){
+     const ttl=DB.pay.reduce((a,r)=>a+r.amt,0),pend=DB.pay.reduce((a,r)=>a+(r.bal>0?r.bal:0),0);
+@@ -4854,36 +4655,7 @@ function showRpt(t){
+   el.scrollIntoView({behavior:'smooth'});
+ }
+ 
+-/* ΓöÇΓöÇ PRESENTATION SAMPLE DATA (optional, for demo) ΓöÇΓöÇ */
+-function loadPresentationDemoData(){
+-  if(!confirm('Sample/example data add karva mate? Aa presentation/demo mate j che ΓÇö pachi "Reset Demo Data" thi remove kari shakay.'))return;
+-  const d=today();
+-  // Purchase pipeline sample
+-  const inq1={id:genId('INQ',++DB.cnt.pur),date:d,source:'Walk-in',nameSource:'',sellerName:'Ramesh Patel',mobile:'9876543210',altMobile:'',email:'',city:'Ahmedabad',state:'Gujarat',address:'SG Highway',make:'Maruti Suzuki',model:'Swift',variant:'VXI',year:'2019',regYear:'2019',fuel:'Petrol',trans:'Manual',color:'White',km:'52000',owners:'2nd',regNo:'GJ-01-AB-1234',rto:'Gujarat',insurance:'2026-12-31',loanBank:'',loan:'No',assigned:'Rajan Desai',status:'Closed-Won',nextFU:'',updatedBy:'Admin',remarks:'Sample record',_seen:true};
+-  const inq2={id:genId('INQ',++DB.cnt.pur),date:d,source:'Online',nameSource:'OLX',sellerName:'Suresh Shah',mobile:'9898765432',altMobile:'',email:'suresh@gmail.com',city:'Surat',state:'Gujarat',address:'Athwa',make:'Hyundai',model:'Creta',variant:'SX',year:'2021',regYear:'2021',fuel:'Diesel',trans:'Manual',color:'Silver',km:'38000',owners:'1st',regNo:'GJ-02-CD-5678',rto:'Gujarat',insurance:'2027-06-30',loanBank:'SBI',loan:'Yes',assigned:'Ritesh Shah',status:'In-Progress',nextFU:d,updatedBy:'',remarks:'Sample record',_seen:true};
+-  DB.pur_inq.push(inq1,inq2);
+-  DB.val.push({id:genId('VAL',++DB.cnt.val),inqId:inq1.id,date:d,vehNo:inq1.regNo,cust:inq1.sellerName,contact:inq1.mobile,km:inq1.km,make:inq1.make,model:inq1.model,variant:inq1.variant,year:inq1.year,fuel:inq1.fuel,owners:inq1.owners,rc:true,svc:true,acc:false,tyre:'Good',engine:'Good',overall:'Good',status:'Approved',remarks:'Sample',_seen:true});
+-  const pcl1={id:genId('PCL',++DB.cnt.pcl),inqId:inq1.id,seller:inq1.sellerName,vehicle:inq1.make+' '+inq1.model+' '+inq1.variant+' '+inq1.year,date:d,type:'Direct Purchase',status:'Confirmed',price:285000,token:50000,balance:235000,pm1:'Cash',p1:50000,pm2:'NEFT',p2:235000,pm3:'-None-',p3:0,newcar:0,loan:'No',lbank:'',tokDate:d,doneBy:'Kalpesh Joshi',manager:'Admin',edd:d,cancel:'',remarks:'Sample record',_seen:true};
+-  DB.pcl.push(pcl1);
+-  DB.ob.push({id:genId('OB',++DB.cnt.ob),closerId:pcl1.id,inqId:inq1.id,date:d,client:inq1.sellerName,contact:inq1.mobile,email:'',address:inq1.address,branch:'SG Highway',mm:pcl1.vehicle,color:inq1.color,fuel:inq1.fuel,chassis:'',engine:'',regNo:inq1.regNo,year:inq1.year,ownerType:'2nd Owner',km:inq1.km,insType:'Comprehensive',insName:'',insVal:inq1.insurance,rtoName:'Gujarat',hpa:'',valuator:'',pp:285000,rc:0,rto:0,cash:50000,online:235000,other:0,total:285000,broker:'',brokerNo:'',src:'',noc:'',remark:'Sample record',partner:'',support:'',recv:d,_seen:true});
+-  // Sales pipeline sample
+-  const sin1={id:genId('SIN',++DB.cnt.sal),date:d,source:'Walk-in',branch:'SG Highway',buyerName:'Karan Modi',mobile:'9870123456',altMobile:'',email:'karan@gmail.com',city:'Ahmedabad',state:'Gujarat',address:'Bopal',budget:400000,make:'Maruti Suzuki',model:'Swift',fuel:'Petrol',trans:'Manual',color:'White',km:'60000',yearFrom:'2018',yearTo:'2021',assigned:'Rajan Desai',status:'Closed-Won',nextFU:'',remarks:'Sample record',_seen:true};
+-  DB.sal_inq.push(sin1);
+-  const scl1={id:genId('SCL',++DB.cnt.scl),inqId:sin1.id,buyer:sin1.buyerName,mobile:sin1.mobile,make:'Maruti Suzuki',model:'Swift',regNo:'GJ-01-AB-1234',vehicle:'Maruti Suzuki Swift (GJ-01-AB-1234)',date:d,mode:'Cash',status:'Confirmed',mrp:395000,disc:10000,final:385000,tok:50000,tokMode:'Cash',ins:12000,rto:8000,oth:0,total:405000,doneBy:'Kalpesh Joshi',remarks:'Sample record',_seen:true};
+-  DB.scl.push(scl1);
+-  const sob1={id:genId('SOB',++DB.cnt.sob),sclId:scl1.id,sinId:sin1.id,date:d,branch:'SG Highway',parkSale:'No',cname:sin1.buyerName,contact:sin1.mobile,email:sin1.email,address:sin1.address,edd:d,exec:'Kalpesh Joshi',src:sin1.source,partner:'',support:'',broker:'',brokComm:'',regNo:'GJ-01-AB-1234',mm:'Maruti Suzuki Swift VXI',year:'2019',color:'White',fuel:'Petrol',own:'2nd',km:60000,insType:'Comprehensive',insStat:'New',finance:'No',finBank:'',chassis:'',salePrice:385000,tcs:0,rto:8000,insChrg:12000,warranty:0,acc:0,other:0,totalAmt:405000,pd:[{lbl:'Booking Amt',date:d,onl:0,cash:50000},{lbl:'1st Payment',date:'',onl:0,cash:0},{lbl:'2nd Payment',date:'',onl:0,cash:0},{lbl:'3rd Payment',date:'',onl:0,cash:0},{lbl:'4th Payment',date:'',onl:0,cash:0},{lbl:'Loan Disbursement',date:'',onl:0,cash:0},{lbl:'Old Car Value',date:'',onl:0,cash:0}],remarks:'Sample record',status:'Confirmed',_seen:true};
+-  DB.sob.push(sob1);
+-  DB.pay.push({id:genId('PAY',++DB.cnt.pay),sobId:sob1.id,obId:'',type:'sale',name:sin1.buyerName,contact:sin1.mobile,regNo:sob1.regNo,mm:sob1.mm,date:d,payType:'Booking',mode:'Cash',ref:'',bank:'',pTo:'',pBy:'Kalpesh Joshi',amt:50000,total:405000,prev:0,bal:355000,hold:'Pending',auth:'Admin',remarks:'Sample record',_seen:true});
+-  DB.del.push({id:genId('DEL',++DB.cnt.del),sobId:sob1.id,obId:'',type:'sale',cust:sin1.buyerName,vehicle:sob1.mm+' ΓÇö '+sob1.regNo,regNo:sob1.regNo,exp:d,act:'',by:'Rajan Desai',status:'Scheduled',remarks:'Sample record',_seen:true});
+-  // Stock sample
+-  DB.stk.push({id:genId('STK',++DB.cnt.stk),regNo:'GJ-01-AB-1234',chassis:'MA3FKEB1S00100001',engine:'G10BE4500001',make:'Maruti Suzuki',model:'Swift',variant:'VXI',year:'2019',regYear:'2019',fuel:'Petrol',trans:'Manual',color:'White',km:'52000',owners:'2nd',status:'Sold',location:'SG Highway',pDate:d,insVal:'2026-12-31',rc:'Yes',photos:'Yes',pp:285000,refurb:25000,rto:8000,ins:12000,tcp:330000,sp:395000,sp2:370000,sp3:355000,profit:65000,v360:'Yes',portal:'OLX',mkt:'Social Media',_seen:true});
+-  updateBadges();saveDB();
+-  renderPurInq();renderVal();renderPCL();renderOB();renderSalInq();renderSCL();renderSOB();renderPay();renderDel();renderStk();
+-  toast('Γ£à Sample data added for presentation!','suc');
+-  if($('pg_reports').classList.contains('on')){ nav('reports',null); }
+-}
+-
+-
++/* ΓöÇΓöÇ EXPORT ΓöÇΓöÇ */
+ function expTable(id){
+   const t=$(id);if(!t){toast('No table to export','err');return}
+   const rows=[...t.querySelectorAll('tr')];
+@@ -5272,53 +5044,33 @@ function autoFillFromSalInq(target, sinId){
+ /* ΓöÇΓöÇ 4. PAYMENT, DELIVERY, DOCUMENTS ΓåÉ Order Booking ΓöÇΓöÇ */
+ function autoFillFromOB(target, obId){
+   if(!obId||obId.length<8)return;
+-  let ob=DB.ob.find(r=>r.id===obId);
+-  let sob=null;
+-  if(!ob) sob=DB.sob.find(r=>r.id===obId.trim());
+-  if(!ob && !sob)return;
+-  toast('Γ£à Booking Data Auto-Fill: '+(ob?ob.client:sob.cname),'suc');
++  const ob=DB.ob.find(r=>r.id===obId);
++  if(!ob)return;
++  toast('Γ£à OB Data Auto-Fill: '+ob.client,'suc');
+ 
+   if(target==='pay'){
+-    if(ob){
+-      setVal('py_name', ob.client);
+-      setVal('py_regn', ob.regNo||'');
+-      setVal('py_mm', ob.mm||'');
+-      setVal('py_contact', ob.contact||'');
+-      setVal('py_total', ob.total);
+-      const prevPaid=DB.pay.filter(r=>r.obId===obId).reduce((a,r)=>a+r.amt,0);
+-      setVal('py_prev', prevPaid);
+-      setVal('py_amt', Math.max(ob.total-prevPaid,0));
+-      calcPay();
+-      autofillFlash(['py_name','py_regn','py_mm','py_contact','py_total','py_prev','py_amt']);
+-    } else {
+-      autoFillFromSOB('pay', obId);
+-    }
++    setVal('py_name', ob.client);
++    setVal('py_regn', ob.regNo||'');
++    setVal('py_mm', ob.mm||'');
++    setVal('py_contact', ob.contact||'');
++    setVal('py_total', ob.total);
++    const prevPaid=DB.pay.filter(r=>r.obId===obId).reduce((a,r)=>a+r.amt,0);
++    setVal('py_prev', prevPaid);
++    setVal('py_amt', Math.max(ob.total-prevPaid,0));
++    calcPay();
++    autofillFlash(['py_name','py_regn','py_mm','py_contact','py_total','py_prev','py_amt']);
+   }
+   else if(target==='del'){
+-    if(ob){
+-      setVal('dl_cname', ob.client);
+-      setVal('dl_veh', ob.mm+(ob.regNo?' ΓÇö '+ob.regNo:''));
+-      setVal('dl_exp', ob.edd||'');
+-      if(ob.regNo) setVal('dl_regn', ob.regNo);
+-    } else {
+-      setVal('dl_cname', sob.cname||'');
+-      setVal('dl_veh', (sob.mm||'')+(sob.regNo?' ΓÇö '+sob.regNo:''));
+-      setVal('dl_exp', sob.edd||'');
+-      if(sob.regNo) setVal('dl_regn', sob.regNo);
+-    }
++    setVal('dl_cname', ob.client);
++    setVal('dl_veh', ob.mm+(ob.regNo?' ΓÇö '+ob.regNo:''));
++    setVal('dl_exp', ob.edd||'');
++    if(ob.regNo) setVal('dl_regn', ob.regNo);
+   }
+   else if(target==='doc'){
+-    if(ob){
+-      setVal('dc_regn', ob.regNo||'');
+-      setVal('dc_insval', ob.insVal||'');
+-      setVal('dc_cname', ob.client||'');
+-      setVal('dc_carinfo', (ob.mm||'')+(ob.year?' ┬╖ '+ob.year:'')+(ob.regNo?' ┬╖ '+ob.regNo:''));
+-    } else {
+-      setVal('dc_regn', sob.regNo||'');
+-      setVal('dc_insval', '');
+-      setVal('dc_cname', sob.cname||'');
+-      setVal('dc_carinfo', (sob.mm||'')+(sob.year?' ┬╖ '+sob.year:'')+(sob.regNo?' ┬╖ '+sob.regNo:''));
+-    }
++    setVal('dc_regn', ob.regNo||'');
++    setVal('dc_insval', ob.insVal||'');
++    setVal('dc_cname', ob.client||'');
++    setVal('dc_carinfo', (ob.mm||'')+(ob.year?' ┬╖ '+ob.year:'')+(ob.regNo?' ┬╖ '+ob.regNo:''));
+     autofillFlash(['dc_regn','dc_cname','dc_carinfo']);
+   }
+ }
+@@ -5446,7 +5198,7 @@ function printDeliveryNote(){
+     keys:v('dn_keys'),tools:v('dn_tools'),spare:v('dn_spare'),
+     rc:v('dn_rc'),ins:v('dn_ins'),puc:v('dn_puc'),
+     f29:v('dn_f29'),f30:v('dn_f30'),insExp:v('dn_ins_exp'),
+-    pucExp:v('dn_puc_exp'),fcExp:v('dn_fc_exp'),by:v('dn_by'),time:v('dn_time'),sign:v('dn_sign'),rem:v('dn_rem')
++    pucExp:v('dn_puc_exp'),fcExp:v('dn_fc_exp'),by:v('dn_by'),rem:v('dn_rem')
+   };
+   const w=window.open('','_blank','width=800,height=600');
+   w.document.write(`<!DOCTYPE html><html><head><title>Delivery Note ΓÇö ${r.id}</title>
+@@ -5461,7 +5213,7 @@ function printDeliveryNote(){
+   .sign-box{border-top:2px solid #333;padding-top:8px;font-size:12px;color:#666}
+   @media print{body{padding:0}}</style></head><body>
+   <h2>≡ƒÜù CARECAY PRIVATE LIMITED</h2>
+-  <div class="sub">DELIVERY NOTE ΓÇö ${r.id} | Date: ${r.date}${r.time?' | Time: '+r.time:''}</div>
++  <div class="sub">DELIVERY NOTE ΓÇö ${r.id} | Date: ${r.date}</div>
+   <table><tr><td class="sec" colspan="2">CUSTOMER DETAILS</td></tr>
+   <tr><th>Customer Name</th><td>${r.cname||'-'}</td></tr>
+   <tr><th>Mobile</th><td>${r.mob||'-'}</td></tr></table>
+@@ -5482,7 +5234,7 @@ function printDeliveryNote(){
+   ${r.rem?`<p><b>Remarks:</b> ${r.rem}</p>`:''}
+   <div class="sign">
+   <div class="sign-box">Delivered By: ${r.by||'_____________'}<br>Signature & Date</div>
+-  <div class="sign-box">Received By: ${r.cname||'_____________'}<br>Customer Signature: ${r.sign||'_____________'}<br>Date</div></div>
++  <div class="sign-box">Received By: ${r.cname||'_____________'}<br>Customer Signature & Date</div></div>
+   <script>window.print()<\/script></body></html>`);
+ }
+ 
+@@ -5764,18 +5516,14 @@ const NOTIF_META={
+   pcl:     {color:'#10B981',icon:'≡ƒñ¥',label:'Purchase Closer',next:'Order Booking'},
+   ob:      {color:'#FF6B00',icon:'≡ƒô¥',label:'Order Booking',next:'Payment + Delivery'},
+   sal_inq: {color:'#EC4899',icon:'≡ƒÅ╖∩╕Å',label:'Sales Inquiry',next:'Sales Follow-Up'},
+-  sfu:     {color:'#F59E0B',icon:'≡ƒÆ¼',label:'Sales Follow-Up',next:'Test Drive'},
+-  td:      {color:'#2563EB',icon:'≡ƒÜù',label:'Test Drive',next:'Sales Closer'},
++  sfu:     {color:'#F59E0B',icon:'≡ƒÆ¼',label:'Sales Follow-Up',next:'Sales Closer'},
+   scl:     {color:'#10B981',icon:'≡ƒÅå',label:'Sales Closer',next:'Sales Order Booking'},
+-  sob:     {color:'#E85D04',icon:'≡ƒôï',label:'Sales Order Booking',next:'Finance / Loan'},
+-  fin:     {color:'#0EA5E9',icon:'≡ƒÅª',label:'Finance / Loan',next:'Sale Payment'},
+-  stk:     {color:'#6366F1',icon:'≡ƒÅ¡',label:'Stock Added',next:'Workshop / Refurb'},
+-  ws:      {color:'#14B8A6',icon:'≡ƒöº',label:'Workshop Job',next:'Gate Pass'},
+-  pay:     {color:'#10B981',icon:'Γé╣',label:'Payment',next:'Documents'},
+-  gp:      {color:'#F59E0B',icon:'≡ƒÜ¬',label:'Gate Pass',next:'Delivery Note'},
+-  dn:      {color:'#8B5CF6',icon:'≡ƒôï',label:'Delivery Note',next:'Delivery'},
+-  del:     {color:'#3B82F6',icon:'≡ƒÜÜ',label:'Delivery',next:'Complete Γ£à'},
+-  doc:     {color:'#8B5CF6',icon:'≡ƒôï',label:'Documents',next:'Car Stock'},
++  sob:     {color:'#E85D04',icon:'≡ƒôï',label:'Sales Order Booking',next:'Payment + Delivery'},
++  stk:     {color:'#6366F1',icon:'≡ƒÅ¡',label:'Stock Added',next:'Refurb ΓåÆ Ready for Sale'},
++  ws:      {color:'#14B8A6',icon:'≡ƒöº',label:'Workshop Job',next:'Ready for Delivery'},
++  pay:     {color:'#10B981',icon:'Γé╣',label:'Payment',next:'Delivery'},
++  del:     {color:'#3B82F6',icon:'≡ƒÜÜ',label:'Delivery',next:'Documents'},
++  doc:     {color:'#8B5CF6',icon:'≡ƒôï',label:'Documents',next:'Complete Γ£à'},
+   cust:    {color:'#EC4899',icon:'≡ƒæñ',label:'Customer Added',next:null},
+ };
+ 
+@@ -5784,24 +5532,20 @@ function addNotif(type, rec){
+ 
+   // Build smart summary line based on record fields
+   let who='', what='', id=rec.id||'';
+-  if(type==='pur_inq')  { who=rec.sellerName; what='≡ƒÜù '+(rec.regNo||'No Reg')+' | '+rec.make+' '+rec.model+' '+rec.year; }
+-  else if(type==='val') { who=rec.cust||''; what='≡ƒÜù '+(rec.vehNo||'No Reg')+' | '+rec.make+' '+rec.model+' | '+rec.overall; }
+-  else if(type==='pfu') { who=rec.sellerName||''; what='≡ƒÜù '+(rec.veh||'No Reg')+' | Follow-Up #'+rec.seq+' | '+rec.status; }
+-  else if(type==='pcl') { who=rec.seller; what='≡ƒÜù '+rec.vehicle+' | Γé╣'+Number(rec.price||0).toLocaleString('en-IN')+' | '+[rec.pm1,rec.pm2&&rec.pm2!=='-None-'?rec.pm2:null,rec.pm3&&rec.pm3!=='-None-'?rec.pm3:null].filter(Boolean).join('+'); }
+-  else if(type==='ob')  { who=rec.client; what='≡ƒÜù '+(rec.regNo||'No Reg')+' | '+rec.mm+' | Γé╣'+Number(rec.total||0).toLocaleString('en-IN')+(rec.docStat?' | Docs: '+rec.docStat:''); }
++  if(type==='pur_inq')  { who=rec.sellerName; what=rec.make+' '+rec.model+' '+rec.year; }
++  else if(type==='val') { who=rec.cust||''; what=rec.make+' '+rec.model+' | '+rec.overall; }
++  else if(type==='pfu') { who=rec.sellerName||''; what='Follow-Up #'+rec.seq+' | '+rec.status; }
++  else if(type==='pcl') { who=rec.seller; what=rec.vehicle+' | Γé╣'+Number(rec.price||0).toLocaleString('en-IN')+' | '+[rec.pm1,rec.pm2&&rec.pm2!=='-None-'?rec.pm2:null,rec.pm3&&rec.pm3!=='-None-'?rec.pm3:null].filter(Boolean).join('+'); }
++  else if(type==='ob')  { who=rec.client; what=rec.mm+' | Γé╣'+Number(rec.total||0).toLocaleString('en-IN')+(rec.docStat?' | Docs: '+rec.docStat:''); }
+   else if(type==='sal_inq'){ who=rec.buyerName; what='Budget Γé╣'+Number(rec.budget||0).toLocaleString('en-IN')+(rec.make?' | '+rec.make:''); }
+   else if(type==='sfu') { who=rec.cust||''; what='Follow-Up #'+rec.seq+' | '+rec.status; }
+   else if(type==='scl') { who=rec.buyer; what=rec.vehicle+' | Γé╣'+Number(rec.final||0).toLocaleString('en-IN')+' | Mode: '+(rec.mode||'-'); }
+-  else if(type==='sob') { who=rec.cname||''; what='≡ƒÜù '+(rec.regNo||'No Reg')+' | '+(rec.mm||'-')+(rec.year?' '+rec.year:'')+' | Γé╣'+Number(rec.totalAmt||0).toLocaleString('en-IN'); }
+-  else if(type==='td')  { who=rec.cname||''; what='≡ƒÜù '+(rec.regn||'No Reg')+' | '+(rec.mm||'-')+' | '+(rec.stat||'Scheduled'); }
+-  else if(type==='fin') { who=rec.cname||''; what='≡ƒÜù '+(rec.regn||'No Reg')+' | '+(rec.bank||'-')+' | Γé╣'+Number(rec.lamt||0).toLocaleString('en-IN'); }
+-  else if(type==='gp')  { who=rec.dname||''; what='≡ƒÜù '+(rec.regn||'No Reg')+' | '+(rec.mm||'-')+' | '+(rec.purpose||'-'); }
+-  else if(type==='dn')  { who=rec.cname||''; what='≡ƒÜù '+(rec.regn||'No Reg')+' | '+(rec.mm||'-')+' | '+(rec.status||'Draft'); }
++  else if(type==='sob') { who=rec.cname||''; what=(rec.mm||'-')+(rec.regNo?' ('+rec.regNo+')':'')+(rec.year?' '+rec.year:'')+' | Γé╣'+Number(rec.totalAmt||0).toLocaleString('en-IN'); }
+   else if(type==='stk') { who=rec.make+' '+rec.model; what=rec.regNo+' | KM '+Number(rec.km||0).toLocaleString(); }
+   else if(type==='ws')  { who=rec.vNum; what=rec.wType+' | '+rec.problem; }
+-  else if(type==='pay') { who=rec.name; what='≡ƒÜù '+(rec.regNo||'No Reg')+' | Γé╣'+Number(rec.amt||0).toLocaleString('en-IN')+' | Bal Γé╣'+Number(rec.bal||0).toLocaleString('en-IN'); }
++  else if(type==='pay') { who=rec.name; what='Γé╣'+Number(rec.amt||0).toLocaleString('en-IN')+' | Bal Γé╣'+Number(rec.bal||0).toLocaleString('en-IN'); }
+   else if(type==='del') { who=rec.cust; what=rec.vehicle; }
+-  else if(type==='doc') { who=rec.regNo; what='≡ƒÜù '+(rec.regNo||'No Reg')+' | Status: '+rec.status; }
++  else if(type==='doc') { who=rec.regNo; what='Status: '+rec.status; }
+   else if(type==='cust'){ who=rec.name; what=rec.type+' | '+rec.mobile; }
+ 
+   const n={
+@@ -6509,177 +6253,6 @@ function printVechanKhat(){
+   win.document.close();
+ }
+ 
+-/* ΓöÇΓöÇ Print SALE Vechan Khat / Delivery Note (Carecay = Seller, Customer = Buyer) ΓöÇΓöÇ */
+-function printSaleVechanKhat(obidArg){
+-  const obid = (obidArg || v('py_obid') || v('dn_obid') || '').trim();
+-  const sob = DB.sob.find(x=>x.id===obid);
+-  if(!sob){toast('Γ¥î Sales Order Booking (SOB) ID nathi malyu ΓÇö pehla SOB save karo!','err');return;}
+-
+-  const sellerName  = 'CARECAY PVT. LTD.';
+-  const sellerAddr  = 'Mumatpura Road, Off. S. G. Highway, Nr. Cafe De Italiano, Ahmedabad-(380058)';
+-  const buyerName   = sob.cname || v('py_name') || '____________________';
+-  const buyerAddr   = sob.address || '_____________________';
+-  const buyerMob    = sob.contact || '___________';
+-  const regNo       = sob.regNo  || v('py_regn') || '____________________';
+-  const make        = sob.mm     || '____________________';
+-  const chassis     = sob.chassis|| '____________________';
+-  const engine      = '____________________';
+-  const year        = sob.year   || '____';
+-  const fuel        = sob.fuel   || '____';
+-  const color       = sob.color  || '____';
+-  const km          = sob.km     ? Number(sob.km).toLocaleString('en-IN') : '____';
+-  const owners      = sob.own    || '____';
+-
+-  // Payment figures ΓÇö prefer live Sale Payment modal values, fallback to SOB payment schedule
+-  const pdPaid = (sob.pd||[]).reduce((a,p)=>a+(Number(p.onl)||0)+(Number(p.cash)||0),0);
+-  const totalAmt = +v('py_total')||sob.totalAmt||0;
+-  const paidAmt  = +v('py_amt')||0;
+-  const prevPaid = +v('py_prev')||(paidAmt?0:pdPaid);
+-  const balance  = totalAmt - prevPaid - paidAmt;
+-  const payMode  = v('py_mode')||'____';
+-  const payRef   = v('py_ref')||'____';
+-  const payBank  = v('py_bank')||'____';
+-  const payDate  = v('py_date')||v('dn_date')||today();
+-  const auth     = v('py_auth')||sob.exec||'____';
+-
+-  const fmt2 = n => n ? 'Γé╣ '+Number(n).toLocaleString('en-IN') : 'Γé╣ 0';
+-
+-  const win = window.open('','_blank','width=900,height=750');
+-  win.document.write(`<!DOCTYPE html><html lang="gu">
+-<head><meta charset="UTF-8">
+-<title>α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ α¬àα¬¿α½ç α¬íα½Çα¬▓α½Çα¬╡α¬░α½Ç α¬¿α½ïα¬ƒ ΓÇö ${regNo}</title>
+-<style>
+-  *{box-sizing:border-box;margin:0;padding:0}
+-  body{font-family:'Noto Sans Gujarati',Arial,sans-serif;font-size:12px;color:#000;padding:20px;max-width:800px;margin:0 auto}
+-  h1{text-align:center;font-size:18px;font-weight:900;letter-spacing:2px;border:3px solid #000;padding:8px 20px;display:inline-block;margin:0 auto 16px;background:#000;color:#fff}
+-  .title-row{text-align:center;margin-bottom:14px}
+-  .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+-  .box{border:1.5px solid #000;padding:8px 10px;border-radius:2px}
+-  .box-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:4px}
+-  .box-val{font-size:13px;font-weight:700}
+-  table{width:100%;border-collapse:collapse;margin-bottom:10px}
+-  td,th{border:1px solid #333;padding:5px 8px;font-size:11.5px;vertical-align:top}
+-  th{background:#333;color:#fff;font-size:10px;letter-spacing:1px;text-align:center;font-weight:700}
+-  .label{color:#555;font-size:10px}
+-  .amount-row td{font-weight:700}
+-  .total-row td{background:#000;color:#fff;font-weight:800;font-size:13px}
+-  .dotted{border-bottom:1px dotted #000;min-width:120px;display:inline-block}
+-  .section-hdr{background:#222;color:#fff;text-align:center;padding:5px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+-  .terms{font-size:10px;line-height:1.6;margin-bottom:12px;border:1px solid #ccc;padding:10px;background:#f9f9f9}
+-  .terms ul{padding-left:16px;margin-top:4px}
+-  .terms li{margin-bottom:3px}
+-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+-  .sig-box{text-align:center}
+-  .sig-line{border-top:1.5px solid #000;margin:0 auto;width:80%;margin-top:40px;padding-top:5px;font-size:10px;font-weight:700;letter-spacing:.5px}
+-  .photo-box{border:1px solid #000;width:80px;height:90px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#999;margin:0 auto}
+-  @media print{body{padding:5px}.no-print{display:none}}
+-</style></head>
+-<body>
+-<div class="title-row"><h1>α¬╡α½çα¬Üα¬╛α¬ú α¬ûα¬ñ α¬àα¬¿α½ç α¬íα½Çα¬▓α½Çα¬╡α¬░α½Ç α¬¿α½ïα¬ƒ</h1></div>
+-<div class="top-grid">
+-  <div class="box"><div class="box-label">α¬ùα¬╛α¬íα½Ç α¬¿α¬é.</div><div class="box-val">${regNo}</div></div>
+-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+-    <div class="box"><div class="box-label">α¬ñα¬╛α¬░α½Çα¬û</div><div class="box-val">${payDate}</div></div>
+-    <div class="box"><div class="box-label">α¬╡α¬╛α¬░</div><div class="box-val">${new Date().toLocaleDateString('gu-IN',{weekday:'long'})||''}</div></div>
+-  </div>
+-</div>
+-<div class="top-grid">
+-  <div class="box">
+-    <div class="box-label">≡ƒÅ╖∩╕Å α¬╡α¬╛α¬╣α¬¿ α¬╡α½çα¬Üα¬╛α¬ú α¬åα¬¬α¬¿α¬╛α¬░ (Seller)</div>
+-    <div class="box-val" style="margin-top:6px">${sellerName}</div>
+-    <div style="margin-top:6px;font-size:10px;color:#555">${sellerAddr}</div>
+-    <div style="margin-top:4px;font-size:11px;color:#555">α¬«α½ï. α¬¿α¬é.: 9484582222</div>
+-  </div>
+-  <div class="box">
+-    <div class="box-label">≡ƒÅó α¬╡α¬╛α¬╣α¬¿ α¬ûα¬░α½Çα¬ª α¬▓α½çα¬¿α¬╛α¬░ (Buyer)</div>
+-    <div class="box-val" style="margin-top:6px">${buyerName}</div>
+-    <div style="margin-top:6px;font-size:11px;color:#555">α¬╕α¬░α¬¿α¬╛α¬«α½üα¬é: ${buyerAddr}</div>
+-    <div style="margin-top:4px;font-size:11px;color:#555">α¬«α½ï. α¬¿α¬é.: ${buyerMob}</div>
+-  </div>
+-</div>
+-
+-<table>
+-  <tr><th colspan="6">≡ƒÜù α¬╡α¬╛α¬╣α¬¿ α¬╡α¬┐α¬ùα¬ñ (Vehicle Details)</th></tr>
+-  <tr>
+-    <td class="label">α¬«α½çα¬ò/α¬«α½ïα¬íα½çα¬▓</td><td><b>${make}</b></td>
+-    <td class="label">α¬░α¬£α½Ç. α¬¿α¬é.</td><td><b>${regNo}</b></td>
+-    <td class="label">α¬╡α¬░α½ìα¬╖</td><td><b>${year}</b></td>
+-  </tr>
+-  <tr>
+-    <td class="label">α¬Üα½çα¬╕α¬┐α¬╕ α¬¿α¬é.</td><td>${chassis}</td>
+-    <td class="label">α¬Åα¬¿α½ìα¬£α¬┐α¬¿ α¬¿α¬é.</td><td>${engine}</td>
+-    <td class="label">α¬çα¬éα¬ºα¬ú</td><td>${fuel}</td>
+-  </tr>
+-  <tr>
+-    <td class="label">α¬░α¬éα¬ù</td><td>${color}</td>
+-    <td class="label">α¬òα¬┐.α¬«α½Ç.</td><td>${km}</td>
+-    <td class="label">α¬«α¬╛α¬▓α¬┐α¬ò</td><td>${owners}</td>
+-  </tr>
+-  <tr>
+-    <td class="label">α¬╡α½Çα¬«α½ï</td><td>${sob.insType||'ΓÇö'}</td>
+-    <td class="label">α¬½α¬╛α¬çα¬¿α¬╛α¬¿α½ìα¬╕</td><td>${sob.finance||'ΓÇö'}</td>
+-    <td class="label">α¬¼α½ìα¬░α¬╛α¬¿α½ìα¬Ü</td><td>${sob.branch||'ΓÇö'}</td>
+-  </tr>
+-</table>
+-
+-<table>
+-  <tr><th colspan="2">≡ƒÆ░ α¬Üα½éα¬òα¬╡α¬úα½Ç α¬╡α¬┐α¬ùα¬ñ (Payment Details)</th></tr>
+-  <tr><td style="width:60%">α¬╡α¬╛α¬╣α¬¿ α¬╡α½çα¬Üα¬╛α¬ú α¬òα¬┐α¬éα¬«α¬ñ (Sale Price)</td><td style="text-align:right"><b>${fmt2(totalAmt)}</b></td></tr>
+-  <tr><td>α¬àα¬ùα¬╛α¬ë α¬Üα½éα¬òα¬╡α½çα¬▓ (Previously Paid)</td><td style="text-align:right">${fmt2(prevPaid)}</td></tr>
+-  <tr><td>α¬å α¬Üα½éα¬òα¬╡α¬úα½Ç (This Payment) ΓÇö ${payMode}${payRef&&payRef!=='____'?' / '+payRef:''}</td><td style="text-align:right">${fmt2(paidAmt)}</td></tr>
+-  <tr class="total-row"><td>α¬¼α¬╛α¬òα½Ç α¬¼α½çα¬▓α½çα¬¿α½ìα¬╕ (Balance Pending)</td><td style="text-align:right">${fmt2(balance)}</td></tr>
+-</table>
+-
+-<table>
+-  <tr><th colspan="2">≡ƒÅª α¬¡α½üα¬ùα¬ñα¬╛α¬¿ α¬«α¬╛α¬ºα½ìα¬»α¬« (Payment Mode)</th></tr>
+-  <tr><td style="width:40%">α¬¡α½üα¬ùα¬ñα¬╛α¬¿ α¬«α½ïα¬í</td><td>${payMode}</td></tr>
+-  <tr><td>α¬¼α½çα¬¿α½ìα¬ò / α¬Üα½çα¬ò / UTR</td><td>${payBank} / ${payRef}</td></tr>
+-  <tr><td>α¬àα¬ºα¬┐α¬òα½âα¬ñ α¬ªα½ìα¬╡α¬╛α¬░α¬╛</td><td>${auth}</td></tr>
+-</table>
+-
+-<div class="terms">
+-  <b>α¬╢α¬░α¬ñα½ï-α¬¿α¬┐α¬»α¬«α½ï (Terms & Conditions):</b>
+-  <ul>
+-    <li>α¬╕α¬ªα¬░ α¬╕α½ïα¬ªα½ï α¬àα¬«α½ï α¬¼α¬éα¬¿α½ç α¬¬α¬╛α¬░α½ìα¬ƒα½Çα¬ô α¬░α¬╛α¬£α½Çα¬ûα½üα¬╢α½Çα¬Ñα½Ç α¬╕α¬«α¬£α½Ç α¬╡α¬┐α¬Üα¬╛α¬░α½Ç, α¬╣α½ïα¬╢α¬┐α¬»α¬╛α¬░α½Çα¬Ñα½Ç, α¬¼α½Çα¬¿α¬òα¬ªα½çα¬½α½Çα¬úα¬╛α¬«α¬╛α¬éα¬Ñα½Ç α¬òα½ïα¬êα¬¿α¬¿α¬╛ α¬ÿα¬╛α¬ò α¬ºα¬«α¬òα½Ç α¬òα½ç α¬ªα¬¼α¬╛α¬ú α¬╡α¬ùα¬░ α¬òα¬░α½ìα¬»α½ï α¬¢α½ç.</li>
+-    <li>α¬╕α¬ªα¬░ α¬╡α¬╛α¬╣α¬¿α¬¿α½üα¬é α¬åα¬£α¬░α½ïα¬£ α¬╕α½üα¬ºα½Çα¬¿α½üα¬é α¬ñα¬«α¬╛α¬« R.T.O., α¬ƒα½çα¬òα½ìα¬╖, α¬çα¬¿α½ìα¬╕α½ìα¬»α½ïα¬░α¬¿α½ìα¬╕, α¬▓α½ïα¬¿ α¬╕α¬éα¬¼α¬éα¬ºα¬┐α¬ñ α¬£α¬╡α¬╛α¬¼α¬ªα¬╛α¬░α½Ç CARECAY PVT. LTD. α¬¿α½Ç α¬░α¬╣α½çα¬╢α½ç ΓÇö α¬ñα½ç α¬¬α¬¢α½Ç α¬ûα¬░α½Çα¬ªα¬¿α¬╛α¬░α¬¿α½Ç α¬░α¬╣α½çα¬╢α½ç.</li>
+-    <li>α¬╕α¬ªα¬░ α¬╡α¬╛α¬╣α¬¿ α¬ûα¬░α½Çα¬ªα¬¿α¬╛α¬░α½ç α¬¬α½ïα¬ñα¬╛α¬¿α½Ç α¬░α½Çα¬ñα½ç α¬£α½ïα¬ê, α¬ƒα½ìα¬░α¬╛α¬ê α¬òα¬░α½Ç, α¬Üα¬òα¬╛α¬╕α¬úα½Ç α¬òα¬░α½Ç α¬ûα¬░α½Çα¬ª α¬òα¬░α½çα¬▓ α¬¢α½ç.</li>
+-    <li>α¬╕α¬ªα¬░ α¬╡α¬╛α¬╣α¬¿α¬¿α½ï α¬╕α½ïα¬ªα½ï α¬òα½ïα¬ê α¬¬α¬ú α¬╕α¬éα¬£α½ïα¬ùα½ïα¬«α¬╛α¬é α¬òα½àα¬¿α½ìα¬╕α¬▓ α¬¿α¬╣α½Çα¬é ΓÇö α¬àα¬¿α½ç α¬£α½ï α¬╕α½ïα¬ªα½ï α¬òα½àα¬¿α½ìα¬╕α¬▓ α¬Ñα¬╢α½ç α¬ñα½ï α¬¼α¬╛α¬¿α¬╛α¬¿α½Ç α¬åα¬¬α½çα¬▓ α¬░α¬òα¬« α¬¬α¬░α¬ñ α¬«α¬│α¬╢α½ç α¬¿α¬╣α½Çα¬é.</li>
+-    <li>α¬ùα¬╛α¬íα½Çα¬¿α½Ç α¬çα¬¿α½ìα¬╢α½ìα¬»α½ïα¬░α¬¿α½ìα¬╕ α¬ƒα½ìα¬░α¬╛α¬¿α½ìα¬╕α¬½α¬░, RTO α¬ƒα½ìα¬░α¬╛α¬¿α½ìα¬╕α¬½α¬░ α¬ñα¬Ñα¬╛ α¬╕α¬éα¬¼α¬éα¬ºα¬┐α¬ñ α¬ƒα½çα¬òα½ìα¬╕ α¬ûα¬░α½ìα¬Ü α¬ûα¬░α½Çα¬ªα¬¿α¬╛α¬░α¬¿α½Ç α¬£α¬╡α¬╛α¬¼α¬ªα¬╛α¬░α½Ç α¬░α¬╣α½çα¬╢α½ç.</li>
+-    <li>α¬íα½Çα¬▓α½Çα¬╡α¬░α½Ç α¬╕α¬«α¬»α½ç α¬╡α¬╛α¬╣α¬¿α¬¿α½Ç α¬òα¬┐α¬▓α½ïα¬«α½Çα¬ƒα¬░, α¬Åα¬òα½ìα¬╕α½çα¬╕α¬░α½Çα¬¥ α¬àα¬¿α½ç α¬ªα¬╕α½ìα¬ñα¬╛α¬╡α½çα¬£α½ï α¬Üα¬òα¬╛α¬╕α½Ç α¬ûα¬░α½Çα¬ªα¬¿α¬╛α¬░α½ç α¬╕α½ìα¬╡α½Çα¬òα¬╛α¬░ α¬òα¬░α½çα¬▓ α¬¢α½ç.</li>
+-  </ul>
+-</div>
+-
+-<div class="sig-grid">
+-  <div class="sig-box">
+-    <div style="font-size:11px;color:#555;margin-bottom:6px">α¬╡α¬╛α¬╣α¬¿ α¬╡α½çα¬Üα¬¿α¬╛α¬░α¬¿α½Ç α¬╕α¬╣α½Ç / Seller Signature</div>
+-    <div class="sig-line">CARECAY PVT. LTD.</div>
+-  </div>
+-  <div class="sig-box">
+-    <div style="font-size:11px;color:#555;margin-bottom:6px">α¬╡α¬╛α¬╣α¬¿ α¬▓α½çα¬¿α¬╛α¬░α¬¿α½Ç α¬╕α¬╣α½Ç / Buyer Signature</div>
+-    <div class="sig-line">${buyerName}</div>
+-  </div>
+-</div>
+-<div class="sig-grid" style="margin-top:18px">
+-  <div class="sig-box">
+-    <div class="sig-line">α¬╕α¬╛α¬òα½ìα¬╖α½Çα¬¿α½Ç α¬╕α¬╣α½Ç ΓÇö 1</div>
+-  </div>
+-  <div class="sig-box">
+-    <div class="sig-line">α¬╕α¬╛α¬òα½ìα¬╖α½Çα¬¿α½Ç α¬╕α¬╣α½Ç ΓÇö 2</div>
+-  </div>
+-</div>
+-<div style="text-align:right;margin-top:20px">
+-  <div class="photo-box">α¬╡α¬╛α¬╣α¬¿ α¬▓α½çα¬¿α¬╛α¬░α¬¿α½ï α¬½α½ïα¬ƒα½ï</div>
+-</div>
+-<div class="no-print" style="text-align:center;margin-top:20px">
+-  <button onclick="window.print()" style="padding:10px 30px;background:#000;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;margin-right:10px">≡ƒû¿∩╕Å Print</button>
+-  <button onclick="window.close()" style="padding:10px 30px;background:#ccc;color:#000;border:none;border-radius:4px;font-size:14px;cursor:pointer">Γ£ò Close</button>
+-</div>
+-<script>setTimeout(()=>window.print(),600);<\/script>
+-</body></html>`);
+-  win.document.close();
+-}
+-
+-
+ /* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+    DOCUMENT FILE UPLOAD SYSTEM
+    Har doc ke saath actual file attach ho sakta hai
+@@ -6767,21 +6340,60 @@ function resetDocFiles(){
+   updateDocCounts();
+ }
+ 
+-/* ΓöÇΓöÇ FRESH DATABASE (no demo/sample data) ΓöÇΓöÇ */
++/* ΓöÇΓöÇ DEMO DATA ΓöÇΓöÇ */
+ function initDemo(){
+-  DB.pur_inq=[];
+-  DB.stk=[];
+-  DB.ws=[];
+-  DB.pay=[];
+-  DB.sal_inq=[];
+-  DB.cust=[];
+-  DB.val=[];
+-  DB.pcl=[];
+-  DB.scl=[];
+-  DB.del=[];
+-  DB.doc=[];
+-  DB.pfu=[];DB.ob=[];DB.sfu=[];DB.sob=[];
+-  DB.cnt={pur:0,val:0,pfu:0,pcl:0,ob:0,sal:0,sfu:0,scl:0,sob:0,stk:0,ws:0,pay:0,del:0,doc:0,cust:0,dn:0,gp:0,sp:0};
++  DB.pur_inq=[
++    {id:'INQ-2025-0001',date:'2025-05-20',source:'Walk-in',nameSource:'',sellerName:'Ramesh Patel',mobile:'9876543210',altMobile:'',email:'',city:'Ahmedabad',state:'Gujarat',address:'SG Highway',make:'Maruti Suzuki',model:'Swift',variant:'VXI',year:'2019',regYear:'2019',fuel:'Petrol',trans:'Manual',color:'White',km:'52000',owners:'2nd',regNo:'GJ-01-AB-1234',rto:'Gujarat',insurance:'2025-12-31',loanBank:'',loan:'No',assigned:'Rajan Desai',status:'In-Progress',nextFU:'2025-05-28',updatedBy:'Admin',remarks:'Good condition'},
++    {id:'INQ-2025-0002',date:'2025-05-21',source:'Online',nameSource:'OLX',sellerName:'Suresh Shah',mobile:'9898765432',altMobile:'',email:'suresh@gmail.com',city:'Surat',state:'Gujarat',address:'Athwa',make:'Hyundai',model:'Creta',variant:'SX',year:'2021',regYear:'2021',fuel:'Diesel',trans:'Manual',color:'Silver',km:'38000',owners:'1st',regNo:'GJ-02-CD-5678',rto:'Gujarat',insurance:'2026-06-30',loanBank:'SBI',loan:'Yes',assigned:'Ritesh Shah',status:'New',nextFU:'2025-05-29',updatedBy:'',remarks:'Loan pending clearance'},
++    {id:'INQ-2025-0003',date:'2025-05-22',source:'Reference',nameSource:'Kiran Patel',sellerName:'Anita Desai',mobile:'9765432109',altMobile:'9765432100',email:'anita@email.com',city:'Vadodara',state:'Gujarat',address:'Alkapuri',make:'Tata',model:'Nexon',variant:'XZ+',year:'2020',regYear:'2020',fuel:'Petrol',trans:'Manual',color:'Blue',km:'65000',owners:'1st',regNo:'GJ-03-EF-9012',rto:'Gujarat',insurance:'2025-09-15',loanBank:'',loan:'No',assigned:'Kalpesh Joshi',status:'Closed-Won',nextFU:'',updatedBy:'Admin',remarks:'Deal completed'},
++    {id:'INQ-2025-0004',date:'2025-05-23',source:'Call',nameSource:'',sellerName:'Vijay Kumar',mobile:'9654321098',altMobile:'',email:'',city:'Ahmedabad',state:'Gujarat',address:'Navrangpura',make:'Honda',model:'City',variant:'VX',year:'2018',regYear:'2018',fuel:'Petrol',trans:'Automatic',color:'Grey',km:'78000',owners:'2nd',regNo:'GJ-01-GH-3456',rto:'Gujarat',insurance:'2025-07-20',loanBank:'HDFC',loan:'Yes',assigned:'Rajan Desai',status:'Hold',nextFU:'2025-06-01',updatedBy:'',remarks:'Owner out of station'},
++    {id:'INQ-2025-0005',date:'2025-05-24',source:'Dealer/Partner',nameSource:'Mahesh Motors',sellerName:'Priya Mehta',mobile:'9543210987',altMobile:'',email:'priya@yahoo.com',city:'Ahmedabad',state:'Gujarat',address:'CG Road',make:'Mahindra',model:'Scorpio',variant:'S9',year:'2017',regYear:'2017',fuel:'Diesel',trans:'Manual',color:'Black',km:'95000',owners:'2nd',regNo:'GJ-01-IJ-7890',rto:'Gujarat',insurance:'2025-05-31',loanBank:'',loan:'No',assigned:'Ritesh Shah',status:'Closed-Lost',nextFU:'',updatedBy:'',remarks:'Price dispute'},
++  ];
++  DB.stk=[
++    {id:'STK-2025-0001',regNo:'GJ-01-AB-1234',chassis:'MA3FKEB1S00100001',engine:'G10BE4500001',make:'Maruti Suzuki',model:'Swift',variant:'VXI',year:'2019',regYear:'2019',fuel:'Petrol',trans:'Manual',color:'White',km:'52000',owners:'2nd',status:'Ready for Sale',location:'SG Highway Lot A-12',pDate:'2025-05-22',insVal:'2025-12-31',rc:'Yes',photos:'Yes',pp:285000,refurb:25000,rto:8000,ins:12000,tcp:330000,sp:395000,sp2:370000,sp3:355000,profit:65000,v360:'Yes',portal:'OLX',mkt:'Social Media'},
++    {id:'STK-2025-0002',regNo:'GJ-02-CD-5678',chassis:'MALA851CAJM200002',engine:'D4FAEG120002',make:'Hyundai',model:'Creta',variant:'SX',year:'2021',regYear:'2021',fuel:'Diesel',trans:'Manual',color:'Silver',km:'38000',owners:'1st',status:'Under Refurb',location:'Vastral Workshop',pDate:'2025-05-23',insVal:'2026-06-30',rc:'Applied',photos:'No',pp:780000,refurb:35000,rto:12000,ins:18000,tcp:845000,sp:980000,sp2:940000,sp3:900000,profit:135000,v360:'No',portal:'None',mkt:'None'},
++    {id:'STK-2025-0003',regNo:'GJ-03-EF-9012',chassis:'MAT601836K3C00003',engine:'REVOTRONPE012',make:'Tata',model:'Nexon',variant:'XZ+',year:'2020',regYear:'2020',fuel:'Petrol',trans:'Manual',color:'Blue',km:'65000',owners:'1st',status:'In Stock',location:'SG Highway Lot B-05',pDate:'2025-05-24',insVal:'2025-09-15',rc:'Yes',photos:'Yes',pp:650000,refurb:30000,rto:10000,ins:15000,tcp:705000,sp:830000,sp2:800000,sp3:775000,profit:125000,v360:'No',portal:'CarDekho',mkt:'WhatsApp'},
++  ];
++  DB.ws=[
++    {id:'JC-2025-0001',vNum:'GJ-01-AB-1234',inDate:'2025-05-22',km:'52000',make:'Maruti Suzuki',model:'Swift',cust:'Ramesh Patel',contact:'9876543210',wType:'General Service',tech:'Kalpesh Joshi',problem:'Oil change, air filter, engine tune-up',parts:'Oil filter, air filter, spark plugs',est:8000,pc:2500,lc:3000,total:5500,del:'2025-05-26',exp:'2025-05-26',qc:'',act:'',pStat:'Pending',jStat:'In Process',remarks:'Parts ordered, waiting delivery'},
++    {id:'JC-2025-0002',vNum:'GJ-02-CD-5678',inDate:'2025-05-23',km:'38000',make:'Hyundai',model:'Creta',cust:'Suresh Shah',contact:'9898765432',wType:'Denting',tech:'Mahesh Joshi',problem:'Minor dents on front door and bumper',parts:'Body filler, primer, paint',est:12000,pc:5000,lc:7000,total:12000,del:'2025-05-28',exp:'2025-05-27',qc:'',act:'',pStat:'Pending',jStat:'Open',remarks:''},
++    {id:'JC-2025-0003',vNum:'GJ-04-KL-2345',inDate:'2025-05-20',km:'72000',make:'Honda',model:'City',cust:'Raj Thakkar',contact:'9712345678',wType:'AC Repair',tech:'Prakash Yadav',problem:'AC not cooling, compressor noise',parts:'AC gas refill, bearing replacement',est:6000,pc:3200,lc:2500,total:5700,del:'2025-05-25',exp:'2025-05-24',qc:'Pinal Shah',act:'2025-05-24',pStat:'Paid',jStat:'Complete',remarks:'Completed on time, customer satisfied'},
++  ];
++  DB.pay=[
++    {id:'PAY-2025-0001',obId:'OB-2025-0001',name:'Ramesh Patel',date:'2025-05-22',type:'Token',mode:'Cash',ref:'',bank:'',pTo:'AutoCRM Pro',pBy:'Rajan Desai',amt:25000,total:285000,prev:0,bal:260000,hold:'',auth:'Kalpesh Joshi',remarks:'Token payment received'},
++    {id:'PAY-2025-0002',obId:'OB-2025-0001',name:'Ramesh Patel',date:'2025-05-24',type:'Part Payment',mode:'NEFT',ref:'UTR20250524001',bank:'HDFC Bank',pTo:'AutoCRM Pro',pBy:'Rajan Desai',amt:150000,total:285000,prev:25000,bal:110000,hold:'',auth:'Kalpesh Joshi',remarks:'Second installment'},
++    {id:'PAY-2025-0003',obId:'OB-2025-0002',name:'Suresh Shah',date:'2025-05-25',type:'Token',mode:'UPI',ref:'UPI@9898765432',bank:'SBI',pTo:'AutoCRM Pro',pBy:'Ritesh Shah',amt:50000,total:780000,prev:0,bal:730000,hold:'NOC Pending',auth:'Admin',remarks:'Advance booking amount'},
++  ];
++  DB.sal_inq=[
++    {id:'SIN-2025-0001',date:'2025-05-19',source:'Walk-in',branch:'SG Highway',buyerName:'Karan Modi',mobile:'9870123456',altMobile:'',email:'karan@gmail.com',city:'Ahmedabad',state:'Gujarat',address:'Bopal',budget:400000,make:'Maruti Suzuki',model:'Swift',fuel:'Petrol',trans:'Manual',color:'White',km:'60000',yearFrom:'2018',yearTo:'2021',assigned:'Rajan Desai',status:'In-Progress',nextFU:'2025-05-27',remarks:'Very interested in Swift'},
++    {id:'SIN-2025-0002',date:'2025-05-20',source:'Online/OLX',branch:'Vastral',buyerName:'Neha Trivedi',mobile:'9865432107',altMobile:'',email:'neha@yahoo.com',city:'Surat',state:'Gujarat',address:'',budget:600000,make:'Hyundai',model:'',fuel:'Any',trans:'Automatic',color:'Any',km:'',yearFrom:'2020',yearTo:'',assigned:'Ritesh Shah',status:'New',nextFU:'2025-05-28',remarks:'Looking for Creta'},
++    {id:'SIN-2025-0003',date:'2025-05-21',source:'Reference',branch:'SG Highway',buyerName:'Deepak Verma',mobile:'9754321098',altMobile:'',email:'',city:'Ahmedabad',state:'Gujarat',address:'Satellite',budget:350000,make:'',model:'',fuel:'Petrol',trans:'Manual',color:'',km:'',yearFrom:'',yearTo:'',assigned:'Kalpesh Joshi',status:'Closed-Won',nextFU:'',remarks:'Purchased Swift VXI'},
++  ];
++  DB.cust=[
++    {id:'CUST-2025-0001',type:'Seller',name:'Ramesh Patel',mobile:'9876543210',altMobile:'',email:'',city:'Ahmedabad',state:'Gujarat',pin:'380059',address:'SG Highway, Ahmedabad',txns:1},
++    {id:'CUST-2025-0002',type:'Buyer',name:'Karan Modi',mobile:'9870123456',altMobile:'',email:'karan@gmail.com',city:'Ahmedabad',state:'Gujarat',pin:'380058',address:'Bopal, Ahmedabad',txns:1},
++    {id:'CUST-2025-0003',type:'Seller',name:'Suresh Shah',mobile:'9898765432',altMobile:'',email:'suresh@gmail.com',city:'Surat',state:'Gujarat',pin:'395007',address:'Athwa, Surat',txns:1},
++    {id:'CUST-2025-0004',type:'Buyer',name:'Neha Trivedi',mobile:'9865432107',altMobile:'',email:'neha@yahoo.com',city:'Surat',state:'Gujarat',pin:'395009',address:'Vesu, Surat',txns:0},
++  ];
++  DB.val=[
++    {id:'VAL-2025-0001',inqId:'INQ-2025-0001',date:'2025-05-21',vehNo:'GJ-01-AB-1234',cust:'Ramesh Patel',contact:'9876543210',km:'52000',make:'Maruti Suzuki',model:'Swift',variant:'VXI',year:'2019',fuel:'Petrol',owners:'2nd',rc:true,svc:true,acc:false,tyre:'Good',engine:'Good',overall:'Good',status:'Approved',remarks:'Overall good condition, minor wear'},
++  ];
++  DB.pcl=[
++    {id:'PCL-2025-0001',inqId:'INQ-2025-0003',seller:'Anita Desai',vehicle:'Tata Nexon XZ+ 2020',date:'2025-05-23',type:'Direct Purchase',status:'Confirmed',price:650000,token:50000,balance:600000,pm1:'Cash',p1:50000,pm2:'NEFT',p2:200000,newcar:0,loan:'No',lbank:'',tokDate:'2025-05-23',doneBy:'Kalpesh Joshi',manager:'Admin',edd:'2025-05-26',cancel:'',remarks:'Deal closed successfully'},
++  ];
++  DB.scl=[
++    {id:'SCL-2025-0001',inqId:'SIN-2025-0003',buyer:'Deepak Verma',vehicle:'Maruti Swift VXI GJ-01-AB-1234',date:'2025-05-24',mode:'Cash',status:'Confirmed',mrp:395000,disc:10000,final:385000,doneBy:'Kalpesh Joshi',remarks:''},
++  ];
++  DB.del=[
++    {id:'DEL-2025-0001',obId:'OB-2025-0001',cust:'Deepak Verma',vehicle:'Maruti Swift VXI GJ-01-AB-1234',exp:'2025-05-28',act:'',by:'Rajan Desai',status:'Scheduled',remarks:''},
++  ];
++  DB.doc=[
++    {id:'DOC-2025-0001',obId:'OB-2025-0001',regNo:'GJ-01-AB-1234',date:'2025-05-22',rc:true,ins:true,puc:true,pan:true,adh:true,f29:true,f30:true,f28:false,f35:false,noc:false,gst:false,svc:true,inv:true,key:true,book:false,status:'Incomplete',pucVal:'2026-01-15',miss:'Form 28, NOC from Bank',verBy:'',verDate:'',remarks:'Waiting for loan NOC'},
++  ];
++  DB.pfu=[];DB.ob=[];DB.sfu=[];
++  DB.cnt={pur:5,val:1,pfu:0,pcl:1,ob:0,sal:3,sfu:0,scl:1,sob:0,stk:3,ws:3,pay:3,del:1,doc:1,cust:4};
++  // Ensure pcl counter matches
++  if(DB.pcl.length>DB.cnt.pcl) DB.cnt.pcl=DB.pcl.length;
+   updateBadges();
+   setTimeout(initStateFields, 200);
+ }
+@@ -7376,8 +6988,7 @@ window.saveRec=function(type){
+   DB.td.push(rec);
+   closeM('m_testdrive');
+   renderTD();
+-  addNotif('td',rec);
+-  updateBadges();saveDB();
++  addNotifDirect(`≡ƒÜù Test drive scheduled: ${rec.cname} ΓÇö ${rec.mm} on ${rec.date}`,'#2563EB','fa-road');
+   toast('Test drive scheduled! ID: '+rec.id,'suc');
+ };
+ 
+@@ -7816,8 +7427,7 @@ window.saveRec=function(type){
+     DB.fin.push(rec);
+     closeM('m_fin');
+     renderFin();
+-    addNotif('fin',rec);
+-    updateBadges();saveDB();
++    addNotifDirect(`≡ƒÅª Loan file created: ${rec.cname} ΓÇö ${rec.bank} Γé╣${fmt(rec.lamt)}`,'var(--bl5)','fa-landmark');
+     toast('Loan file saved! ID: '+rec.id,'suc');
+     return;
+   }
+@@ -7974,6 +7584,20 @@ document.addEventListener('DOMContentLoaded',()=>{
+       <div class="rpt-card" onclick="showRpt('expense')"><div class="ri">≡ƒº╛</div><h5>Expense Report</h5><p>Category-wise expense breakdown</p></div>
+     `);
+   }
++  // Seed demo targets
++  if(!DB.targets.length){
++    DB.targets=[
++      {id:'TGT-001',month:'Jun-2025',emp:'Rajan Desai',branch:'SG Highway',purTgt:20,salTgt:15,buyTgt:8,sellTgt:6,revTgt:3000000,colTgt:2500000},
++      {id:'TGT-002',month:'Jun-2025',emp:'Ritesh Shah',branch:'Vastral',purTgt:15,salTgt:12,buyTgt:6,sellTgt:5,revTgt:2500000,colTgt:2000000},
++      {id:'TGT-003',month:'Jun-2025',emp:'Kalpesh Joshi',branch:'All',purTgt:40,salTgt:30,buyTgt:15,sellTgt:12,revTgt:6000000,colTgt:5000000},
++    ];DB.cnt.tgt=3;
++    // Seed demo expenses
++    DB.exp_rec=[
++      {id:'EXP-001',date:today(),cat:'Petrol/Travel',branch:'SG Highway',desc:'Petrol for site visit',amt:1500,paid:'Rajan Desai',mode:'Cash',appby:'Manager'},
++      {id:'EXP-002',date:today(),cat:'Advertising',branch:'Head Office',desc:'OLX premium listing',amt:5000,paid:'Kalpesh Joshi',mode:'UPI',appby:'Admin'},
++      {id:'EXP-003',date:today(),cat:'Office',branch:'Vastral',desc:'Stationery & printing',amt:800,paid:'Ritesh Shah',mode:'Cash',appby:'Self'},
++    ];DB.cnt.exp_rec=3;
++  }
+   renderTargets();
+ });
+ 
+@@ -9421,4 +9045,4 @@ function eiRenderHistory(){
+ 
+ </script>
+ </body>
+-</html>
++</html>
+\ No newline at end of file
