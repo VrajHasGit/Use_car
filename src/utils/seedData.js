@@ -49,9 +49,9 @@ export async function seedFirestore() {
     });
     await batch.commit();
     console.log('✅ Firestore seeded successfully');
-    return true;
+    return { success: true };
   } catch (e) {
     console.error('Seed error:', e);
-    return false;
+    return { success: false, error: e.message };
   }
 }

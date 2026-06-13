@@ -14,5 +14,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+
+// Because you explicitly named your database "default" instead of using the standard "(default)",
+// we must pass "default" as the second parameter so Firebase knows which one to look for.
+export const db = getFirestore(app, "default");
 export const auth = getAuth(app);
