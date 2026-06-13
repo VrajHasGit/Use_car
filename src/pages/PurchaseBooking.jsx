@@ -56,7 +56,7 @@ const PurchaseBooking = () => {
                   <td className="amt-or">{fmt(r.tcp)}</td>
                   <td>{r.branch || '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       <button className="btn-icon bi-print" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>

@@ -274,7 +274,7 @@ const Stock = () => {
                     <td><DaysInStock pDate={r.pDate} /></td>
                     <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
                         <button className="btn-icon bi-next" title="Workshop Job" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>

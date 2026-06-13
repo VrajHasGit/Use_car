@@ -218,7 +218,7 @@ const Targets = () => {
                       </b>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}>
                           <i className="fa fa-pen"></i>
                         </button>

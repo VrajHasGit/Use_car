@@ -226,7 +226,7 @@ const PurchaseInquiry = () => {
                       ) : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit Inquiry" onClick={() => handleEdit(inq)}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-next" title="Valuation" onClick={() => setQuickModal({ type: 'val', inqId: inq.inqId || inq.id })}><i className="fa fa-magnifying-glass-dollar"></i></button>
                         <button className="btn-icon bi-view" title="Follow Up" onClick={() => setQuickModal({ type: 'pfu', inqId: inq.inqId || inq.id })}><i className="fa fa-phone-volume"></i></button>

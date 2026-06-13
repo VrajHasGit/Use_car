@@ -53,7 +53,7 @@ const PurchaseCloser = () => {
                   <td>{r.make} {r.model}</td>
                   <td className="amt-or">{fmt(r.amount)}</td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
-                  <td><div style={{display:'flex',gap:4}}>
+                  <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                     <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>

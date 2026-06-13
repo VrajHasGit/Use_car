@@ -90,7 +90,7 @@ const Valuation = () => {
                   <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.ourPrice)}</td>
                   <td>{r.remarks || '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       <button className="btn-icon bi-next" onClick={() => valToFU(r)} title="Follow-Up"><i className="fa fa-phone"></i></button>
                       <button className="btn-icon" style={{ background: 'rgba(124,58,237,.12)', color: '#7C3AED' }} onClick={() => showAIPrice(r)} title="AI Price Suggestion"><i className="fa fa-robot"></i></button>
