@@ -174,17 +174,286 @@ input.autofilled,select.autofilled{animation:autoFillPulse 1s ease;background:rg
 }
 
 
-:root{
-  --or1:#1A56DB;--or2:#1E40AF;--or3:#60A5FA;--or4:#1E3A5F;--or5:#0D1B30;
-  --bl1:#000000;--bl2:#060912;--bl3:#0B1120;--bl4:#1A56DB;--bl5:#2563EB;--bl6:#60A5FA;--bl7:#0D1B30;
-  --bg:#04060D;--surface:#080D1A;--surface2:#060A15;--surface3:#0D1525;
-  --border:#131E35;--border2:#1A2A45;
-  --text:#E8EEFF;--text2:#8BA3CC;--text3:#4A5E82;
-  --success:#22C55E;--danger:#F87171;--warn:#FBBF24;--info:#3B82F6;
+
+/* ══════════════════════════════════════════════════
+   THEME A — OBSIDIAN FLEET (Default / Dark + Gold)
+   spec: §1 — deep black, gold accent
+══════════════════════════════════════════════════ */
+:root,
+body[data-theme="obsidian"]{
+  --or1:#C8A84B;--or2:#E3C06A;--or3:#D4AE55;--or4:#3D3118;--or5:#1E1A0E;
+  --bl1:#000000;--bl2:#060912;--bl3:#0B1120;--bl4:#1A2035;--bl5:#4A7CDE;--bl6:#7AAEF5;--bl7:#0D1B30;
+  --bg:#0D0F14;--surface:#14171F;--surface2:#1C2030;--surface3:#1A1D27;
+  --border:#2A2E3E;--border2:#1F2333;
+  --text:#F0F2F7;--text2:#8A8FA8;--text3:#3E4258;
+  --success:#22C55E;--danger:#EF4444;--warn:#F59E0B;--info:#3B82F6;
   --radius:10px;--radius-lg:16px;--radius-sm:6px;
   --shadow:0 4px 24px rgba(0,0,0,.7);
   --sw:260px;
 }
+
+/* ══════════════════════════════════════════════════
+   THEME B — SLATE MERIDIAN (Light / Navy)
+   spec: §1 — clean corporate, deep navy accent
+══════════════════════════════════════════════════ */
+body[data-theme="slate"]{
+  --or1:#1B3A6B;--or2:#254F94;--or3:#3A6BC4;--or4:#E8EDF6;--or5:#EEF0F5;
+  --bl1:#1B3A6B;--bl2:#254F94;--bl3:#3A6BC4;--bl4:#5A8FD4;--bl5:#1B3A6B;--bl6:#254F94;--bl7:#E8EDF6;
+  --bg:#F4F5F8;--surface:#FFFFFF;--surface2:#EEF0F5;--surface3:#F9FAFB;
+  --border:#DDE1EC;--border2:#EBEDF3;
+  --text:#0F172A;--text2:#4B5570;--text3:#B0B8CC;
+  --success:#16A34A;--danger:#DC2626;--warn:#D97706;--info:#2563EB;
+  --radius:10px;--radius-lg:16px;--radius-sm:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.12);
+  --sw:260px;
+}
+
+/* ══════════════════════════════════════════════════
+   THEME C — CARBON SPORT (High Contrast / Crimson)
+   spec: §1 — near-black, bold crimson
+══════════════════════════════════════════════════ */
+body[data-theme="carbon"]{
+  --or1:#E63946;--or2:#FF5A67;--or3:#FF7A84;--or4:#2A0A0C;--or5:#1A0608;
+  --bl1:#080808;--bl2:#0D0D0D;--bl3:#111111;--bl4:#1A1A1A;--bl5:#E63946;--bl6:#FF5A67;--bl7:#111111;
+  --bg:#080808;--surface:#111111;--surface2:#1A1A1A;--surface3:#1A1A1A;
+  --border:#252525;--border2:#1A1A1A;
+  --text:#FFFFFF;--text2:#909090;--text3:#555555;
+  --success:#22C55E;--danger:#FF4A57;--warn:#F59E0B;--info:#3B82F6;
+  --radius:10px;--radius-lg:16px;--radius-sm:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.9);
+  --sw:260px;
+}
+
+/* ══════════════════════════════════════════════════
+   THEME D — PEARL SUMMIT (Soft Light / Steel Blue)
+   spec: §1 — warm off-white, steel blue, accessibility mode
+══════════════════════════════════════════════════ */
+body[data-theme="pearl"]{
+  --or1:#2E5F8A;--or2:#3D7AB5;--or3:#5A98CC;--or4:#D8E8F4;--or5:#EEF4FA;
+  --bl1:#2E5F8A;--bl2:#3D7AB5;--bl3:#5A98CC;--bl4:#7AAED8;--bl5:#2E5F8A;--bl6:#3D7AB5;--bl7:#D8E8F4;
+  --bg:#FAFAFA;--surface:#FFFFFF;--surface2:#F2F4F7;--surface3:#F9FAFB;
+  --border:#E0E4ED;--border2:#EBEDF3;
+  --text:#1A1A2E;--text2:#5C6680;--text3:#B0B8CC;
+  --success:#16A34A;--danger:#DC2626;--warn:#D97706;--info:#2563EB;
+  --radius:10px;--radius-lg:16px;--radius-sm:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.1);
+  --sw:260px;
+}
+
+/* ══════════════════════════════════════════════════
+   FONT SYSTEM — 4 pairs (data-font attribute on body)
+   spec: §2
+══════════════════════════════════════════════════ */
+body[data-font="inter"],body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+body[data-font="sora"]{
+  font-family:'Sora','DM Sans',sans-serif;
+}
+body[data-font="space"]{
+  font-family:'Space Grotesk','Outfit',sans-serif;
+}
+body[data-font="geist"]{
+  font-family:'Plus Jakarta Sans','Outfit',sans-serif;
+}
+
+/* ── Table / mono data font within each font system ── */
+body[data-font="inter"] table td,
+body[data-font="inter"] .kpi-val,
+body[data-font="inter"] .amt-or{ font-feature-settings:"tnum"; }
+
+/* ══════════════════════════════════════════════════
+   LIGHT THEME overrides — tables, thead, hover states
+   (slate + pearl themes need light table colours)
+══════════════════════════════════════════════════ */
+body[data-theme="slate"] thead th,
+body[data-theme="pearl"] thead th{
+  background:#EEF2F7;color:#4B5570;border-bottom:1px solid var(--border);
+}
+body[data-theme="slate"] tbody tr:hover,
+body[data-theme="pearl"] tbody tr:hover{ background:#F0F4FB; }
+body[data-theme="slate"] .sb-item,
+body[data-theme="pearl"] .sb-item{ color:rgba(15,23,42,.6); }
+body[data-theme="slate"] .sb-item:hover,
+body[data-theme="pearl"] .sb-item:hover{ background:rgba(27,58,107,.08);color:rgba(15,23,42,.9); }
+body[data-theme="slate"] .sb-item.act,
+body[data-theme="pearl"] .sb-item.act{ background:rgba(27,58,107,.12);color:var(--or1);border-left:3px solid var(--or1); }
+body[data-theme="slate"] #sb,
+body[data-theme="pearl"] #sb{ background:linear-gradient(180deg,#1B3A6B 0%,#0F2348 100%); }
+body[data-theme="slate"] .sb-sec,
+body[data-theme="pearl"] .sb-sec{ color:rgba(255,255,255,.4); }
+body[data-theme="slate"] .lx-top,
+body[data-theme="pearl"] .lx-top{ background:linear-gradient(135deg,#1B3A6B,#254F94); }
+body[data-theme="carbon"] .lx-top{ background:linear-gradient(135deg,#080808,#E63946); }
+
+/* ══════════════════════════════════════════════════
+   SKELETON / LOADING STATES (spec §18)
+══════════════════════════════════════════════════ */
+@keyframes shimmer{
+  0%{background-position:-400px 0}
+  100%{background-position:400px 0}
+}
+.skeleton{
+  background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
+  background-size:800px 100%;
+  animation:shimmer 1.4s infinite linear;
+  border-radius:var(--radius-sm);
+  display:inline-block;
+}
+.skeleton-row td{padding:10px 14px}
+.skeleton-cell{height:14px;border-radius:4px}
+.skeleton-kpi{height:60px;border-radius:var(--radius)}
+@keyframes skeletonPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.skeleton-pulse{animation:skeletonPulse 1.5s ease-in-out infinite}
+
+/* ══════════════════════════════════════════════════
+   FOCUS-VISIBLE RINGS (accessibility, spec §19)
+══════════════════════════════════════════════════ */
+:focus-visible{
+  outline:2px solid var(--or1);
+  outline-offset:2px;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:2px solid var(--or1);
+  outline-offset:2px;
+}
+
+/* ══════════════════════════════════════════════════
+   PAGINATION COMPONENT (spec §5 — 20 per page)
+══════════════════════════════════════════════════ */
+.pagination{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+.pg-btn{min-width:28px;height:28px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;font-size:11px;transition:.15s;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.pg-btn:hover,.pg-btn.on{background:var(--or1);border-color:var(--or1);color:#fff}
+.pg-btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+
+/* ══════════════════════════════════════════════════
+   STAGE TABS (Sales Inquiry / Test Drive spec §6)
+══════════════════════════════════════════════════ */
+.stage-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.stage-tab{padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border:none;background:transparent;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.stage-tab:hover{color:var(--text);background:var(--surface2)}
+.stage-tab.active{color:var(--or1);border-bottom-color:var(--or1);background:transparent}
+.stage-count{background:var(--surface2);border:1px solid var(--border);color:var(--text3);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;min-width:18px;text-align:center}
+.stage-tab.active .stage-count{background:var(--or4);border-color:var(--or3);color:var(--or1)}
+
+/* ══════════════════════════════════════════════════
+   GRID VIEW — Stock Cards (spec §5)
+══════════════════════════════════════════════════ */
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:14px}
+.stk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:.2s;position:relative}
+.stk-card:hover{border-color:var(--or1);transform:translateY(-3px);box-shadow:0 8px 28px rgba(200,168,75,.15)}
+.stk-card-img{height:120px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;overflow:hidden}
+.stk-card-img img{width:100%;height:100%;object-fit:cover}
+.stk-status-overlay{position:absolute;top:8px;right:8px}
+.stk-card-body{padding:12px}
+.stk-card-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px}
+.stk-card-sub{font-size:10px;color:var(--text3);margin-bottom:8px}
+.stk-card-price{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:var(--or1)}
+.stk-card-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.stk-card-actions{display:none;position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;gap:8px;border-radius:var(--radius-lg)}
+.stk-card:hover .stk-card-actions{display:flex}
+
+/* ══════════════════════════════════════════════════
+   VIEW TOGGLE (List / Grid)
+══════════════════════════════════════════════════ */
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.view-toggle button{width:34px;height:32px;background:transparent;border:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s}
+.view-toggle button.active{background:var(--or1);color:#fff}
+
+/* ══════════════════════════════════════════════════
+   COLOUR DOT (Stock colour pill spec §5)
+══════════════════════════════════════════════════ */
+.colour-dot{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:var(--surface2);border:1px solid var(--border)}
+.colour-dot-swatch{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.25);flex-shrink:0}
+
+/* ══════════════════════════════════════════════════
+   JOB DETAIL EXPAND PANEL (Workshop spec §9)
+══════════════════════════════════════════════════ */
+.job-expand{background:var(--surface2);border-top:1px solid var(--border);padding:16px 18px;display:none}
+.job-expand.open{display:block;animation:slideDown .2s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.job-task-item{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;transition:.15s}
+.job-task-item.done{opacity:.6}
+.job-task-cb{width:16px;height:16px;border-radius:3px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;transition:.15s}
+.job-task-cb.done{background:var(--success);border-color:var(--success);color:#fff}
+.inline-add-row{display:flex;gap:8px;margin-top:8px}
+.inline-add-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-family:inherit;font-size:12px}
+.inline-add-row input:focus{outline:none;border-color:var(--or1)}
+
+/* ══════════════════════════════════════════════════
+   EXPENSE WORKFLOW BADGES (spec §8)
+══════════════════════════════════════════════════ */
+.b-approved{background:#ECFDF5;color:#059669}
+.b-pending{background:#FFFBEB;color:#D97706}
+.b-rejected{background:#FEF2F2;color:#DC2626}
+.b-reimbursed{background:#EFF6FF;color:#2563EB}
+body[data-theme="slate"] .b-approved,
+body[data-theme="pearl"] .b-approved{background:#DCFCE7;color:#15803D}
+
+/* ══════════════════════════════════════════════════
+   GST SETTINGS TABLE (spec §11)
+══════════════════════════════════════════════════ */
+.gst-rate-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);transition:.15s}
+.gst-rate-row:last-child{border-bottom:none}
+.gst-rate-row:hover{background:var(--surface2)}
+.gst-rate-input{width:72px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:6px 8px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;text-align:center}
+
+/* ══════════════════════════════════════════════════
+   FINANCE PARTNER CARDS (spec §12)
+══════════════════════════════════════════════════ */
+.fin-partner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;border-top:3px solid var(--bl5);transition:.2s}
+.fin-partner-card:hover{border-color:var(--or1);border-top-color:var(--or1);box-shadow:0 6px 20px rgba(200,168,75,.1)}
+.fin-partner-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
+.fin-partner-meta{font-size:11px;color:var(--text3);margin-bottom:10px}
+.fin-partner-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.fin-partner-row:last-of-type{border-bottom:none}
+
+/* ══════════════════════════════════════════════════
+   TASK MANAGER — KANBAN COLUMNS (spec §14)
+══════════════════════════════════════════════════ */
+.task-kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.task-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.task-col-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.task-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.task-card:hover{border-color:var(--or1);box-shadow:0 4px 12px rgba(200,168,75,.1)}
+.task-priority-high{border-left:3px solid var(--danger)}
+.task-priority-medium{border-left:3px solid var(--warn)}
+.task-priority-low{border-left:3px solid var(--success)}
+.task-due{font-size:10px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:4px}
+.task-due.overdue{color:var(--danger);font-weight:700}
+.date-nav{display:flex;align-items:center;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.date-nav-btn{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:16px;transition:.15s}
+.date-nav-btn:hover{color:var(--or1)}
+.date-pill{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);white-space:nowrap;transition:.15s}
+.date-pill:hover{border-color:var(--or1);color:var(--or1)}
+.date-pill.active{background:var(--or1);border-color:var(--or1);color:#fff}
+.date-pill.has-tasks::after{content:'●';color:var(--or2);font-size:6px;margin-left:4px;vertical-align:super}
+
+/* ══════════════════════════════════════════════════
+   CHART CONTAINER SKELETON (spec §15)
+══════════════════════════════════════════════════ */
+.chart-loading{height:200px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text3);font-size:12px}
+.chart-empty{text-align:center;padding:36px;color:var(--text3);font-size:12px}
+.chart-empty i{font-size:28px;display:block;margin-bottom:8px;opacity:.35}
+
+/* ══════════════════════════════════════════════════
+   SETTINGS — THEME / FONT PICKER CARDS (spec §4)
+══════════════════════════════════════════════════ */
+.picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:6px}
+.picker-card{padding:14px 12px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:.2s;text-align:center}
+.picker-card:hover{border-color:var(--or1);transform:translateY(-2px)}
+.picker-card.active{border-color:var(--or1);box-shadow:0 0 0 3px var(--or4)}
+.picker-preview{width:100%;height:32px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:8px;border:1px solid rgba(0,0,0,.15)}
+.picker-preview-top{width:30%;height:100%}
+.picker-preview-bottom{flex:1;height:100%}
+.picker-name{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.3px}
+.picker-desc{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.3px}
+.picker-check{width:16px;height:16px;border-radius:50%;background:var(--or1);margin:6px auto 0;display:none;align-items:center;justify-content:center;color:#fff;font-size:9px}
+.picker-card.active .picker-check{display:flex}
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow-x:hidden;text-transform:uppercase}
 ::-webkit-scrollbar{width:5px;height:5px}
