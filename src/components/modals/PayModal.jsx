@@ -6,6 +6,7 @@ import { today } from '../../utils/helpers';
 
 export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId, type }) => {
   const emptyForm = {
+    py_inqid: '',
     py_obid: '',
     py_sobid: '',
     py_name: '',
@@ -38,6 +39,7 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
     if (data) {
       setFormData(prev => ({
         ...prev,
+        py_inqid: data.ob_inqid || data.inqId || prev.py_inqid,
         py_name: data.ob_cname || data.sellerName || prev.py_name,
         py_contact: data.ob_cont || data.mobile || prev.py_contact,
         py_regn: data.ob_regn || data.regNo || prev.py_regn,
@@ -56,6 +58,7 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
     if (data) {
       setFormData(prev => ({
         ...prev,
+        py_inqid: data.sob_inqid || data.inqId || prev.py_inqid,
         py_name: data.sob_cname || data.buyerName || prev.py_name,
         py_contact: data.sob_cont || data.mobile || prev.py_contact,
         py_regn: data.sob_regn || data.regNo || prev.py_regn,

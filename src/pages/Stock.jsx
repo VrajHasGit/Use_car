@@ -297,7 +297,7 @@ const Stock = () => {
             <table id="tbl_stk">
               <thead>
                 <tr>
-                  <th>Stock ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
+                  <th>Stock ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
                   <th>Fuel</th><th>Colour</th><th>KM</th>
                   {isAdmin && <><th>TCP</th><th>Selling Price</th><th>Profit</th></>}
                   <th>Days</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th>
@@ -307,6 +307,7 @@ const Stock = () => {
                 {paginated.length > 0 ? paginated.map(r => (
                   <tr key={r.id}>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)', fontSize: 10 }}>{r.stkId || r.id?.slice(0, 12)}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sk_inqid || '—'}</td>
                     <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo || r.sk_regn}</td>
                     <td><span style={{ fontWeight: 600 }}>{r.make || r.sk_make}</span> {r.model || r.sk_model}<br /><small style={{ color: 'var(--text3)' }}>{r.variant || r.sk_var}</small></td>
                     <td>{r.year || r.sk_year}</td>

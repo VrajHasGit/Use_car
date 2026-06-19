@@ -116,11 +116,12 @@ const Payment = () => {
         <div className="tc-hdr"><div className="tc-title">Payments <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_pay">
-            <thead><tr><th>Payment ID</th><th>Booking ID</th><th>Seller/Buyer</th><th>Reg No.</th><th>Date</th><th>Type</th><th>Amount ₹</th><th>Mode</th><th>Cheque/UTR</th><th>Bank</th><th>Total Amt ₹</th><th>Prev Paid ₹</th><th>Balance ₹</th><th>Hold Pay</th><th>Authorized By</th><th style={{ minWidth: 100 }}>Actions</th></tr></thead>
+            <thead><tr><th>Payment ID</th><th>Inq ID</th><th>Booking ID</th><th>Seller/Buyer</th><th>Reg No.</th><th>Date</th><th>Type</th><th>Amount ₹</th><th>Mode</th><th>Cheque/UTR</th><th>Bank</th><th>Total Amt ₹</th><th>Prev Paid ₹</th><th>Balance ₹</th><th>Hold Pay</th><th>Authorized By</th><th style={{ minWidth: 100 }}>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--or1)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.payId||r.id?.slice(0,12)}</td>
+                  <td style={{fontWeight:600,color:'var(--text2)'}}>{r.py_inqid || '—'}</td>
                   <td>{r.obId || r.py_obid || r.py_sobid || '—'}</td>
                   <td style={{fontWeight:600}}>{r.name || r.py_name || '—'}</td>
                   <td>{r.regNo || r.py_regn || '—'}</td>
