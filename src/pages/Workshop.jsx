@@ -261,7 +261,7 @@ const Workshop = () => {
             <thead>
               <tr>
                 <th style={{ width: 32 }}></th>
-                <th>Job ID</th><th>Date</th><th>Reg No.</th><th>Vehicle</th>
+                <th>Job ID</th><th>Inq ID</th><th>Date</th><th>Reg No.</th><th>Vehicle</th>
                 <th>Job Type</th><th>Cost</th><th>Tasks</th><th>Status</th><th>Notes</th>
                 <th style={{ minWidth: 160 }}>Actions</th>
               </tr>
@@ -281,6 +281,7 @@ const Workshop = () => {
                         </button>
                       </td>
                       <td style={{ fontWeight: 700, color: 'var(--warn)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.wsId || r.id?.slice(0, 12)}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.ws_inqid || '—'}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.date)}</td>
                       <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.regNo}</td>
                       <td>{r.make} {r.model}</td>

@@ -119,11 +119,12 @@ const Valuation = () => {
         <div className="tc-hdr"><div className="tc-title">Valuation Records <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table>
-            <thead><tr><th>Val ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Expected Price</th><th>Our Price</th><th>Remarks</th><th style={{ minWidth: 160 }}>Actions</th></tr></thead>
+            <thead><tr><th>Val ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Expected Price</th><th>Our Price</th><th>Remarks</th><th style={{ minWidth: 160 }}>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.valId || r.id?.slice(0, 12)}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.v_inqid || '—'}</td>
                   <td>{fmtDate(r.date || r.v_date)}</td>
                   <td style={{ fontWeight: 600 }}>{r.sellerName || r.v_cname}</td>
                   <td>{r.make || r.v_make} {r.model || r.v_model} ({r.year || r.v_year})</td>

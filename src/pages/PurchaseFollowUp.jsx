@@ -145,11 +145,12 @@ const PurchaseFollowUp = () => {
         <div className="tc-hdr"><div className="tc-title">Purchase Follow-Ups <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Date</th><th>Seller</th><th>Mobile</th><th>Vehicle</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Mobile</th><th>Vehicle</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.pfuId || r.id?.slice(0, 12)}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.pf_inqid || '—'}</td>
                   <td>{fmtDate(r.date || r.pf_date)}</td>
                   <td style={{ fontWeight: 600 }}>{r.sellerName || r.pf_sname}</td>
                   <td><a href={`tel:${r.mobile || r.pf_smob}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{r.mobile || r.pf_smob}</a></td>

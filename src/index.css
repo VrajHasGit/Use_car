@@ -1031,4 +1031,9 @@ tbody tr:hover{background:#F8FBFF}
   .tb-search-wrap{position:relative!important;display:flex!important;background:transparent!important;border:none!important;padding:0!important;box-shadow:none!important}
 }
 
-@media print{#sb,#tb,.ph-actions,.tc-acts,.action-btns,.toast-wrap{display:none!important}#main{margin:0!important}body{background:#fff;color:#000}}
+@media print{
+  @page { size: auto; margin: 5mm; }
+  #sb,#tb,.ph-actions,.tc-acts,.action-btns,.toast-wrap,.print-hide{display:none!important}
+  #main{margin:0!important}
+  body{background:#fff;color:#000;zoom:0.85}
+}

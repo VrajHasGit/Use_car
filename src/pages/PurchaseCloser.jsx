@@ -83,11 +83,12 @@ const PurchaseCloser = () => {
         <div className="tc-hdr"><div className="tc-title">Purchase Closer Records <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--or1)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.pclId||r.id?.slice(0,12)}</td>
+                  <td style={{fontWeight:600,color:'var(--text2)'}}>{r.inqId || r.pc_inqid || '—'}</td>
                   <td>{fmtDate(r.date || r.pc_date)}</td>
                   <td style={{fontWeight:600}}>{r.sellerName || r.pc_sname}</td>
                   <td>{r.make || r.pc_veh} {r.model}</td>

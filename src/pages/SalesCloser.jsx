@@ -59,11 +59,12 @@ const SalesCloser = () => {
         <div className="tc-hdr"><div className="tc-title">Sales Deals <span style={{background:'var(--success)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_scl">
-            <thead><tr><th>ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Final Price</th><th>Profit</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Final Price</th><th>Profit</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--success)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.sclId||r.id?.slice(0,12)}</td>
+                  <td style={{fontWeight:600,color:'var(--text2)'}}>{r.sc_inqid||'—'}</td>
                   <td>{fmtDate(r.date)}</td><td style={{fontWeight:600}}>{r.buyerName}</td>
                   <td style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700}}>{r.regNo}</td>
                   <td>{r.make} {r.model}</td>

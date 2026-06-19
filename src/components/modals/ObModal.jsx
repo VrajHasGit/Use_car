@@ -134,6 +134,12 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
         <title>Purchase Order Booking</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
+          @page { size: auto; margin: 5mm; }
+          @media print { 
+            body { zoom: 0.85; padding: 0 !important; } 
+            .section { margin-bottom: 8px !important; }
+            .sign-section { margin-top: 10px !important; }
+          }
           body { font-family: 'Arial', sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
           .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1A56DB; padding-bottom: 14px; }
           .header h1 { font-size: 22px; color: #1A56DB; font-weight: 800; letter-spacing: 2px; }

@@ -166,7 +166,8 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   .sig-box{text-align:center}
   .sig-line{border-top:1.5px solid #000;margin:0 auto;width:80%;margin-top:40px;padding-top:5px;font-size:10px;font-weight:700;letter-spacing:.5px}
   .photo-box{border:1px solid #000;width:80px;height:90px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#999;margin:0 auto}
-  @media print{body{padding:5px}.no-print{display:none}}
+  @page { size: auto; margin: 5mm; }
+  @media print { body { padding: 5px; zoom: 0.85; } .no-print { display: none; } }
 </style></head>
 <body>
 <div class="title-row"><h1>વેચાણ ખત અને ડીલીવરી નોટ</h1></div>

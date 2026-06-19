@@ -37,11 +37,12 @@ const SalesFollowUp = () => {
         <div className="tc-hdr"><div className="tc-title">Sales Follow-Ups <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_sfu">
-            <thead><tr><th>ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--bl5)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.sfuId||r.id?.slice(0,12)}</td>
+                  <td style={{fontWeight:600,color:'var(--text2)'}}>{r.sf_inqid||'—'}</td>
                   <td>{fmtDate(r.date)}</td><td style={{fontWeight:600}}>{r.buyerName}</td>
                   <td><a href={`tel:${r.mobile}`} style={{color:'var(--info)',textDecoration:'none'}}>{r.mobile}</a></td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
