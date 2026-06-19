@@ -90,12 +90,12 @@ const PurchaseDashboard = () => {
       </div>
 
       {/* P&L Summary Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
+      <div className="pl-grid" style={{ gap: 14, marginBottom: 20 }}>
         {[
-          { lbl: 'TOTAL PURCHASE VALUE', val: `₹${fmt(stats.totalPurchase)}`, color: 'var(--or1)' },
-          { lbl: 'TOTAL PAYMENTS MADE', val: `₹${fmt(stats.totalPaid)}`, color: 'var(--success)' },
-          { lbl: 'WORKSHOP COST', val: `₹${fmt(stats.totalWSCost)}`, color: 'var(--warn)' },
-          { lbl: 'AVG PURCHASE PRICE', val: `₹${fmt(stats.avgPurchase)}`, color: 'var(--info)' },
+          { lbl: 'TOTAL PURCHASE VALUE', val: fmt(stats.totalPurchase), color: 'var(--or1)' },
+          { lbl: 'TOTAL PAYMENTS MADE', val: fmt(stats.totalPaid), color: 'var(--success)' },
+          { lbl: 'WORKSHOP COST', val: fmt(stats.totalWSCost), color: 'var(--warn)' },
+          { lbl: 'AVG PURCHASE PRICE', val: fmt(stats.avgPurchase), color: 'var(--info)' },
         ].map((p, i) => (
           <div key={i} className="pl-card">
             <div className="pl-val" style={{ color: p.color }}>{p.val}</div>
@@ -146,7 +146,7 @@ const PurchaseDashboard = () => {
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/valuation')}>
                     <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 11 }}>{r.valId || r.id?.slice(0, 10)}</td>
                     <td>{r.make} {r.model} {r.year && `(${r.year})`}</td>
-                    <td style={{ color: 'var(--success)', fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif" }}>{r.ourPrice ? `₹${fmt(r.ourPrice)}` : '—'}</td>
+                    <td style={{ color: 'var(--success)', fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif" }}>{r.ourPrice ? fmt(r.ourPrice) : '—'}</td>
                     <td><span className={`badge ${statusBadge(r.status)}`}>{r.status || 'Pending'}</span></td>
                   </tr>
                 )) : <tr><td colSpan="4" className="empty">No valuations yet</td></tr>}
@@ -167,7 +167,7 @@ const PurchaseDashboard = () => {
           </div>
           <div className="tbl-wrap">
             <table>
-              <thead><tr><th>ID</th><th>Seller</th><th>Vehicle</th><th>Price ₹</th><th>Status</th></tr></thead>
+              <thead><tr><th>ID</th><th>Seller</th><th>Vehicle</th><th>Price</th><th>Status</th></tr></thead>
               <tbody>
                 {recentPcl.length > 0 ? recentPcl.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/purchase-closer')}>
@@ -219,7 +219,7 @@ const PurchaseDashboard = () => {
         <div className="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Reg No.</th><th>Vehicle</th><th>Year</th><th>KM</th><th>TCP ₹</th><th>Status</th><th>Days In Stock</th></tr>
+              <tr><th>Reg No.</th><th>Vehicle</th><th>Year</th><th>KM</th><th>TCP</th><th>Status</th><th>Days In Stock</th></tr>
             </thead>
             <tbody>
               {stockList.length > 0 ? stockList.map(r => (

@@ -61,7 +61,7 @@ const ROUTE_COLLECTION = {
   '/user-mgmt': 'users',
 };
 
-const Topbar = ({ isSlim, toggleSidebar }) => {
+const Topbar = ({ isSlim, toggleSidebar, toggleDTM }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { data } = useData();
@@ -69,6 +69,7 @@ const Topbar = ({ isSlim, toggleSidebar }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchRef = useRef(null);
   const notifRef = useRef(null);
 
@@ -173,12 +174,12 @@ const Topbar = ({ isSlim, toggleSidebar }) => {
   }, []);
 
   return (
-    <div id="tb" className={isSlim ? 'slim' : ''}>
+    <div id="tb" className={`${isSlim ? 'slim' : ''}${mobileSearchOpen ? ' mob-search-open' : ''}`}>
       <button className="tb-menu" onClick={toggleSidebar}>
         <i className="fa fa-bars"></i>
       </button>
 
-      <div>
+      <div className="tb-center">
         <div className="tb-title" id="tbTitle">{title}</div>
         <div className="tb-bc" id="tbBc">
           <i className="fa fa-home"></i><span>Home</span>
@@ -190,8 +191,18 @@ const Topbar = ({ isSlim, toggleSidebar }) => {
       </div>
 
       <div className="tb-right">
+        {/* Mobile Search Toggle */}
+        <button
+          className="tb-btn mob-search-btn"
+          onClick={() => { setMobileSearchOpen(v => !v); }}
+          title="Search"
+          id="mobSearchBtn"
+        >
+          <i className={`fa ${mobileSearchOpen ? 'fa-times' : 'fa-search'}`}></i>
+        </button>
+
         {/* Global Search */}
-        <div style={{ position: 'relative' }} ref={searchRef}>
+        <div className="tb-search-wrap" ref={searchRef}>
           <input
             className="tb-search"
             id="gsInput"
@@ -237,6 +248,11 @@ const Topbar = ({ isSlim, toggleSidebar }) => {
         {/* Print */}
         <button className="tb-btn" onClick={() => window.print()} title="Print" id="printBtn">
           <i className="fa fa-print"></i>
+        </button>
+
+        {/* Daily Task Manager Toggle */}
+        <button className="tb-btn" onClick={toggleDTM} title="Daily Task Manager" style={{ position: 'relative' }}>
+          <i className="fa fa-clipboard-list"></i>
         </button>
 
         {/* Notifications */}

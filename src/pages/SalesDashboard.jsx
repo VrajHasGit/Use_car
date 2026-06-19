@@ -78,11 +78,11 @@ const SalesDashboard = () => {
       </div>
 
       {/* Revenue Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
+      <div className="pl-grid" style={{ gap: 14, marginBottom: 20 }}>
         {[
-          { lbl: 'TOTAL REVENUE', val: `₹${fmt(stats.totalRevenue)}`, color: 'var(--success)' },
-          { lbl: 'TOTAL PROFIT', val: `₹${fmt(stats.totalProfit)}`, color: 'var(--or1)' },
-          { lbl: 'AVG SALE PRICE', val: `₹${fmt(stats.avgSale)}`, color: 'var(--bl5)' },
+          { lbl: 'TOTAL REVENUE', val: fmt(stats.totalRevenue), color: 'var(--success)' },
+          { lbl: 'TOTAL PROFIT', val: fmt(stats.totalProfit), color: 'var(--or1)' },
+          { lbl: 'AVG SALE PRICE', val: fmt(stats.avgSale), color: 'var(--bl5)' },
           { lbl: 'TOTAL DELIVERIES', val: stats.deliveries, color: 'var(--info)' },
         ].map((p, i) => (
           <div key={i} className="pl-card">
@@ -103,7 +103,7 @@ const SalesDashboard = () => {
           </div>
           <div className="tbl-wrap">
             <table>
-              <thead><tr><th>ID</th><th>Buyer</th><th>Budget ₹</th><th>Status</th><th>Next FU</th></tr></thead>
+              <thead><tr><th>ID</th><th>Buyer</th><th>Budget</th><th>Status</th><th>Next FU</th></tr></thead>
               <tbody>
                 {recentInq.length > 0 ? recentInq.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/sales-inquiry')}>
@@ -128,7 +128,7 @@ const SalesDashboard = () => {
           </div>
           <div className="tbl-wrap">
             <table>
-              <thead><tr><th>ID</th><th>Buyer</th><th>Vehicle</th><th>Final ₹</th><th>Status</th></tr></thead>
+              <thead><tr><th>ID</th><th>Buyer</th><th>Vehicle</th><th>Final Price</th><th>Status</th></tr></thead>
               <tbody>
                 {recentScl.length > 0 ? recentScl.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/sales-closer')}>
@@ -156,7 +156,7 @@ const SalesDashboard = () => {
           </div>
           <div className="tbl-wrap">
             <table>
-              <thead><tr><th>SOB#</th><th>Customer</th><th>Vehicle</th><th>Sale Price ₹</th><th>Status</th></tr></thead>
+              <thead><tr><th>SOB#</th><th>Customer</th><th>Vehicle</th><th>Sale Price</th><th>Status</th></tr></thead>
               <tbody>
                 {recentSob.length > 0 ? recentSob.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/sales-booking')}>
@@ -209,7 +209,7 @@ const SalesDashboard = () => {
         <div className="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Reg No.</th><th>Vehicle</th><th>Year</th><th>KM</th><th>Fuel</th><th>Sale Price ₹</th><th>Status</th></tr>
+              <tr><th>Reg No.</th><th>Vehicle</th><th>Year</th><th>KM</th><th>Fuel</th><th>Sale Price</th><th>Status</th></tr>
             </thead>
             <tbody>
               {availStock.length > 0 ? availStock.map(r => (
@@ -219,7 +219,7 @@ const SalesDashboard = () => {
                   <td>{r.year || '—'}</td>
                   <td>{r.km ? `${parseInt(r.km).toLocaleString('en-IN')} km` : '—'}</td>
                   <td>{r.fuel || '—'}</td>
-                  <td className="amt-or">{r.sprice ? `₹${fmt(r.sprice)}` : '—'}</td>
+                  <td className="amt-or">{r.sprice ? fmt(r.sprice) : '—'}</td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                 </tr>
               )) : <tr><td colSpan="7" className="empty"><i className="fa fa-car"></i><br />No stock available</td></tr>}

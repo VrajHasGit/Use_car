@@ -34,7 +34,7 @@ const SalesFollowUp = () => {
       </div>
       {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Sales Follow-Ups <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Sales Follow-Ups <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_sfu">
             <thead><tr><th>ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>

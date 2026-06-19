@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { autoFillFromInq } from '../../utils/relations';
+import { autoFillFromInq, autoFillFromStock } from '../../utils/relations';
 import { MAKES, MODELS } from '../../utils/constants';
 
-export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
+export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId }) => {
   const [formData, setFormData] = useState({
     ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
@@ -33,6 +33,8 @@ export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
             setModelOptions(MODELS[inqData.make] || []);
           }
         });
+      } else if (quickDocId) {
+        setFormData(prev => ({ ...prev, ws_inqid: quickDocId })); // using quickDocId as reference
       } else {
         setFormData({
           ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
@@ -44,7 +46,7 @@ export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
         setModelOptions([]);
       }
     }
-  }, [isOpen, editData, quickInqId]);
+  }, [isOpen, editData, quickInqId, quickDocId]);
 
   if (!isOpen) return null;
 
@@ -62,10 +64,29 @@ export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
         if (inqData) {
           setFormData(prev => ({
             ...prev,
-            ws_make: inqData.make || '',
-            ws_model: inqData.model || ''
+            ws_make: inqData.make || prev.ws_make,
+            ws_model: inqData.model || prev.ws_model,
+            ws_cname: inqData.sellerName || prev.ws_cname,
+            ws_cont: inqData.mobile || prev.ws_cont,
+            ws_vnum: inqData.regNo || prev.ws_vnum,
+            ws_km: inqData.km || prev.ws_km,
           }));
           setModelOptions(MODELS[inqData.make] || []);
+        }
+      });
+    }
+
+    if (name === 'ws_vnum' && value.length >= 6) {
+      autoFillFromStock(value).then(stkData => {
+        if (stkData) {
+          setFormData(prev => ({
+            ...prev,
+            ws_make: stkData.make || prev.ws_make,
+            ws_model: stkData.model || prev.ws_model,
+            ws_km: stkData.km || prev.ws_km,
+            ws_cname: prev.ws_cname, // don't overwrite if already filled
+          }));
+          setModelOptions(MODELS[stkData.make] || []);
         }
       });
     }
@@ -78,7 +99,7 @@ export const WsModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
         await onSave(formData);
       } else {
         await addDoc(collection(db, 'ws'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else { onClose(); }
+        if (onSave) { await onSave(formData); } else if (onSuccess) { onSuccess(); } else { onClose(); }
       }
     } catch (error) {
       console.error("Error saving record: ", error);

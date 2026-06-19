@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { autoFillFromInq } from '../../utils/relations';
+import { autoFillFromInq, autoFillFromDoc } from '../../utils/relations';
 import { MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
-export const StkModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
+export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId }) => {
   const [formData, setFormData] = useState({
     sk_inqid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
     sk_model: "", sk_var: "", sk_year: "", sk_ryear: "", sk_fuel: "Petrol",
@@ -38,6 +38,28 @@ export const StkModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
             setModelOptions(MODELS[inqData.make] || []);
           }
         });
+      } else if (quickDocId) {
+        setFormData(prev => ({ ...prev, sk_inqid: quickDocId })); // doc Id reference
+        autoFillFromDoc(quickDocId).then(docData => {
+          if (docData) {
+            setFormData(prev => ({
+              ...prev,
+              sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || '',
+              sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || '',
+              sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || '',
+              sk_var: docData.ob_var || docData.variant || '',
+              sk_year: docData.ob_year || docData.year || '',
+              sk_fuel: docData.ob_fuel || docData.fuel || 'Petrol',
+              sk_chas: docData.ob_chas || docData.chas || '',
+              sk_eng: docData.ob_eng || docData.eng || '',
+              sk_color: docData.ob_color || docData.color || 'White',
+              sk_km: docData.ob_km || docData.km || '',
+              sk_pp: docData.ob_pp || docData.pp || '',
+              sk_rc: docData.dc_rc ? 'Yes' : 'No'
+            }));
+            setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
+          }
+        });
       } else {
         setFormData({
           sk_inqid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
@@ -51,7 +73,7 @@ export const StkModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
         setModelOptions([]);
       }
     }
-  }, [isOpen, editData, quickInqId]);
+  }, [isOpen, editData, quickInqId, quickDocId]);
 
   if (!isOpen) return null;
 
@@ -65,30 +87,103 @@ export const StkModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
     }
 
     if (name === 'sk_inqid' && value.length >= 5) {
-      autoFillFromInq(value).then(inqData => {
-        if (inqData) {
-          setFormData(prev => ({
-            ...prev,
-            sk_make: inqData.make || '',
-            sk_model: inqData.model || '',
-            sk_var: inqData.variant || '',
-            sk_year: inqData.year || '',
-            sk_fuel: inqData.fuel || 'Petrol'
-          }));
-          setModelOptions(MODELS[inqData.make] || []);
-        }
-      });
+      if (value.toUpperCase().startsWith('DOC-')) {
+        autoFillFromDoc(value.toUpperCase()).then(docData => {
+          if (docData) {
+            setFormData(prev => ({
+              ...prev,
+              sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || '',
+              sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || '',
+              sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || '',
+              sk_var: docData.ob_var || docData.variant || '',
+              sk_year: docData.ob_year || docData.year || '',
+              sk_fuel: docData.ob_fuel || docData.fuel || 'Petrol',
+              sk_chas: docData.ob_chas || docData.chas || '',
+              sk_eng: docData.ob_eng || docData.eng || '',
+              sk_color: docData.ob_color || docData.color || 'White',
+              sk_km: docData.ob_km || docData.km || '',
+              sk_pp: docData.ob_pp || docData.pp || '',
+              sk_rc: docData.dc_rc ? 'Yes' : 'No'
+            }));
+            setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
+          }
+        });
+      } else {
+        autoFillFromInq(value).then(inqData => {
+          if (inqData) {
+            setFormData(prev => ({
+              ...prev,
+              sk_make: inqData.make || '',
+              sk_model: inqData.model || '',
+              sk_var: inqData.variant || '',
+              sk_year: inqData.year || '',
+              sk_fuel: inqData.fuel || 'Petrol'
+            }));
+            setModelOptions(MODELS[inqData.make] || []);
+          }
+        });
+      }
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (onSave && editData) {
+      if (onSave) {
+        // Let the parent handle the complete saving process (e.g. Stock.jsx)
         await onSave(formData);
       } else {
-        await addDoc(collection(db, 'stk'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else { onClose(); }
+        // Internal saving (e.g. when triggered from Quick Modal)
+        const payload_pp = Number(formData.sk_pp || 0);
+        const payload_refurb = Number(formData.sk_refurb || 0);
+        const payload_rto = Number(formData.sk_rto || 0);
+        const payload_ins = Number(formData.sk_ins || 0);
+        const payload_tcp = payload_pp + payload_refurb + payload_rto + payload_ins;
+        const payload_sp = Number(formData.sk_sp || 0);
+        const payload_profit = payload_sp - payload_tcp;
+        
+        let stkId = formData.stkId;
+        if (!stkId) {
+          const { getNextCounter } = await import('../../services/db');
+          const { genId } = await import('../../utils/helpers');
+          const cnt = await getNextCounter('stk');
+          stkId = genId('STK', cnt);
+        }
+
+        const newDocData = { 
+          ...formData, 
+          stkId,
+          createdAt: new Date().toISOString(),
+          regNo: formData.sk_regn || '',
+          make: formData.sk_make || '',
+          model: formData.sk_model || '',
+          variant: formData.sk_var || '',
+          year: formData.sk_year || '',
+          fuel: formData.sk_fuel || '',
+          trans: formData.sk_trans || '',
+          color: formData.sk_color || '',
+          km: formData.sk_km || '',
+          status: formData.sk_stat || 'In Stock',
+          pDate: formData.sk_pdate || new Date().toISOString().split('T')[0],
+          pp: payload_pp, 
+          refurb: payload_refurb, 
+          rto: payload_rto, 
+          ins: payload_ins, 
+          tcp: payload_tcp, 
+          sp: payload_sp, 
+          profit: payload_profit
+        };
+
+        if (editData && editData.id) {
+          const { updateRecord } = await import('../../services/db');
+          await updateRecord('stk', editData.id, newDocData);
+        } else {
+          const { addRecord } = await import('../../services/db');
+          await addRecord('stk', newDocData);
+        }
+
+        if (onSuccess) { onSuccess(); }
+        onClose();
       }
     } catch (error) {
       console.error("Error saving record: ", error);

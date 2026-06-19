@@ -33,7 +33,7 @@ const DeliveryNote = () => {
       </div>
       {isModalOpen && <DnModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Delivery Notes <span style={{background:'var(--info)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Delivery Notes <span style={{background:'var(--info)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_dn">
             <thead><tr><th>DN ID</th><th>Date</th><th>Customer</th><th>Vehicle</th><th>Reg No.</th><th>Handover By</th><th>Status</th><th>Actions</th></tr></thead>

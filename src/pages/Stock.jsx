@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -63,13 +64,30 @@ const Stock = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [page, setPage] = useState(1);
 
+  React.useEffect(() => {
+    const migrate = async () => {
+      const recordsToMigrate = data.stk?.filter(r => !r.stkId || !r.stkId.startsWith('STK-'));
+      if (recordsToMigrate && recordsToMigrate.length > 0) {
+        for (const rec of recordsToMigrate) {
+          const cnt = await getNextCounter('stk');
+          const newStkId = genId('STK', cnt);
+          await updateRecord('stk', rec.id, { stkId: newStkId });
+        }
+        await refresh('stk');
+      }
+    };
+    if (data.stk && data.stk.length > 0) migrate();
+  }, [data.stk, refresh]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quickModal, setQuickModal] = useState({ type: null, stkId: null });
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
-  const stock = data.stk || [];
+  const rawStock = data.stk || [];
+  // Exclude Sold and Workshop from the main table view
+  const stock = rawStock.filter(r => r.status !== 'Sold' && r.status !== 'Workshop');
 
   // Unique makes for filter
   const makes = useMemo(() => [...new Set(stock.map(r => r.make).filter(Boolean))].sort(), [stock]);
@@ -94,10 +112,24 @@ const Stock = () => {
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
   // KPI cards
-  const inStock = stock.filter(r => r.status === 'In Stock').length;
-  const sold = stock.filter(r => r.status === 'Sold').length;
-  const refurb = stock.filter(r => r.status === 'Refurb' || r.status === 'Under Refurb').length;
+  const inStock = rawStock.filter(r => r.status === 'In Stock').length;
+  const sold = rawStock.filter(r => r.status === 'Sold').length;
+  const refurb = rawStock.filter(r => r.status === 'Refurb' || r.status === 'Under Refurb' || r.status === 'Workshop').length;
   const totalValue = stock.filter(r => r.status === 'In Stock').reduce((s, r) => s + (parseFloat(r.sp || r.sk_sp) || 0), 0);
+
+  const chartData = useMemo(() => {
+    const makesCount = {};
+    stock.filter(r => r.status === 'In Stock').forEach(r => {
+      const m = r.make || 'Other';
+      makesCount[m] = (makesCount[m] || 0) + 1;
+    });
+    return Object.entries(makesCount)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5); // Top 5 makes
+  }, [stock]);
+
+  const PIE_COLORS = ['#E85D04', '#F4A261', '#E9C46A', '#2A9D8F', '#264653'];
 
   const clearFilters = () => { setSearch(''); setStatusFilter(''); setMakeFilter(''); setFuelFilter(''); setYearFrom(''); setYearTo(''); setPage(1); };
   const hasFilter = search || statusFilter || makeFilter || fuelFilter || yearFrom || yearTo;
@@ -199,12 +231,34 @@ const Stock = () => {
         ))}
       </div>
 
+      {/* Analytics Chart */}
+      {inStock > 0 && (
+        <div className="tc" style={{ marginBottom: 16 }}>
+          <div className="tc-hdr">
+            <div className="tc-title">📊 Available Stock by Make (Top 5)</div>
+          </div>
+          <div style={{ height: 250, width: '100%', padding: '10px' }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)' }} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14, padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', }}>
         <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
         <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
           <option value="">All Status</option>
-          <option>In Stock</option><option>Sold</option><option>Refurb</option><option>Under Refurb</option><option>Hold</option>
+          <option>In Stock</option><option>Refurb</option><option>Under Refurb</option><option>Hold</option>
         </select>
         <select className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }}>
           <option value="">All Makes</option>
@@ -253,28 +307,28 @@ const Stock = () => {
                 {paginated.length > 0 ? paginated.map(r => (
                   <tr key={r.id}>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)', fontSize: 10 }}>{r.stkId || r.id?.slice(0, 12)}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo}</td>
-                    <td><span style={{ fontWeight: 600 }}>{r.make}</span> {r.model}<br /><small style={{ color: 'var(--text3)' }}>{r.variant}</small></td>
-                    <td>{r.year}</td>
-                    <td>{r.fuel ? <span className="badge b-prog">{r.fuel}</span> : '—'}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo || r.sk_regn}</td>
+                    <td><span style={{ fontWeight: 600 }}>{r.make || r.sk_make}</span> {r.model || r.sk_model}<br /><small style={{ color: 'var(--text3)' }}>{r.variant || r.sk_var}</small></td>
+                    <td>{r.year || r.sk_year}</td>
+                    <td>{(r.fuel || r.sk_fuel) ? <span className="badge b-prog">{r.fuel || r.sk_fuel}</span> : '—'}</td>
                     <td>
-                      {r.color ? (
+                      {(r.color || r.sk_color) ? (
                         <div className="colour-dot">
-                          <div className="colour-dot-swatch" style={{ background: colourHex(r.color) }}></div>
-                          {r.color}
+                          <div className="colour-dot-swatch" style={{ background: colourHex(r.color || r.sk_color) }}></div>
+                          {r.color || r.sk_color}
                         </div>
                       ) : '—'}
                     </td>
-                    <td>{r.km ? `${Number(r.km).toLocaleString('en-IN')} km` : '—'}</td>
+                    <td>{(r.km || r.sk_km) ? `${Number(r.km || r.sk_km).toLocaleString('en-IN')} km` : '—'}</td>
                     {isAdmin && <>
-                      <td className="amt-or">{fmt(r.tcp)}</td>
+                      <td className="amt-or">{fmt(r.tcp || (Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))}</td>
                       <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.sp || r.sk_sp)}</td>
-                      <td className={r.profit > 0 ? 'profit-pos' : r.profit < 0 ? 'profit-neg' : ''}>{fmt(r.profit)}</td>
+                      <td className={(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) > 0 ? 'profit-pos' : (r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) < 0 ? 'profit-neg' : ''}>{fmt(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0))))}</td>
                     </>}
-                    <td><DaysInStock pDate={r.pDate} /></td>
-                    <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
+                    <td><DaysInStock pDate={r.pDate || r.sk_pdate} /></td>
+                    <td><span className={`badge ${statusBadge(r.status || r.sk_stat || 'In Stock')}`}>{r.status || r.sk_stat || 'In Stock'}</span></td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
                         <button className="btn-icon bi-next" title="Workshop Job" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>

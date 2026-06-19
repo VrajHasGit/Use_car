@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { fmt, fmtDate, ageDays } from '../utils/helpers';
 
@@ -23,13 +24,14 @@ const Dashboard = () => {
       .reduce((a, r) => a + (r.final || 0), 0);
     const pendingPur = pur_inq.filter(r => r.status === 'In-Progress').length;
     const pendingSal = sal_inq.filter(r => r.status === 'In-Progress').length;
+    const totalPendFU = pur_inq.filter(r => r.stage !== 'Closed' && r.fu).length + sal_inq.filter(r => r.stage !== 'Closed' && r.fu).length;
     const wsOpen = ws.filter(r => r.jStat === 'Open' || r.jStat === 'In Process').length;
     const totalDeals = scl.length + pcl.length;
     const avgAge = stk.length > 0
       ? Math.round(stk.reduce((a, r) => a + ageDays(r.pDate), 0) / stk.length)
       : 0;
 
-    return { inStock, totalRevenue, mthRevenue, pendingPur, pendingSal, wsOpen, totalDeals, avgAge };
+    return { inStock, totalRevenue, mthRevenue, pendingPur, pendingSal, totalPendFU, wsOpen, totalDeals, avgAge };
   }, [data]);
 
   const recentPurInq = useMemo(() => (data.pur_inq || []).slice(-5).reverse(), [data.pur_inq]);
@@ -57,6 +59,28 @@ const Dashboard = () => {
     { icon: 'fa fa-indian-rupee-sign', val: fmt(kpis.totalRevenue), lbl: 'Total Revenue', trend: 'All time', up: true, link: '/reports' },
   ];
 
+  const chartData = useMemo(() => {
+    const months = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const m = d.toISOString().slice(0, 7);
+      months[m] = { name: m, Sales: 0, Purchases: 0 };
+    }
+    (data.scl || []).forEach(r => {
+      const m = (r.date || '').slice(0, 7);
+      if (months[m]) months[m].Sales += parseFloat(r.final || 0);
+    });
+    (data.pcl || []).forEach(r => {
+      const m = (r.date || '').slice(0, 7);
+      if (months[m]) months[m].Purchases += parseFloat(r.agreedPrice || 0);
+    });
+    return Object.values(months).map(m => ({
+      ...m,
+      name: new Date(m.name + '-01').toLocaleString('default', { month: 'short', year: '2-digit' })
+    }));
+  }, [data]);
+
   return (
     <div className="page on" id="pg_dashboard">
       <div className="ph">
@@ -76,6 +100,19 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* WhatsApp Bulk Follow-up Banner */}
+      {kpis.totalPendFU > 0 && (
+        <div className="s12-wa-banner" onClick={() => alert(`Redirecting to WhatsApp Bulk Sender for ${kpis.totalPendFU} pending follow-ups...`)}>
+          <span className="s12-wa-banner-icon">📱</span>
+          <div className="s12-wa-banner-body">
+            <div className="s12-wa-banner-title">WhatsApp Bulk Follow-Up</div>
+            <div className="s12-wa-banner-sub">{kpis.totalPendFU} active inquiry customer{kpis.totalPendFU > 1 ? 's' : ''} pending follow-up</div>
+          </div>
+          <span className="s12-wa-banner-badge">{kpis.totalPendFU} Pending</span>
+          <button className="s12-wa-banner-btn"><i className="fa-brands fa-whatsapp"></i> Send Follow-ups</button>
+        </div>
+      )}
 
       {/* KPI Grid */}
       <div className="kpi-grid" id="kpiGrid">
@@ -102,6 +139,25 @@ const Dashboard = () => {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Analytics Chart */}
+      <div className="tc" style={{ marginBottom: 20 }}>
+        <div className="tc-hdr">
+          <div className="tc-title">📊 Revenue & Purchases (6 Months)</div>
+        </div>
+        <div style={{ height: 300, width: '100%', padding: '20px 20px 0 0' }}>
+          <ResponsiveContainer>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border2)" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--text2)' }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={v => `₹${(v/100000).toFixed(1)}L`} tick={{ fontSize: 12, fill: 'var(--text2)' }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={v => fmt(v)} cursor={{ fill: 'var(--border)' }} contentStyle={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)' }} />
+              <Bar dataKey="Sales" fill="var(--success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="Purchases" fill="var(--or1)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Quick Tables */}

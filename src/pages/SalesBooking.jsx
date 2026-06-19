@@ -33,7 +33,7 @@ const SalesBooking = () => {
       </div>
       {isModalOpen && <SobModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Sales Order Bookings <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Sales Order Bookings <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_sob">
             <thead><tr><th>SOB ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Sale Price</th><th>Advance</th><th>Status</th><th>Actions</th></tr></thead>

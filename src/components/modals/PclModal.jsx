@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useData } from '../../contexts/DataContext';
+import { addRecord, updateRecord, getNextCounter } from '../../services/db';
+import { genId, today } from '../../utils/helpers';
+
 import { autoFillFromInq } from '../../utils/relations';
 
-export const PclModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
+export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
     pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: "", pc_type: "Direct Purchase",
     pc_stat: "Confirmed", pc_price: "", pc_tok: "", pc_pm1: "Cash", pc_p1: "",
@@ -51,8 +54,15 @@ export const PclModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
         if (inqData) {
           setFormData(prev => ({
             ...prev,
-            pc_sname: inqData.sellerName || '',
-            pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
+            pc_sname: inqData.sellerName || prev.pc_sname,
+            pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''} ${inqData.year || ''}`.trim() : prev.pc_veh,
+            pc_mob: inqData.mobile || prev.pc_mob,
+            pc_make: inqData.make || prev.pc_make,
+            pc_model: inqData.model || prev.pc_model,
+            pc_year: inqData.year || prev.pc_year,
+            pc_fuel: inqData.fuel || prev.pc_fuel,
+            pc_km: inqData.km || prev.pc_km,
+            pc_regn: inqData.regNo || prev.pc_regn,
           }));
         }
       });
@@ -62,12 +72,18 @@ export const PclModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (onSave && editData) {
-        await onSave(formData);
+      if (editData && editData.id) {
+        if (onSave) { await onSave(formData); } else { await updateRecord('pcl', editData.id, formData); }
       } else {
-        await addDoc(collection(db, 'pcl'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else { onClose(); }
+        const cnt = await getNextCounter('pcl');
+        const pclId = genId('PCL', cnt);
+        if (onSave) { await onSave({...formData, pclId}); } 
+        else {
+          await addRecord('pcl', { ...formData, pclId, date: formData.date || today() });
+          if (onSuccess) onSuccess();
+        }
       }
+      onClose();
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');

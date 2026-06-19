@@ -33,7 +33,7 @@ const GstInvoice = () => {
       </div>
       {isModalOpen && <GstModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">GST Invoice <span style={{background:'var(--purple)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">GST Invoice <span style={{background:'var(--purple)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           {filtered.length === 0 ? (
             <div className="empty" style={{padding:48}}>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -95,6 +96,12 @@ const Expenses = () => {
   const monthVsLast = lastMonthTotal > 0 ? (((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100).toFixed(1) : null;
   const catTotals = CATEGORIES.map(c => ({ cat: c, total: records.filter(r => r.category === c).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0) })).sort((a, b) => b.total - a.total);
   const topCat = catTotals[0]?.cat || '—';
+
+  const chartData = useMemo(() => {
+    return catTotals.filter(c => c.total > 0).map(c => ({ name: c.cat, value: c.total }));
+  }, [catTotals]);
+
+  const PIE_COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#6366F1'];
 
   const filtered = useMemo(() => records.filter(r => {
     const q = search.toLowerCase();
@@ -210,6 +217,27 @@ const Expenses = () => {
           <div className="kpi-lbl">Top Category · {fmt(catTotals[0]?.total)}</div>
         </div>
       </div>
+
+      {/* Analytics Chart */}
+      {chartData.length > 0 && (
+        <div className="tc" style={{ marginBottom: 16 }}>
+          <div className="tc-hdr">
+            <div className="tc-title">📊 Expenses by Category</div>
+          </div>
+          <div style={{ height: 250, width: '100%', padding: '10px' }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => fmt(value)} contentStyle={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="tc">

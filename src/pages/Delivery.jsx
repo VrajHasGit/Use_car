@@ -3,6 +3,7 @@ import { useData } from '../contexts/DataContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { DelModal } from '../components/modals/DelModal';
+import { DocModal } from '../components/modals/DocModal';
 
 const Delivery = () => {
   const { data, refresh } = useData();
@@ -12,7 +13,10 @@ const Delivery = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.del || [];
-  const filtered = records.filter(r => !search || (r.buyerName||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase()));
+  const filtered = records.filter(r => {
+    if (r.stage && r.stage !== 'Delivery') return false;
+    return !search || (r.buyerName||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase());
+  });
   const handleSave = async (fd) => {
     try {
       if (editRec) { await updateRecord('del', editRec.id, fd); showToast('Updated!'); }
@@ -21,6 +25,24 @@ const Delivery = () => {
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
   const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('del', rec.id); await refresh('del'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+
+  const [quickModal, setQuickModal] = useState({ type: null, delId: null });
+  const closeQuickModal = () => setQuickModal({ type: null, delId: null });
+
+  const markShifted = async (targetStage, recId) => {
+    const rec = data.del.find(r => r.id === recId || r.delId === recId);
+    if (rec) {
+      try {
+        await updateRecord('del', rec.id, { stage: targetStage });
+        await refresh('del');
+        showToast(`Shifted to ${targetStage}`);
+        closeQuickModal();
+      } catch (e) {
+        showToast('Failed to shift', 'error');
+      }
+    }
+  };
+
   return (
     <div className="page on" id="pg_delivery">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
@@ -32,8 +54,9 @@ const Delivery = () => {
         </div>
       </div>
       {isModalOpen && <DelModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+      <DocModal isOpen={quickModal.type === 'doc'} onClose={closeQuickModal} onSuccess={() => markShifted('Documents', quickModal.delId)} quickObId={quickModal.delId} />
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Deliveries <span style={{background:'var(--success)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Deliveries <span style={{background:'var(--success)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_del">
             <thead><tr><th>Del ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Del Date</th><th>Status</th><th>Actions</th></tr></thead>
@@ -49,6 +72,7 @@ const Delivery = () => {
                   <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                     <button className="btn-icon bi-print" title="Print" onClick={()=>window.print()}><i className="fa fa-print"></i></button>
+                    <button className="btn-icon bi-next" title="Send to Documents" onClick={() => setQuickModal({ type: 'doc', delId: r.id })}><i className="fa fa-folder-open"></i></button>
                     <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>
                 </tr>

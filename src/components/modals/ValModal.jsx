@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useData } from '../../contexts/DataContext';
+import { addRecord, updateRecord, getNextCounter } from '../../services/db';
+import { genId, today } from '../../utils/helpers';
 import { autoFillFromInq } from '../../utils/relations';
 import { MAKES, MODELS, YEARS, FUELS, OWNERS } from '../../utils/constants';
 
-export const ValModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
+export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId }) => {
   const [formData, setFormData] = useState({
     v_inqid: "", v_date: "", v_vnum: "", v_cname: "", v_cont: "", v_km: "",
     v_make: "", v_model: "", v_var: "", v_year: "", v_fuel: "", v_own: "",
@@ -80,12 +82,18 @@ export const ValModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (onSave && editData) {
-        await onSave(formData);
+      if (editData && editData.id) {
+        if (onSave) { await onSave(formData); } else { await updateRecord('val', editData.id, formData); }
       } else {
-        await addDoc(collection(db, 'val'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else { onClose(); }
+        const cnt = await getNextCounter('val');
+        const valId = genId('VAL', cnt);
+        if (onSave) { await onSave({...formData, valId}); } 
+        else {
+          await addRecord('val', { ...formData, valId, date: formData.date || today() });
+          if (onSuccess) onSuccess();
+        }
       }
+      onClose();
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');

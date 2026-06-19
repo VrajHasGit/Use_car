@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -129,6 +130,17 @@ const Workshop = () => {
     return Math.round(active.reduce((s, r) => s + ageDays(r.date), 0) / active.length);
   })();
 
+  const chartData = useMemo(() => {
+    const counts = {};
+    records.filter(r => r.jStat !== 'Complete').forEach(r => {
+      const type = r.jobType || 'Other';
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [records]);
+
+  const PIE_COLORS = ['#F59E0B', '#3B82F6', '#8B5CF6', '#10B981', '#EF4444', '#6366F1'];
+
   const handleSave = async (fd) => {
     try {
       if (editRec) { await updateRecord('ws', editRec.id, fd); showToast('Updated!'); }
@@ -212,6 +224,27 @@ const Workshop = () => {
           </div>
         ))}
       </div>
+
+      {/* Analytics Chart */}
+      {chartData.length > 0 && (
+        <div className="tc" style={{ marginBottom: 16 }}>
+          <div className="tc-hdr">
+            <div className="tc-title">📊 Active Jobs by Type</div>
+          </div>
+          <div style={{ height: 250, width: '100%', padding: '10px' }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="tc">
         <div className="tc-hdr">

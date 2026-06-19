@@ -23,7 +23,7 @@ const EmpPerf = () => {
 
   const empData = useMemo(() => {
     return users
-      .filter(u => u.status === 'Active' || u.status === undefined)
+      .filter(u => (u.status === 'Active' || u.status === undefined) && u.role !== 'Admin' && !u.isTest)
       .map(u => {
         const name = u.name;
         const purInq = purInqData.filter(r => r.assigned === name).length;

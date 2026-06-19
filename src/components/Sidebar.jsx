@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { initials } from '../utils/helpers';
 
-const Sidebar = ({ isSlim }) => {
+const Sidebar = ({ isSlim, isMobileOpen }) => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -33,7 +33,7 @@ const Sidebar = ({ isSlim }) => {
   );
 
   return (
-    <div id="sb" className={isSlim ? 'slim' : ''}>
+    <div id="sb" className={`${isSlim ? 'slim' : ''}${isMobileOpen ? ' mob-on' : ''}`}>
       <div className="sb-hdr">
         <div className="sb-logo" id="sbLogoWrap" title="Carecay ERP">
           <i className="fa fa-car" id="sbLogoIcon"></i>

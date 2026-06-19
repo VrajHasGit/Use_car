@@ -37,6 +37,8 @@ import Tasks from './pages/Tasks';
 
 import './index.css';
 
+import SplashLoader from './components/SplashLoader';
+
 const ProtectedRoute = ({ children }) => {
   const { currentUser } = useAuth();
   if (!currentUser) {
@@ -103,10 +105,13 @@ function AppInner() {
 }
 
 export default function App() {
+  const [appLoading, setAppLoading] = React.useState(true);
+
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppInner />
+        {appLoading && <SplashLoader onComplete={() => setAppLoading(false)} />}
+        {!appLoading && <AppInner />}
       </AuthProvider>
     </BrowserRouter>
   );

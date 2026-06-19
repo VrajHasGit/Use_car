@@ -35,7 +35,7 @@ const PurchaseInquiry = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const inquiries = data.pur_inq || [];
+  const inquiries = (data.pur_inq || []).filter(r => !r.stage || r.stage === 'Inquiry');
 
   const filtered = inquiries.filter(inq => {
     const q = search.toLowerCase();
@@ -112,6 +112,20 @@ const PurchaseInquiry = () => {
 
   const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
 
+  const markShifted = async (targetStage, recId) => {
+    const rec = data.pur_inq.find(r => r.id === recId || r.inqId === recId);
+    if (rec) {
+      try {
+        await updateRecord('pur_inq', rec.id, { stage: targetStage });
+        await refresh('pur_inq');
+        showToast(`Shifted to ${targetStage}`);
+        closeQuickModal();
+      } catch (e) {
+        showToast('Failed to shift', 'error');
+      }
+    }
+  };
+
   const exportToExcel = () => {
     const headers = ['Inquiry ID', 'Date', 'Source', 'Seller Name', 'Mobile', 'Make', 'Model', 'Variant', 'Year', 'Fuel', 'Trans', 'Color', 'KM', 'Owners', 'Reg No', 'Assigned', 'Status', 'Next FU'];
     const rows = filtered.map(r => [
@@ -156,17 +170,17 @@ const PurchaseInquiry = () => {
       <PurInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
       
       {/* Quick Action Modals */}
-      <ValModal isOpen={quickModal.type === 'val'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <ValModal isOpen={quickModal.type === 'val'} onClose={closeQuickModal} onSuccess={() => markShifted('Valuation', quickModal.inqId)} quickInqId={quickModal.inqId} />
       <PfuModal isOpen={quickModal.type === 'pfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <PclModal isOpen={quickModal.type === 'pcl'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <StkModal isOpen={quickModal.type === 'stk'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <PclModal isOpen={quickModal.type === 'pcl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.inqId)} quickInqId={quickModal.inqId} />
+      <StkModal isOpen={quickModal.type === 'stk'} onClose={closeQuickModal} onSuccess={() => markShifted('Stock', quickModal.inqId)} quickInqId={quickModal.inqId} />
+      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} onSuccess={() => markShifted('Workshop', quickModal.inqId)} quickInqId={quickModal.inqId} />
 
       <div className="tc">
         <div className="tc-hdr">
           <div className="tc-title">
             <i className="fa fa-car-side" style={{ color: 'var(--or1)' }}></i> Purchase Inquiries
-            <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{inquiries.length}</span>
+            <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span>
           </div>
         </div>
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
@@ -226,17 +240,19 @@ const PurchaseInquiry = () => {
                       ) : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit Inquiry" onClick={() => handleEdit(inq)}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-next" title="Valuation" onClick={() => setQuickModal({ type: 'val', inqId: inq.inqId || inq.id })}><i className="fa fa-magnifying-glass-dollar"></i></button>
                         <button className="btn-icon bi-view" title="Follow Up" onClick={() => setQuickModal({ type: 'pfu', inqId: inq.inqId || inq.id })}><i className="fa fa-phone-volume"></i></button>
+                        
                         <button className="btn-icon bi-next" title="Closure" onClick={() => setQuickModal({ type: 'pcl', inqId: inq.inqId || inq.id })}><i className="fa fa-handshake"></i></button>
                         <button className="btn-icon bi-view" title="Add to Stock" onClick={() => setQuickModal({ type: 'stk', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(8,145,178,.1)', color: '#0891B2' }}><i className="fa fa-warehouse"></i></button>
                         <button className="btn-icon bi-del" title="Workshop" onClick={() => setQuickModal({ type: 'ws', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(220,38,38,.1)', color: '#DC2626' }}><i className="fa fa-screwdriver-wrench"></i></button>
-                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
-                        {inq.mobile && (
-                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer' }}><i className="fa-brands fa-whatsapp"></i></button>
-                        )}
+                        
+                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
+                        {inq.mobile ? (
+                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>
+                        ) : <div />}
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>

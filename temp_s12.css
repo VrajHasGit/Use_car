@@ -1,0 +1,12 @@
+/* STEP 12 - LOADING SCREEN */
+#s12_loader{position:fixed;inset:0;background:linear-gradient(135deg,#0D2B22 0%,#0A1F19 60%,#064E3B 100%);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}
+#s12_loader.hide{opacity:0;pointer-events:none}
+.s12-loader-logo{width:80px;height:80px;background:linear-gradient(135deg,#059669,#34D399);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:20px;box-shadow:0 0 40px rgba(5,150,105,.5);animation:s12pulse 1.4s ease-in-out infinite}
+@keyframes s12pulse{0%,100%{box-shadow:0 0 40px rgba(5,150,105,.5)}50%{box-shadow:0 0 70px rgba(5,150,105,.9)}}
+.s12-loader-brand{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:6px}
+.s12-loader-brand em{color:#6EE7B7;font-style:normal}
+.s12-loader-tag{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px}
+.s12-loader-bar{width:200px;height:3px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.s12-loader-bar-fill{height:100%;background:linear-gradient(90deg,#059669,#34D399);border-radius:3px;animation:s12load 1.6s ease-in-out}
+@keyframes s12load{from{width:0}to{width:100%}}
+.s12-loader-txt{font-size:11px;color:rgba(255,255,255,.35);margin-top:10px;letter-spacing:1px}

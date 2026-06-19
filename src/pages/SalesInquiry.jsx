@@ -107,6 +107,7 @@ const SalesInquiry = () => {
 
   const filtered = useMemo(() => {
     return inquiries.filter(inq => {
+      if (inq.stage && inq.stage !== 'Inquiry') return false;
       const q = search.toLowerCase();
       const matchSearch = !search ||
         (inq.buyerName || '').toLowerCase().includes(q) ||
@@ -177,6 +178,20 @@ const SalesInquiry = () => {
 
   const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
 
+  const markShifted = async (targetStage, recId) => {
+    const rec = data.sal_inq.find(r => r.id === recId || r.salId === recId);
+    if (rec) {
+      try {
+        await updateRecord('sal_inq', rec.id, { stage: targetStage, status: 'Closed-Won' });
+        await refresh('sal_inq');
+        showToast(`Shifted to ${targetStage}`);
+        closeQuickModal();
+      } catch (e) {
+        showToast('Failed to shift', 'error');
+      }
+    }
+  };
+
   // KPI strip
   const newCount = inquiries.filter(r => r.status === 'New').length;
   const inProgress = inquiries.filter(r => r.status === 'In-Progress').length;
@@ -215,7 +230,7 @@ const SalesInquiry = () => {
 
       <SalInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
       <SfuModal isOpen={quickModal.type === 'sfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <SclModal isOpen={quickModal.type === 'scl'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
+      <SclModal isOpen={quickModal.type === 'scl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.inqId)} quickInqId={quickModal.inqId} />
 
       {/* KPI Strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>

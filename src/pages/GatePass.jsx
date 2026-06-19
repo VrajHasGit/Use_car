@@ -33,7 +33,7 @@ const GatePass = () => {
       </div>
       {isModalOpen && <GpModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Gate Passes <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{records.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Gate Passes <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table id="tbl_gp">
             <thead><tr><th>GP ID</th><th>Date</th><th>Reg No.</th><th>Vehicle</th><th>Type</th><th>Driver</th><th>Status</th><th>Actions</th></tr></thead>
