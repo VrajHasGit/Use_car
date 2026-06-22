@@ -19,6 +19,8 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
   const [partnerOptions, setPartnerOptions] = useState([
     'Rajan Desai', 'Ritesh Shah', 'Kalpesh Joshi', 'Marut Dandawala', 'Isha Dashraniya', 'Pinal Desai', 'Other'
   ]);
+  const [isAddingPartner, setIsAddingPartner] = useState(false);
+  const [newPartnerName, setNewPartnerName] = useState('');
 
   useEffect(() => {
     if (editData) {
@@ -87,17 +89,37 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
             <div className="fg">
               <label>Partner Name</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <select name="nameSource" value={formData.nameSource} onChange={handleChange} style={{ flex: 1 }}>
-                  <option value="">-- Select --</option>
-                  {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-                <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => {
-                  const newP = window.prompt('Enter new Partner Name:');
-                  if (newP && newP.trim()) {
-                    setPartnerOptions(prev => [...prev, newP.trim()]);
-                    set('nameSource', newP.trim());
-                  }
-                }}>+</button>
+                {!isAddingPartner ? (
+                  <>
+                    <select name="nameSource" value={formData.nameSource} onChange={handleChange} style={{ flex: 1 }}>
+                      <option value="">-- Select --</option>
+                      {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => setIsAddingPartner(true)} title="Add New Partner">+</button>
+                  </>
+                ) : (
+                  <>
+                    <input 
+                      value={newPartnerName} 
+                      onChange={e => setNewPartnerName(e.target.value)} 
+                      placeholder="Enter partner name..." 
+                      style={{ flex: 1 }} 
+                      autoFocus
+                    />
+                    <button type="button" className="btn btn-or" style={{ padding: '0 12px' }} onClick={() => {
+                      if (newPartnerName.trim()) {
+                        setPartnerOptions(prev => [...prev, newPartnerName.trim()]);
+                        set('nameSource', newPartnerName.trim());
+                      }
+                      setIsAddingPartner(false);
+                      setNewPartnerName('');
+                    }} title="Save Partner">✓</button>
+                    <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => {
+                      setIsAddingPartner(false);
+                      setNewPartnerName('');
+                    }} title="Cancel">✕</button>
+                  </>
+                )}
               </div>
             </div>
           </div>
