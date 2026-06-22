@@ -90,13 +90,23 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
               <label>Partner Name</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {!isAddingPartner ? (
-                  <>
-                    <select name="nameSource" value={formData.nameSource} onChange={handleChange} style={{ flex: 1 }}>
-                      <option value="">-- Select --</option>
-                      {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                    <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => setIsAddingPartner(true)} title="Add New Partner">+</button>
-                  </>
+                  <select 
+                    name="nameSource" 
+                    value={formData.nameSource} 
+                    onChange={(e) => {
+                      if (e.target.value === 'ADD_NEW') {
+                        setIsAddingPartner(true);
+                        setNewPartnerName('');
+                      } else {
+                        handleChange(e);
+                      }
+                    }} 
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">-- Select --</option>
+                    {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                    <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--or1)' }}>+ Add New Partner...</option>
+                  </select>
                 ) : (
                   <>
                     <input 
@@ -134,11 +144,11 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
             </div>
             <div className="fg">
               <label>Source Name</label>
-              <input name="sourceName" value={formData.sourceName} onChange={handleChange} placeholder="Source Name" />
+              <input name="sourceName" value={formData.sourceName} onChange={handleChange} placeholder="Source Name" disabled={formData.source === 'Walk-in'} />
             </div>
             <div className="fg">
               <label>Source Number</label>
-              <input name="sourceNumber" value={formData.sourceNumber} onChange={handleChange} type="number" placeholder="Source Number" />
+              <input name="sourceNumber" value={formData.sourceNumber} onChange={handleChange} type="number" placeholder="Source Number" disabled={formData.source === 'Walk-in'} />
             </div>
           </div>
 
