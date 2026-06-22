@@ -48,6 +48,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         v_km: inqData.km || '',
         v_vnum: inqData.regNo || '',
         v_own: inqData.owners || prev.v_own,
+        v_rem: inqData.remarks || prev.v_rem,
       }));
       setModelOptions(MODELS[inqData.make] || []);
       setAutoFillMsg(`✅ Auto-filled from: ${inqData.sellerName || inqId}`);

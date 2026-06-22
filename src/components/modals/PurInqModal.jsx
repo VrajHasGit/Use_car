@@ -3,10 +3,12 @@ import { today } from '../../utils/helpers';
 import { MAKES, MODELS, YEARS, CITIES, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
 const INIT = {
-  source: 'Walk-in', nameSource: '', date: today(),
+  inqId: '',
+  source: 'Walk-in', sourceName: '', sourceNumber: '', nameSource: '', date: today(),
   sellerName: '', mobile: '', altMobile: '', email: '', city: '', state: 'Gujarat', address: '',
   make: '', model: '', variant: '', year: '', regYear: '', fuel: 'Petrol', trans: 'Manual',
-  color: 'White', km: '', owners: '1st', regNo: '', rto: '', insurance: '', loanBank: '', loan: 'No',
+  color: 'White', km: '', owners: '1st', regNo: '', rto: '', insuranceStatus: 'No', insurance: '', 
+  hypothecation: 'No', loanBank: '', loan: '',
   assigned: 'Ritesh Shah', status: 'New', nextFU: '', updatedBy: '', remarks: ''
 };
 
@@ -14,16 +16,28 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState(INIT);
   const [saving, setSaving] = useState(false);
   const [models, setModels] = useState([]);
+  const [partnerOptions, setPartnerOptions] = useState([
+    'Rajan Desai', 'Ritesh Shah', 'Kalpesh Joshi', 'Marut Dandawala', 'Isha Dashraniya', 'Pinal Desai', 'Other'
+  ]);
 
   useEffect(() => {
     if (editData) {
-      setFormData({ ...INIT, ...editData });
+      setFormData({ 
+        ...INIT, 
+        ...editData,
+        hypothecation: editData.loan === 'Yes' || editData.loan === 'No' ? editData.loan : editData.hypothecation || 'No',
+        loan: editData.loan === 'Yes' || editData.loan === 'No' ? '' : editData.loan,
+        insuranceStatus: editData.insurance ? 'Yes' : 'No'
+      });
       setModels(MODELS[editData.make] || []);
+      if (editData.nameSource && !partnerOptions.includes(editData.nameSource)) {
+        setPartnerOptions(p => [...p, editData.nameSource]);
+      }
     } else {
       setFormData({ ...INIT, date: today() });
       setModels([]);
     }
-  }, [editData, isOpen]);
+  }, [editData, isOpen, partnerOptions]);
 
   if (!isOpen) return null;
 
@@ -59,6 +73,34 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
         <div className="m-body">
           {/* Inquiry Details */}
           <div className="sect-lbl"><i className="fa fa-circle-info"></i> Inquiry Details</div>
+          <div className="grid2">
+            <div className="fg">
+              <label>Inquiry ID</label>
+              <input name="inqId" value={formData.inqId} onChange={handleChange} placeholder="Auto-generated or Enter ID" readOnly={!!editData?.inqId} />
+            </div>
+            <div className="fg">
+              <label>Inquiry Date *</label>
+              <input type="date" name="date" value={formData.date} onChange={handleChange} />
+            </div>
+          </div>
+          <div className="grid1">
+            <div className="fg">
+              <label>Partner Name</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select name="nameSource" value={formData.nameSource} onChange={handleChange} style={{ flex: 1 }}>
+                  <option value="">-- Select --</option>
+                  {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => {
+                  const newP = window.prompt('Enter new Partner Name:');
+                  if (newP && newP.trim()) {
+                    setPartnerOptions(prev => [...prev, newP.trim()]);
+                    set('nameSource', newP.trim());
+                  }
+                }}>+</button>
+              </div>
+            </div>
+          </div>
           <div className="grid3">
             <div className="fg">
               <label>Inquiry Source *</label>
@@ -69,16 +111,12 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
               </select>
             </div>
             <div className="fg">
-              <label>Name Source (Partner)</label>
-              <select name="nameSource" value={formData.nameSource} onChange={handleChange}>
-                <option value="">-- Select --</option>
-                <option>Rajan Desai</option><option>Ritesh Shah</option><option>Kalpesh Joshi</option>
-                <option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Other</option>
-              </select>
+              <label>Source Name</label>
+              <input name="sourceName" value={formData.sourceName} onChange={handleChange} placeholder="Source Name" />
             </div>
             <div className="fg">
-              <label>Inquiry Date *</label>
-              <input type="date" name="date" value={formData.date} onChange={handleChange} />
+              <label>Source Number</label>
+              <input name="sourceNumber" value={formData.sourceNumber} onChange={handleChange} type="number" placeholder="Source Number" />
             </div>
           </div>
 
@@ -203,20 +241,34 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
               <input name="rto" value={formData.rto} onChange={handleChange} placeholder="Gujarat" />
             </div>
           </div>
-          <div className="grid3">
+          <div className="grid2">
             <div className="fg">
-              <label>Insurance Valid Till</label>
-              <input type="date" name="insurance" value={formData.insurance} onChange={handleChange} />
+              <label>Insurance</label>
+              <select name="insuranceStatus" value={formData.insuranceStatus} onChange={handleChange}>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
             </div>
             <div className="fg">
-              <label>Loan Bank</label>
-              <input name="loanBank" value={formData.loanBank} onChange={handleChange} placeholder="Bank name" />
+              <label>Insurance Valid Till</label>
+              <input type="date" name="insurance" value={formData.insurance} onChange={handleChange} disabled={formData.insuranceStatus !== 'Yes'} />
+            </div>
+          </div>
+          <div className="grid3">
+            <div className="fg">
+              <label>Hypothecation</label>
+              <select name="hypothecation" value={formData.hypothecation} onChange={handleChange}>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div className="fg">
+              <label>Bank Name</label>
+              <input name="loanBank" value={formData.loanBank} onChange={handleChange} placeholder="Bank name" disabled={formData.hypothecation !== 'Yes'} />
             </div>
             <div className="fg">
               <label>Loan Outstanding</label>
-              <select name="loan" value={formData.loan} onChange={handleChange}>
-                <option>No</option><option>Yes</option>
-              </select>
+              <input name="loan" value={formData.loan} onChange={handleChange} placeholder="Amount" type="number" disabled={formData.hypothecation !== 'Yes'} />
             </div>
           </div>
 
