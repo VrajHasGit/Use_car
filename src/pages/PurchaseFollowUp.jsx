@@ -16,6 +16,7 @@ const PurchaseFollowUp = () => {
   const records = data.pfu || [];
   const filtered = records.filter(r => {
     if (r.stage && r.stage !== 'Follow-Up') return false;
+    if (r.pf_stat === 'Closed-Won' || r.status === 'Closed-Won') return false;
     const q = search.toLowerCase();
     return !search || (r.sellerName || r.pf_sname || '').toLowerCase().includes(q) || (r.regNo || r.pf_veh || '').toLowerCase().includes(q) || (r.mobile || r.pf_smob || '').includes(q);
   });

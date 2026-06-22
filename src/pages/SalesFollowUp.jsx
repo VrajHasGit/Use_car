@@ -30,6 +30,7 @@ const SalesFollowUp = () => {
   }, [records]);
 
   const filtered = records.filter(r => {
+    if (r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won') return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (r.sf_cname || r.buyerName || '').toLowerCase().includes(q) ||
