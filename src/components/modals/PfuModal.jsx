@@ -34,12 +34,12 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
     if (inqData) {
       setFormData(prev => ({
         ...prev,
-        pf_sname: inqData.sellerName || '',
-        pf_smob: inqData.mobile || '',
-        pf_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : '',
+        pf_sname: inqData.sellerName || prev.pf_sname,
+        pf_smob: inqData.mobile || prev.pf_smob,
+        pf_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}`.trim() : prev.pf_veh,
         pf_var: inqData.variant || prev.pf_var,
-        pf_year: inqData.year || '',
-        pf_fuel: inqData.fuel || 'Petrol',
+        pf_year: inqData.year || prev.pf_year,
+        pf_fuel: inqData.fuel || prev.pf_fuel,
         pf_km: inqData.km || prev.pf_km,
         pf_own: inqData.owners || prev.pf_own,
       }));
@@ -53,6 +53,7 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
       setAutoFillMsg('');
       if (editData) {
         setFormData({ ...editData });
+        if (editData.pf_inqid) applyAutoFill(editData.pf_inqid);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, pf_inqid: quickInqId }));
         applyAutoFill(quickInqId);

@@ -55,6 +55,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       setAutoFillMsg('');
       if (editData) {
         setFormData({ ...editData });
+        if (editData.pc_inqid) applyAutoFill(editData.pc_inqid);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, pc_inqid: quickInqId }));
         applyAutoFill(quickInqId);

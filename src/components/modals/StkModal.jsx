@@ -18,48 +18,56 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const [modelOptions, setModelOptions] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  const applyAutoFillInq = async (inqId) => {
+    const inqData = await autoFillFromInq(inqId);
+    if (inqData) {
+      setFormData(prev => ({
+        ...prev,
+        sk_make: inqData.make || prev.sk_make,
+        sk_model: inqData.model || prev.sk_model,
+        sk_var: inqData.variant || prev.sk_var,
+        sk_year: inqData.year || prev.sk_year,
+        sk_fuel: inqData.fuel || prev.sk_fuel
+      }));
+      setModelOptions(MODELS[inqData.make] || []);
+    }
+  };
+
+  const applyAutoFillDoc = async (docId) => {
+    const docData = await autoFillFromDoc(docId);
+    if (docData) {
+      setFormData(prev => ({
+        ...prev,
+        sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || prev.sk_regn,
+        sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || prev.sk_make,
+        sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || prev.sk_model,
+        sk_var: docData.ob_var || docData.variant || prev.sk_var,
+        sk_year: docData.ob_year || docData.year || prev.sk_year,
+        sk_fuel: docData.ob_fuel || docData.fuel || prev.sk_fuel,
+        sk_chas: docData.ob_chas || docData.chas || prev.sk_chas,
+        sk_eng: docData.ob_eng || docData.eng || prev.sk_eng,
+        sk_color: docData.ob_color || docData.color || prev.sk_color,
+        sk_km: docData.ob_km || docData.km || prev.sk_km,
+        sk_pp: docData.ob_pp || docData.pp || prev.sk_pp,
+        sk_rc: docData.dc_rc ? 'Yes' : prev.sk_rc
+      }));
+      setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (editData) {
         setFormData({ ...editData });
         setModelOptions(MODELS[editData.sk_make] || []);
+        if (editData.sk_inqid) applyAutoFillInq(editData.sk_inqid);
+        if (editData.sk_docid) applyAutoFillDoc(editData.sk_docid);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, sk_inqid: quickInqId }));
-        autoFillFromInq(quickInqId).then(inqData => {
-          if (inqData) {
-            setFormData(prev => ({
-              ...prev,
-              sk_make: inqData.make || '',
-              sk_model: inqData.model || '',
-              sk_var: inqData.variant || '',
-              sk_year: inqData.year || '',
-              sk_fuel: inqData.fuel || 'Petrol'
-            }));
-            setModelOptions(MODELS[inqData.make] || []);
-          }
-        });
+        applyAutoFillInq(quickInqId);
       } else if (quickDocId) {
-        setFormData(prev => ({ ...prev, sk_docid: quickDocId })); // doc Id reference
-        autoFillFromDoc(quickDocId).then(docData => {
-          if (docData) {
-            setFormData(prev => ({
-              ...prev,
-              sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || '',
-              sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || '',
-              sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || '',
-              sk_var: docData.ob_var || docData.variant || '',
-              sk_year: docData.ob_year || docData.year || '',
-              sk_fuel: docData.ob_fuel || docData.fuel || 'Petrol',
-              sk_chas: docData.ob_chas || docData.chas || '',
-              sk_eng: docData.ob_eng || docData.eng || '',
-              sk_color: docData.ob_color || docData.color || 'White',
-              sk_km: docData.ob_km || docData.km || '',
-              sk_pp: docData.ob_pp || docData.pp || '',
-              sk_rc: docData.dc_rc ? 'Yes' : 'No'
-            }));
-            setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
-          }
-        });
+        setFormData(prev => ({ ...prev, sk_docid: quickDocId }));
+        applyAutoFillDoc(quickDocId);
       } else {
         setFormData({
           sk_inqid: "", sk_docid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
@@ -87,42 +95,11 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     }
 
     if (name === 'sk_docid' && value.length >= 5) {
-      autoFillFromDoc(value.toUpperCase()).then(docData => {
-        if (docData) {
-          setFormData(prev => ({
-            ...prev,
-            sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || prev.sk_regn,
-            sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || prev.sk_make,
-            sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || prev.sk_model,
-            sk_var: docData.ob_var || docData.variant || prev.sk_var,
-            sk_year: docData.ob_year || docData.year || prev.sk_year,
-            sk_fuel: docData.ob_fuel || docData.fuel || prev.sk_fuel,
-            sk_chas: docData.ob_chas || docData.chas || prev.sk_chas,
-            sk_eng: docData.ob_eng || docData.eng || prev.sk_eng,
-            sk_color: docData.ob_color || docData.color || prev.sk_color,
-            sk_km: docData.ob_km || docData.km || prev.sk_km,
-            sk_pp: docData.ob_pp || docData.pp || prev.sk_pp,
-            sk_rc: docData.dc_rc ? 'Yes' : prev.sk_rc
-          }));
-          setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
-        }
-      });
+      applyAutoFillDoc(value.toUpperCase());
     }
 
     if (name === 'sk_inqid' && value.length >= 5) {
-      autoFillFromInq(value).then(inqData => {
-        if (inqData) {
-          setFormData(prev => ({
-            ...prev,
-            sk_make: inqData.make || prev.sk_make,
-            sk_model: inqData.model || prev.sk_model,
-            sk_var: inqData.variant || prev.sk_var,
-            sk_year: inqData.year || prev.sk_year,
-            sk_fuel: inqData.fuel || prev.sk_fuel
-          }));
-          setModelOptions(MODELS[inqData.make] || []);
-        }
-      });
+      applyAutoFillInq(value);
     }
   };
 

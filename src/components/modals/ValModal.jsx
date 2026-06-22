@@ -38,15 +38,15 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     if (inqData) {
       setFormData(prev => ({
         ...prev,
-        v_cname: inqData.sellerName || '',
-        v_cont: inqData.mobile || '',
-        v_make: inqData.make || '',
-        v_model: inqData.model || '',
-        v_var: inqData.variant || '',
-        v_year: inqData.year || '',
-        v_fuel: inqData.fuel || '',
-        v_km: inqData.km || '',
-        v_vnum: inqData.regNo || '',
+        v_cname: inqData.sellerName || prev.v_cname,
+        v_cont: inqData.mobile || prev.v_cont,
+        v_make: inqData.make || prev.v_make,
+        v_model: inqData.model || prev.v_model,
+        v_var: inqData.variant || prev.v_var,
+        v_year: inqData.year || prev.v_year,
+        v_fuel: inqData.fuel || prev.v_fuel,
+        v_km: inqData.km || prev.v_km,
+        v_vnum: inqData.regNo || prev.v_vnum,
         v_own: inqData.owners || prev.v_own,
         v_rem: inqData.remarks || prev.v_rem,
       }));
@@ -62,6 +62,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       if (editData) {
         setFormData({ v_media: [], ...editData });
         setModelOptions(MODELS[editData.v_make] || []);
+        if (editData.v_inqid) applyAutoFill(editData.v_inqid);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, v_inqid: quickInqId, v_media: [] }));
         applyAutoFill(quickInqId);
