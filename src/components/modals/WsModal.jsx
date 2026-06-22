@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
-import { autoFillFromInq, autoFillFromStock } from '../../utils/relations';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { autoFillFromInq, autoFillFromStock, autoFillFromStockId } from '../../utils/relations';
 import { MAKES, MODELS } from '../../utils/constants';
 
-export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId }) => {
+export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId, stockDocId, stockIdForWs }) => {
   const [formData, setFormData] = useState({
-    ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
+    ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
     ws_tech: "", ws_prob: "", ws_parts: "", ws_est: "", ws_pc: "",
     ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
@@ -35,9 +35,23 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         });
       } else if (quickDocId) {
         setFormData(prev => ({ ...prev, ws_inqid: quickDocId })); // using quickDocId as reference
+      } else if (stockIdForWs) {
+        setFormData(prev => ({ ...prev, ws_stkid: stockIdForWs }));
+        autoFillFromStockId(stockIdForWs).then(stkData => {
+          if (stkData) {
+            setFormData(prev => ({
+              ...prev,
+              ws_make: stkData.make || '',
+              ws_model: stkData.model || '',
+              ws_km: stkData.km || '',
+              ws_vnum: stkData.regNo || ''
+            }));
+            setModelOptions(MODELS[stkData.make] || []);
+          }
+        });
       } else {
         setFormData({
-          ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
+          ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
           ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
           ws_tech: "", ws_prob: "", ws_parts: "", ws_est: "", ws_pc: "",
           ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
@@ -46,7 +60,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setModelOptions([]);
       }
     }
-  }, [isOpen, editData, quickInqId, quickDocId]);
+  }, [isOpen, editData, quickInqId, quickDocId, stockIdForWs]);
 
   if (!isOpen) return null;
 
@@ -57,6 +71,21 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_make') {
       setModelOptions(MODELS[value] || []);
       setFormData(prev => ({ ...prev, ws_model: '' }));
+    }
+
+    if (name === 'ws_stkid' && value.length >= 5) {
+      autoFillFromStockId(value).then(stkData => {
+        if (stkData) {
+          setFormData(prev => ({
+            ...prev,
+            ws_make: stkData.make || prev.ws_make,
+            ws_model: stkData.model || prev.ws_model,
+            ws_km: stkData.km || prev.ws_km,
+            ws_vnum: stkData.regNo || prev.ws_vnum,
+          }));
+          setModelOptions(MODELS[stkData.make] || []);
+        }
+      });
     }
 
     if (name === 'ws_inqid' && value.length >= 5) {
@@ -92,14 +121,30 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (moveToWorkshop = false) => {
     setSaving(true);
     try {
-      if (onSave && editData) {
+      if (onSave) {
         await onSave(formData);
       } else {
-        await addDoc(collection(db, 'ws'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else if (onSuccess) { onSuccess(); } else { onClose(); }
+        const { getNextCounter } = await import('../../services/db');
+        const { genId } = await import('../../utils/helpers');
+        let wsId = formData.wsId;
+        if (!wsId) {
+          const cnt = await getNextCounter('ws');
+          wsId = genId('JC', cnt);
+        }
+        await addDoc(collection(db, 'ws'), { 
+          ...formData, 
+          wsId,
+          date: formData.ws_indate || new Date().toISOString().split('T')[0],
+          tasks: formData.tasks || [],
+          createdAt: new Date().toISOString() 
+        });
+        if (moveToWorkshop === true && stockDocId) {
+          await updateDoc(doc(db, 'stk', stockDocId), { status: 'Under Refurb', updatedAt: new Date().toISOString() });
+        }
+        if (onSuccess) { onSuccess(); } else { onClose(); }
       }
     } catch (error) {
       console.error("Error saving record: ", error);
@@ -124,9 +169,15 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         <div className="m-body">
           <div style={{background:"rgba(255,107,0,.07)",border:"1px solid rgba(255,107,0,.25)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:"14px",display:"flex",alignItems:"center",gap:"10px"}}>
             <span style={{fontSize:"18px"}}>⚡</span>
-            <div className="fg" style={{margin:"0",flex:"1"}}>
-              <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Purchase INQ ID — Auto-Fill Vehicle Details</label>
-              <input name="ws_inqid" value={formData.ws_inqid} onChange={handleChange} placeholder="INQ-2025-0001 — type karo, vehicle data fill ho jayega" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+            <div style={{display:"flex",gap:"10px",width:"100%"}}>
+              <div className="fg" style={{margin:"0",flex:"1"}}>
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Stock ID — Auto-Fill</label>
+                <input name="ws_stkid" value={formData.ws_stkid} onChange={handleChange} placeholder="STK-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+              </div>
+              <div className="fg" style={{margin:"0",flex:"1"}}>
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Purchase INQ ID — Auto-Fill</label>
+                <input name="ws_inqid" value={formData.ws_inqid} onChange={handleChange} placeholder="INQ-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+              </div>
             </div>
           </div>
           <div className="grid3">
@@ -183,9 +234,14 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn btn-or" onClick={handleSave} disabled={saving}>
+          <button className="btn btn-or" onClick={() => handleSave(false)} disabled={saving}>
             {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Job Card</>}
           </button>
+          {stockDocId && (
+            <button className="btn btn-or" onClick={() => handleSave(true)} disabled={saving} style={{ background: 'var(--bl5)', borderColor: 'var(--bl5)' }}>
+              {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-share"></i> Save & Move to Workshop</>}
+            </button>
+          )}
         </div>
       </div>
     </div>

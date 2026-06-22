@@ -112,14 +112,14 @@ const Stock = () => {
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
   // KPI cards
-  const inStock = rawStock.filter(r => r.status === 'In Stock').length;
+  const inStock = rawStock.filter(r => r.status === 'In Stock' || r.status === 'Ready for Sale').length;
   const sold = rawStock.filter(r => r.status === 'Sold').length;
   const refurb = rawStock.filter(r => r.status === 'Refurb' || r.status === 'Under Refurb' || r.status === 'Workshop').length;
-  const totalValue = stock.filter(r => r.status === 'In Stock').reduce((s, r) => s + (parseFloat(r.sp || r.sk_sp) || 0), 0);
+  const totalValue = stock.filter(r => r.status === 'In Stock' || r.status === 'Ready for Sale').reduce((s, r) => s + (parseFloat(r.sp || r.sk_sp) || 0), 0);
 
   const chartData = useMemo(() => {
     const makesCount = {};
-    stock.filter(r => r.status === 'In Stock').forEach(r => {
+    stock.filter(r => r.status === 'In Stock' || r.status === 'Ready for Sale').forEach(r => {
       const m = r.make || 'Other';
       makesCount[m] = (makesCount[m] || 0) + 1;
     });
@@ -211,7 +211,7 @@ const Stock = () => {
 
       {/* Modals */}
       {isModalOpen && <StkModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
-      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} quickInqId={quickModal.stkId} />
+      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} stockDocId={quickModal.docId} stockIdForWs={quickModal.stkId} />
       <VtModal isOpen={quickModal.type === 'vt'} onClose={closeQuickModal} stkId={quickModal.stkId} />
       <QrModal isOpen={quickModal.type === 'qr'} onClose={closeQuickModal} stkId={quickModal.stkId} />
 
@@ -258,7 +258,7 @@ const Stock = () => {
         <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
         <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
           <option value="">All Status</option>
-          <option>In Stock</option><option>Refurb</option><option>Under Refurb</option><option>Hold</option>
+          <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>On Hold</option><option>Cancelled</option>
         </select>
         <select className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }}>
           <option value="">All Makes</option>
@@ -297,7 +297,7 @@ const Stock = () => {
             <table id="tbl_stk">
               <thead>
                 <tr>
-                  <th>Stock ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
+                  <th>Stock ID</th><th>Doc ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
                   <th>Fuel</th><th>Colour</th><th>KM</th>
                   {isAdmin && <><th>TCP</th><th>Selling Price</th><th>Profit</th></>}
                   <th>Days</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th>
@@ -307,7 +307,20 @@ const Stock = () => {
                 {paginated.length > 0 ? paginated.map(r => (
                   <tr key={r.id}>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)', fontSize: 10 }}>{r.stkId || r.id?.slice(0, 12)}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sk_inqid || '—'}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sk_docid || (r.sk_inqid?.startsWith('DOC-') ? r.sk_inqid : '—')}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>
+                      {(() => {
+                        const explicitInq = r.sk_inqid?.startsWith('INQ-') ? r.sk_inqid : (r.sk_inqid && !r.sk_inqid.startsWith('DOC-') ? r.sk_inqid : null);
+                        if (explicitInq) return explicitInq;
+                        const matchReg = r.regNo || r.sk_regn;
+                        if (matchReg && data.pur_inq) {
+                          const rn = matchReg.replace(/\s/g, '').toUpperCase();
+                          const inq = data.pur_inq.find(i => (i.regNo || i.inq_regn || '').replace(/\s/g, '').toUpperCase() === rn);
+                          if (inq) return inq.inqId || inq.id;
+                        }
+                        return '—';
+                      })()}
+                    </td>
                     <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo || r.sk_regn}</td>
                     <td><span style={{ fontWeight: 600 }}>{r.make || r.sk_make}</span> {r.model || r.sk_model}<br /><small style={{ color: 'var(--text3)' }}>{r.variant || r.sk_var}</small></td>
                     <td>{r.year || r.sk_year}</td>
@@ -332,7 +345,7 @@ const Stock = () => {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                        <button className="btn-icon bi-next" title="Workshop Job" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>
+                        <button className="btn-icon bi-next" title="Workshop Job" onClick={() => setQuickModal({ type: 'ws', docId: r.id, stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>
                         <button className="btn-icon bi-view" title="Vehicle History" onClick={() => setQuickModal({ type: 'vt', stkId: r.stkId || r.id })}><i className="fa fa-timeline"></i></button>
                         <button className="btn-icon" style={{ background: 'rgba(37,99,235,.1)', color: 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="QR Code" onClick={() => setQuickModal({ type: 'qr', stkId: r.stkId || r.id })}><i className="fa fa-qrcode"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>

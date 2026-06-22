@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const CREDENTIALS_HINT = [
-  { label: 'Admin', id: 'admin', pw: 'admin123' },
-  { label: 'Purchase', id: 'purchase', pw: 'pur123' },
-  { label: 'Sales', id: 'sales', pw: 'sal123' },
-];
 
 const BRANCHES = ['SG Highway', 'Vastral', 'Head Office'];
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState('admin');
-  const [loginId, setLoginId] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('');
   const [branch, setBranch] = useState('SG Highway');
   const [showBranch, setShowBranch] = useState(false);
   const [error, setError] = useState('');
@@ -24,13 +19,8 @@ const Login = () => {
   const selectTab = (tab) => {
     setActiveTab(tab);
     setError('');
-    if (tab === 'admin') {
-      setLoginId('admin'); setPassword('admin123');
-    } else if (tab === 'purchase') {
-      setLoginId('purchase'); setPassword('pur123');
-    } else {
-      setLoginId('sales'); setPassword('sal123');
-    }
+    setLoginId('');
+    setPassword('');
     setShowBranch(tab !== 'admin');
   };
 
@@ -140,11 +130,7 @@ const Login = () => {
             )}
           </button>
 
-          <div className="lx-hint">
-            Admin: <b>admin / admin123</b> &nbsp;|&nbsp;
-            Purchase: <b>purchase / pur123</b> &nbsp;|&nbsp;
-            Sales: <b>sales / sal123</b>
-          </div>
+
         </div>
       </div>
     </div>

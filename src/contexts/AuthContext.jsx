@@ -69,7 +69,9 @@ export function AuthProvider({ children }) {
 
   const loginFromList = (users, loginId, password, branch) => {
     const user = users.find(
-      u => u.lid === loginId.trim() && u.pw === password && u.status === 'Active'
+      u => (u.lid || '').toLowerCase() === loginId.trim().toLowerCase() && 
+           (u.pw === password || u.password === password) && 
+           u.status === 'Active'
     );
     if (!user) {
       return { success: false, error: 'Invalid Login ID or Password.' };

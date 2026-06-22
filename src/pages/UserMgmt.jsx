@@ -34,6 +34,7 @@ const UserMgmt = () => {
   const { data, refresh } = useData();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('view');
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
@@ -95,7 +96,7 @@ const UserMgmt = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search users…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}>
+          <button className="btn btn-or" onClick={() => { setEditRec(null); setModalMode('create'); setIsModalOpen(true); }}>
             <i className="fa fa-plus"></i> Add User
           </button>
         </div>
@@ -107,6 +108,7 @@ const UserMgmt = () => {
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}
           editData={editRec}
+          initialMode={modalMode}
         />
       )}
 
@@ -168,8 +170,8 @@ const UserMgmt = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}>
-                        <i className="fa fa-pen"></i>
+                      <button className="btn-icon bi-view" title="View Details" onClick={() => { setEditRec(r); setModalMode('view'); setIsModalOpen(true); }}>
+                        <i className="fa fa-eye"></i>
                       </button>
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}>
                         <i className="fa fa-trash"></i>
@@ -202,7 +204,7 @@ const UserMgmt = () => {
             <thead>
               <tr>
                 <th>Module</th>
-                {['Admin', 'Manager', 'Sales', 'Valuator', 'Workshop'].map(role => (
+                {['Admin', 'Partner', 'Manager', 'Sales', 'Valuator', 'Workshop'].map(role => (
                   <th key={role}><span className={`role-pill ${roleClass(role)}`}>{role}</span></th>
                 ))}
               </tr>
@@ -211,7 +213,7 @@ const UserMgmt = () => {
               {MODULES.map(mod => (
                 <tr key={mod}>
                   <td style={{ fontWeight: 600, fontSize: 11 }}>{mod}</td>
-                  {['Admin', 'Manager', 'Sales', 'Valuator', 'Workshop'].map(role => (
+                  {['Admin', 'Partner', 'Manager', 'Sales', 'Valuator', 'Workshop'].map(role => (
                     <td key={role} style={{ textAlign: 'center' }}>
                       {canAccess(role, mod)
                         ? <i className="fa fa-check" style={{ color: 'var(--success)' }}></i>

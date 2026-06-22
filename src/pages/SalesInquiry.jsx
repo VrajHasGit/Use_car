@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
-import { today, genId, fmtDate, statusBadge, fmt, ageDays } from '../utils/helpers';
+import { today, genId, fmtDate, fmt, statusBadge, ageDays } from '../utils/helpers';
 import { SalInqModal } from '../components/modals/SalInqModal';
 import { SfuModal } from '../components/modals/SfuModal';
 import { SclModal } from '../components/modals/SclModal';
+import { SobModal } from '../components/modals/SobModal';
+import { TestdriveModal } from '../components/modals/TestdriveModal';
 import { exportToExcel } from '../utils/exportData';
 
 const PAGE_SIZE = 20;
@@ -113,7 +115,8 @@ const SalesInquiry = () => {
         (inq.buyerName || '').toLowerCase().includes(q) ||
         (inq.mobile || '').includes(q) ||
         (inq.salId || '').toLowerCase().includes(q) ||
-        (inq.makePref || '').toLowerCase().includes(q);
+        (inq.makePref || '').toLowerCase().includes(q) ||
+        (inq.linkedStock || '').toLowerCase().includes(q);
       const matchStage = !activeStage || inq.status === activeStage;
       const matchSource = !sourceFilter || inq.source === sourceFilter;
       return matchSearch && matchStage && matchSource;
@@ -142,18 +145,14 @@ const SalesInquiry = () => {
   };
 
   const handleWhatsApp = (rec) => {
-    const msg = encodeURIComponent(`Hello ${rec.buyerName}, we have some great cars matching your requirements at Carecay. Please visit or call us!`);
+    const vehicle = rec.linkedStock ? ` We have a ${rec.makePref || ''} ${rec.model || ''} ready for you.` : '';
+    const msg = encodeURIComponent(`Hello ${rec.buyerName}, thank you for your interest at Carecay.${vehicle} Please visit or call us!`);
     window.open(`https://wa.me/91${rec.mobile}?text=${msg}`, '_blank');
   };
 
   const handleLogCall = async (id, updates) => {
     try { await updateRecord('sal_inq', id, updates); await refresh('sal_inq'); showToast('Interaction logged! ✅'); }
     catch (e) { showToast('Failed to log.', 'error'); }
-  };
-
-  const handleStageChange = async (rec, newStatus) => {
-    try { await updateRecord('sal_inq', rec.id, { status: newStatus }); await refresh('sal_inq'); showToast(`Stage → ${newStatus}`); }
-    catch (e) { showToast('Failed.', 'error'); }
   };
 
   const handleSetFU = async (rec) => {
@@ -197,6 +196,7 @@ const SalesInquiry = () => {
   const inProgress = inquiries.filter(r => r.status === 'In-Progress').length;
   const wonCount = inquiries.filter(r => r.status === 'Closed-Won').length;
   const overdueFU = inquiries.filter(r => r.nextFU && r.nextFU < today() && r.status !== 'Closed-Won' && r.status !== 'Closed-Lost').length;
+  const linkedCount = inquiries.filter(r => r.linkedStock).length;
 
   return (
     <div className="page on" id="pg_sal_inq">
@@ -218,7 +218,7 @@ const SalesInquiry = () => {
           <p>Buyer pipeline · Budget · Preferred vehicle · Follow-up tracking</p>
         </div>
         <div className="ph-actions">
-          <input className="srch" placeholder="🔍 Search buyer / mobile…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          <input className="srch" placeholder="🔍 Search buyer / mobile / stock ID…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
           <select className="flt" value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(1); }}>
             <option value="">All Sources</option>
             {SOURCES.map(s => <option key={s}>{s}</option>)}
@@ -231,13 +231,16 @@ const SalesInquiry = () => {
       <SalInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
       <SfuModal isOpen={quickModal.type === 'sfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
       <SclModal isOpen={quickModal.type === 'scl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.inqId)} quickInqId={quickModal.inqId} />
+      <SobModal isOpen={quickModal.type === 'sob'} onClose={closeQuickModal} />
+      <TestdriveModal isOpen={quickModal.type === 'td'} onClose={closeQuickModal} />
 
       {/* KPI Strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 16 }}>
         {[
           { icon: 'fa-sparkles', val: newCount, lbl: 'New Inquiries', color: '#4A7CDE' },
           { icon: 'fa-phone-volume', val: inProgress, lbl: 'In Follow-Up', color: '#F59E0B' },
           { icon: 'fa-handshake', val: wonCount, lbl: 'Closed Won', color: '#22C55E' },
+          { icon: 'fa-link', val: linkedCount, lbl: 'Linked to Stock', color: '#059669' },
           { icon: 'fa-triangle-exclamation', val: overdueFU, lbl: 'Overdue Follow-Ups', color: '#EF4444' },
         ].map((k, i) => (
           <div key={i} className="kpi" style={{ borderLeft: `3px solid ${k.color}` }}>
@@ -274,8 +277,8 @@ const SalesInquiry = () => {
             <thead>
               <tr>
                 <th>Inq ID</th><th>Date</th><th>Source</th><th>Buyer Name</th><th>Mobile</th>
-                <th>Budget</th><th>Interest</th><th>Stage</th><th>Next F/U</th>
-                <th>Timeline</th><th style={{ minWidth: 220 }}>Actions</th>
+                <th>Budget</th><th>Interest</th><th>Stock ID</th><th>Stage</th><th>Next F/U</th>
+                <th>Timeline</th><th style={{ minWidth: 260 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -290,7 +293,12 @@ const SalesInquiry = () => {
                     <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{inq.buyerName}</td>
                     <td><a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{inq.mobile}</a></td>
                     <td className="amt-or">{fmt(inq.budget)}</td>
-                    <td style={{ color: 'var(--text2)', fontSize: 11 }}>{inq.makePref || '—'}</td>
+                    <td style={{ color: 'var(--text2)', fontSize: 11 }}>{inq.makePref || '—'} {inq.model || ''}</td>
+                    <td>
+                      {inq.linkedStock ? (
+                        <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: '#059669', fontSize: 10, background: 'rgba(5,150,105,.1)', padding: '2px 8px', borderRadius: 10 }}>{inq.linkedStock}</span>
+                      ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>Not linked</span>}
+                    </td>
                     <td><span className={`badge ${statusBadge(inq.status)}`}>{inq.status || 'New'}</span></td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {inq.nextFU ? (
@@ -308,14 +316,23 @@ const SalesInquiry = () => {
                       ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>No log</span>}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon" title="Log Call / Interaction" onClick={() => setLogCallRec(inq)}
                           style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                           <i className="fa fa-phone-volume"></i>
                         </button>
                         <button className="btn-icon bi-view" title="Follow-Up" onClick={() => setQuickModal({ type: 'sfu', inqId: inq.salId || inq.id })}><i className="fa fa-phone"></i></button>
-                        <button className="btn-icon bi-next" title="Closer" onClick={() => setQuickModal({ type: 'scl', inqId: inq.salId || inq.id })}><i className="fa fa-handshake"></i></button>
+                        <button className="btn-icon bi-next" title="Sales Closer" onClick={() => setQuickModal({ type: 'scl', inqId: inq.salId || inq.id })}><i className="fa fa-handshake"></i></button>
+
+                        <button className="btn-icon" title="Order Booking" onClick={() => setQuickModal({ type: 'sob', inqId: inq.salId || inq.id })}
+                          style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className="fa fa-clipboard-list"></i>
+                        </button>
+                        <button className="btn-icon" title="Test Drive" onClick={() => setQuickModal({ type: 'td', inqId: inq.salId || inq.id })}
+                          style={{ background: 'rgba(157,23,77,.1)', color: '#9D174D', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className="fa fa-road"></i>
+                        </button>
                         <button className="btn-icon" title="Set Follow-Up Reminder" onClick={() => handleSetFU(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
                         {inq.mobile && (
                           <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
@@ -329,7 +346,7 @@ const SalesInquiry = () => {
                   </tr>
                 );
               }) : (
-                <tr><td colSpan="11" className="empty">
+                <tr><td colSpan="12" className="empty">
                   <i className="fa fa-search"></i><br />
                   {search || activeStage || sourceFilter ? 'No inquiries match your filters.' : 'No sales inquiries yet. Click "Add Inquiry" to create one.'}
                 </td></tr>

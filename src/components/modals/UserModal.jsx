@@ -1,18 +1,32 @@
-﻿import React, { useState } from 'react';
-import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
 
-export const UserModal = ({ isOpen, onClose, onSave, editData }) => {
+const ReadOnlyVal = ({ value }) => (
+  <div style={{ padding: '8px 12px', background: 'var(--surface2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text2)', minHeight: '34px' }}>
+    {value || '—'}
+  </div>
+);
+
+export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'create' }) => {
+  const [mode, setMode] = useState(initialMode);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-  "usr_name": "",
-  "usr_lid": "",
-  "usr_pw": "",
-  "usr_role": "",
-  "usr_branch": "",
-  "usr_mob": "",
-  "usr_email": "",
-  "usr_stat": ""
-});
+    name: "", lid: "", password: "", role: "Sales", branch: "Head Office", mobile: "", email: "", status: "Active"
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setShowPassword(false);
+      if (editData) {
+        const { pw, password, ...rest } = editData;
+        setFormData({ ...rest, password: password || pw || "" }); // Preserve existing password
+      } else {
+        setFormData({
+          name: "", lid: "", password: "", role: "Sales", branch: "Head Office", mobile: "", email: "", status: "Active"
+        });
+      }
+    }
+  }, [isOpen, editData, initialMode]);
 
   if (!isOpen) return null;
 
@@ -22,24 +36,109 @@ export const UserModal = ({ isOpen, onClose, onSave, editData }) => {
 
   const handleSave = async () => {
     try {
-      await addDoc(collection(db, 'user'), { ...formData, createdAt: new Date().toISOString() });
-      if (onSave) { await onSave(formData); } else { onClose(); }
+      if (onSave) { 
+        await onSave(formData); 
+      } else { 
+        onClose(); 
+      }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
     }
   };
 
+  const isView = mode === 'view';
+
   return (
-    <div className="overlay" id="m_user">
- <div className="mbox" style={{"maxWidth":"600px"}}><div className="m-hdr"><div className="m-hdr-icon">ðŸ‘¤</div><h3>Add / Edit User</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
- <div className="m-body">
-  <div className="grid3"><div className="fg"><label>Full Name *</label><input id="usr_name" name="usr_name" value={formData['usr_name'] || ''} onChange={handleChange} placeholder="Employee name" /></div><div className="fg"><label>Login ID *</label><input id="usr_lid" name="usr_lid" value={formData['usr_lid'] || ''} onChange={handleChange} placeholder="rajan.desai" /></div><div className="fg"><label>Password *</label><input type="password" id="usr_pw" name="usr_pw" value={formData['usr_pw'] || ''} onChange={handleChange} placeholder="Set password" /></div></div>
-  <div className="grid3"><div className="fg"><label>Role *</label><select id="usr_role" name="usr_role" value={formData['usr_role'] || ''} onChange={handleChange}><option>Admin</option><option>Partner</option><option>Manager</option><option>Closer</option><option>Executive</option><option>Sales</option><option>Valuator</option><option>Workshop</option></select></div><div className="fg"><label>Branch</label><select id="usr_branch" name="usr_branch" value={formData['usr_branch'] || ''} onChange={handleChange}><option>SG Highway</option><option>Vastral</option><option>Head Office</option></select></div><div className="fg"><label>Mobile</label><input type="tel" id="usr_mob" name="usr_mob" value={formData['usr_mob'] || ''} onChange={handleChange} placeholder="10-digit" maxLength="10" /></div></div>
-  <div className="grid2"><div className="fg"><label>Email</label><input type="email" id="usr_email" name="usr_email" value={formData['usr_email'] || ''} onChange={handleChange} placeholder="email@example.com" /></div><div className="fg"><label>Status</label><select id="usr_stat" name="usr_stat" value={formData['usr_stat'] || ''} onChange={handleChange}><option>Active</option><option>Inactive</option></select></div></div>
- </div>
- <div className="m-foot"><button className="btn btn-out"  onClick={onClose}>Cancel</button><button className="btn btn-or" onClick={handleSave} ><i className="fa fa-save"></i> Save User</button></div></div>
-</div>
+    <div className="overlay on" id="m_user">
+      <div className="mbox" style={{ maxWidth: '600px' }}>
+        <div className="m-hdr">
+          <div className="m-hdr-icon">👤</div>
+          <h3>{mode === 'create' ? 'Add User' : mode === 'edit' ? 'Edit User' : 'View User Details'}</h3>
+          <button className="m-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="m-body">
+          <div className="grid3">
+            <div className="fg">
+              <label>Full Name *</label>
+              {isView ? <ReadOnlyVal value={formData.name} /> : <input name="name" value={formData.name} onChange={handleChange} placeholder="Employee name" />}
+            </div>
+            <div className="fg">
+              <label>Login ID *</label>
+              {isView ? <ReadOnlyVal value={formData.lid} /> : <input name="lid" value={formData.lid} onChange={handleChange} placeholder="e.g. rajan.desai" />}
+            </div>
+            <div className="fg">
+              <label>Password</label>
+              {isView ? (
+                <div style={{ position: 'relative' }}>
+                  <ReadOnlyVal value={showPassword ? formData.password : '••••••••'} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: 8, background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }} title={showPassword ? "Hide Password" : "Show Password"}>
+                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <input type={showPassword ? "text" : "password"} name="password" value={formData.password || ''} onChange={handleChange} placeholder="Set password" style={{ width: '100%', paddingRight: '32px' }} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }} title={showPassword ? "Hide Password" : "Show Password"}>
+                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid3">
+            <div className="fg">
+              <label>Role *</label>
+              {isView ? <ReadOnlyVal value={formData.role} /> : (
+                <select name="role" value={formData.role} onChange={handleChange}>
+                  <option>Admin</option><option>Partner</option><option>Manager</option>
+                  <option>Closer</option><option>Executive</option><option>Sales</option>
+                  <option>Valuator</option><option>Workshop</option>
+                </select>
+              )}
+            </div>
+            <div className="fg">
+              <label>Branch</label>
+              {isView ? <ReadOnlyVal value={formData.branch} /> : (
+                <select name="branch" value={formData.branch} onChange={handleChange}>
+                  <option>SG Highway</option><option>Vastral</option><option>Head Office</option>
+                </select>
+              )}
+            </div>
+            <div className="fg">
+              <label>Mobile</label>
+              {isView ? <ReadOnlyVal value={formData.mobile} /> : <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="10-digit" maxLength="10" />}
+            </div>
+          </div>
+          <div className="grid2">
+            <div className="fg">
+              <label>Email</label>
+              {isView ? <ReadOnlyVal value={formData.email} /> : <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" />}
+            </div>
+            <div className="fg">
+              <label>Status</label>
+              {isView ? <ReadOnlyVal value={formData.status} /> : (
+                <select name="status" value={formData.status} onChange={handleChange}>
+                  <option>Active</option><option>Inactive</option>
+                </select>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="m-foot">
+          {isView ? (
+            <>
+              <button className="btn btn-out" onClick={onClose}>Close</button>
+              <button className="btn btn-or" onClick={() => setMode('edit')}><i className="fa fa-pen"></i> Edit User</button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-out" onClick={() => (mode === 'edit' && editData) ? setMode('view') : onClose()}>Cancel</button>
+              <button className="btn btn-or" onClick={handleSave}><i className="fa fa-save"></i> Save User</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
-

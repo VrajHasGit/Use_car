@@ -10,7 +10,7 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     sc_make: '', sc_model: '', sc_regn: '', sc_year: '',
     sc_date: today(), sc_stat: 'Confirmed', sc_mrp: '', sc_disc: '',
     sc_tok: '', sc_pm: 'Cash', sc_ins: '', sc_rto: '', sc_oth: '',
-    sc_rem: '', sc_dby: 'Ritesh Shah'
+    sc_rem: '', sc_dby: 'Ritesh Shah', sc_tcp: ''
   };
 
   const [formData, setFormData] = useState(blank);
@@ -40,11 +40,14 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         ...prev,
         sc_bname: d.buyerName || d.customerName || prev.sc_bname,
         sc_mob: d.mobile || d.buyerMob || prev.sc_mob,
-        sc_make: d.make || prev.sc_make,
+        sc_make: d.makePref || d.make || prev.sc_make,
         sc_model: d.model || prev.sc_model,
-        sc_year: d.year || prev.sc_year,
+        sc_year: d.year || d.yearFrom || prev.sc_year,
         sc_mrp: d.salePrice || d.finalPrice || d.budget || prev.sc_mrp,
+        sc_stkid: d.linkedStock || prev.sc_stkid,
       }));
+      // Chain-load stock data if linked
+      if (d.linkedStock) doFillFromStkId(d.linkedStock);
     }
     setFilling('');
   };
@@ -56,11 +59,12 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     if (d) {
       setFormData(prev => ({
         ...prev,
-        sc_make: d.make || prev.sc_make,
-        sc_model: d.model || prev.sc_model,
-        sc_year: d.year || prev.sc_year,
-        sc_regn: d.regNo || prev.sc_regn,
-        sc_mrp: d.sprice || d.tcp || prev.sc_mrp,
+        sc_make: d.make || d.sk_make || prev.sc_make,
+        sc_model: d.model || d.sk_model || prev.sc_model,
+        sc_year: d.year || d.sk_year || prev.sc_year,
+        sc_regn: d.regNo || d.sk_regn || prev.sc_regn,
+        sc_mrp: d.sprice || d.sp || d.sk_sp || prev.sc_mrp,
+        sc_tcp: d.tcp || (Number(d.sk_pp || d.pp || 0) + Number(d.sk_refurb || d.refurb || 0) + Number(d.sk_rto || d.rto || 0) + Number(d.sk_ins || d.ins || 0)) || prev.sc_tcp,
       }));
     }
     setFilling('');
@@ -77,7 +81,8 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sc_model: d.model || prev.sc_model,
         sc_year: d.year || prev.sc_year,
         sc_stkid: d.stkId || prev.sc_stkid,
-        sc_mrp: d.sprice || d.tcp || prev.sc_mrp,
+        sc_mrp: d.sprice || d.sp || d.tcp || prev.sc_mrp,
+        sc_tcp: d.tcp || (Number(d.sk_pp || d.pp || 0) + Number(d.sk_refurb || d.refurb || 0) + Number(d.sk_rto || d.rto || 0) + Number(d.sk_ins || d.ins || 0)) || prev.sc_tcp,
       }));
     }
     setFilling('');
@@ -98,11 +103,13 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const rto = Number(formData.sc_rto || 0);
   const oth = Number(formData.sc_oth || 0);
   const total = final + ins + rto + oth;
+  const tcp = Number(formData.sc_tcp || 0);
+  const profit = tcp > 0 ? final - tcp : 0;
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { ...formData, final, total };
+      const payload = { ...formData, final, total, profit };
       if (editData && editData.id) {
         await updateDoc(doc(db, 'scl', editData.id), { ...payload, updatedAt: new Date().toISOString() });
       } else {
@@ -140,11 +147,11 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
               <input name="sc_inqid" value={formData.sc_inqid} onChange={handleChange} placeholder="SIN-2025-0001" />
             </div>
             <div className="fg">
-              <label>Stock ID <Tag text="Auto-Fill Vehicle" /></label>
+              <label>Stock ID <span style={{ color: '#059669', fontSize: 10, fontWeight: 700, marginLeft: 4 }}>{filling === 'stk' ? '⏳' : '⚡'} Auto-Fill Vehicle</span></label>
               <input name="sc_stkid" value={formData.sc_stkid} onChange={handleChange} placeholder="STK-2025-0001" />
             </div>
             <div className="fg">
-              <label>Reg No. <Tag text="Auto-Fill from Stock" /></label>
+              <label>Reg No. <span style={{ color: '#059669', fontSize: 10, fontWeight: 700, marginLeft: 4 }}>{filling === 'reg' ? '⏳' : '⚡'} Auto-Fill from Stock</span></label>
               <input name="sc_regn" value={formData.sc_regn} onChange={handleChange} placeholder="GJ-01-AB-1234" />
             </div>
           </div>
@@ -194,7 +201,21 @@ export const SclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             <div className="fg"><label>Total Amount ₹ (Auto)</label><div className="calc-out" style={{ color: 'var(--or1)' }}>₹ {total.toLocaleString('en-IN')}</div></div>
             <div className="fg"></div>
           </div>
-          <div className="grid1"><div className="fg"><label>Remarks</label><input name="sc_rem" value={formData.sc_rem} onChange={handleChange} placeholder="Notes" /></div></div>
+
+          {/* Profit Preview */}
+          {tcp > 0 && (
+            <div style={{ background: profit >= 0 ? 'rgba(34,197,94,.08)' : 'rgba(239,68,68,.08)', border: `1px solid ${profit >= 0 ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)'}`, borderRadius: 'var(--radius-sm)', padding: '12px 16px', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--text3)', marginBottom: 4 }}>💰 Estimated Profit</div>
+                <div style={{ fontSize: 11, color: 'var(--text2)' }}>Sale Price ₹{final.toLocaleString('en-IN')} − TCP ₹{tcp.toLocaleString('en-IN')}</div>
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif", color: profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                {profit >= 0 ? '+' : ''}₹{profit.toLocaleString('en-IN')}
+              </div>
+            </div>
+          )}
+
+          <div className="grid1" style={{ marginTop: 10 }}><div className="fg"><label>Remarks</label><input name="sc_rem" value={formData.sc_rem} onChange={handleChange} placeholder="Notes" /></div></div>
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>

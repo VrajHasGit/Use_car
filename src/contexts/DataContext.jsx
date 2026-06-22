@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAll } from '../services/db';
+import { getAll, subscribeCollection } from '../services/db';
 
 const DataContext = createContext(null);
 
@@ -16,6 +16,7 @@ export function DataProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async (colName) => {
+    // With real-time listeners, manual refresh is mostly a no-op or fallback
     try {
       const records = await getAll(colName);
       setData(prev => ({ ...prev, [colName]: records }));
@@ -25,6 +26,7 @@ export function DataProvider({ children }) {
   }, []);
 
   const refreshAll = useCallback(async () => {
+    // Used mainly for manual forcing if needed
     setLoading(true);
     try {
       const results = await Promise.all(
@@ -40,7 +42,25 @@ export function DataProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshAll();
+    let loadedCount = 0;
+    const unsubs = COLLECTIONS.map(col => {
+      return subscribeCollection(col, (records) => {
+        setData(prev => ({ ...prev, [col]: records }));
+        loadedCount++;
+        // If all collections have returned at least their first snapshot, stop loading
+        if (loadedCount >= COLLECTIONS.length && loading) {
+          setLoading(false);
+        }
+      });
+    });
+
+    // Fallback if some collections take too long
+    const fallbackTimer = setTimeout(() => setLoading(false), 3000);
+
+    return () => {
+      clearTimeout(fallbackTimer);
+      unsubs.forEach(unsub => unsub && unsub());
+    };
   }, []);
 
   const value = { data, loading, refresh, refreshAll };

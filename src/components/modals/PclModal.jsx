@@ -7,6 +7,7 @@ import { genId, today } from '../../utils/helpers';
 import { autoFillFromInq } from '../../utils/relations';
 
 export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId }) => {
+  const { data: ctxData } = useData();
   const [formData, setFormData] = useState({
     pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: "", pc_type: "Direct Purchase",
     pc_stat: "Confirmed", pc_price: "", pc_tok: "", pc_pm1: "Cash", pc_p1: "",
@@ -16,22 +17,47 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   });
   
   const [saving, setSaving] = useState(false);
+  const [autoFillMsg, setAutoFillMsg] = useState('');
+
+  // In-memory lookup first, Firestore fallback
+  const lookupInquiry = async (inqId) => {
+    if (!inqId) return null;
+    const local = (ctxData?.pur_inq || []).find(r =>
+      (r.inqId || '').toLowerCase() === inqId.toLowerCase() ||
+      (r.id || '').toLowerCase() === inqId.toLowerCase()
+    );
+    if (local) return local;
+    return await autoFillFromInq(inqId);
+  };
+
+  const applyAutoFill = async (inqId) => {
+    const inqData = await lookupInquiry(inqId);
+    if (inqData) {
+      setFormData(prev => ({
+        ...prev,
+        pc_sname: inqData.sellerName || prev.pc_sname,
+        pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''} ${inqData.year || ''}`.trim() : prev.pc_veh,
+        pc_mob: inqData.mobile || prev.pc_mob,
+        pc_make: inqData.make || prev.pc_make,
+        pc_model: inqData.model || prev.pc_model,
+        pc_year: inqData.year || prev.pc_year,
+        pc_fuel: inqData.fuel || prev.pc_fuel,
+        pc_km: inqData.km || prev.pc_km,
+        pc_regn: inqData.regNo || prev.pc_regn,
+      }));
+      setAutoFillMsg(`✅ Auto-filled from: ${inqData.sellerName || inqId}`);
+      setTimeout(() => setAutoFillMsg(''), 4000);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
+      setAutoFillMsg('');
       if (editData) {
         setFormData({ ...editData });
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, pc_inqid: quickInqId }));
-        autoFillFromInq(quickInqId).then(inqData => {
-          if (inqData) {
-            setFormData(prev => ({
-              ...prev,
-              pc_sname: inqData.sellerName || '',
-              pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''}` : ''
-            }));
-          }
-        });
+        applyAutoFill(quickInqId);
       } else {
         setFormData({
           pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: new Date().toISOString().split('T')[0], pc_type: "Direct Purchase",
@@ -49,23 +75,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (name === 'pc_inqid' && value.length >= 5) {
-      autoFillFromInq(value).then(inqData => {
-        if (inqData) {
-          setFormData(prev => ({
-            ...prev,
-            pc_sname: inqData.sellerName || prev.pc_sname,
-            pc_veh: inqData.make ? `${inqData.make} ${inqData.model || ''} ${inqData.year || ''}`.trim() : prev.pc_veh,
-            pc_mob: inqData.mobile || prev.pc_mob,
-            pc_make: inqData.make || prev.pc_make,
-            pc_model: inqData.model || prev.pc_model,
-            pc_year: inqData.year || prev.pc_year,
-            pc_fuel: inqData.fuel || prev.pc_fuel,
-            pc_km: inqData.km || prev.pc_km,
-            pc_regn: inqData.regNo || prev.pc_regn,
-          }));
-        }
-      });
+    if (name === 'pc_inqid' && value.length >= 3) {
+      applyAutoFill(value);
     }
   };
 
@@ -110,6 +121,11 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           <button className="m-close" onClick={onClose}>✕</button>
         </div>
         <div className="m-body">
+          {autoFillMsg && (
+            <div style={{ background: 'rgba(16,185,129,.1)', border: '1px solid #10B981', borderRadius: 'var(--radius-sm)', padding: '8px 14px', fontSize: 12, color: '#10B981', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {autoFillMsg}
+            </div>
+          )}
           <div className="grid3">
             <div className="fg"><label>Inquiry ID <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill</span></label><input name="pc_inqid" value={formData.pc_inqid} onChange={handleChange} placeholder="INQ-2025-0001" /></div>
             <div className="fg"><label>Seller Name</label><input name="pc_sname" value={formData.pc_sname} onChange={handleChange} placeholder="Name" /></div>

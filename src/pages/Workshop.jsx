@@ -68,10 +68,10 @@ function JobExpandPanel({ rec, onUpdateTasks, onReadyToList }) {
         <button className="btn btn-or btn-sm" onClick={addTask} disabled={!newTask.trim()}><i className="fa fa-plus"></i></button>
       </div>
       {/* Ready to List */}
-      {rec.jStat === 'Complete' && (
-        <button className="btn" style={{ marginTop: 12, background: 'var(--success)', color: '#fff', width: '100%' }}
+      {!rec.readyToList && (
+        <button className="btn" style={{ marginTop: 12, background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', width: '100%', border: '1px solid #047857', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
           onClick={() => onReadyToList(rec)}>
-          <i className="fa fa-warehouse"></i> Mark Ready to List in Stock
+          <i className="fa fa-wand-magic-sparkles" style={{ color: '#FFD700', marginRight: '6px' }}></i> ✨ Finalize & Release to Showroom
         </button>
       )}
     </div>
@@ -114,26 +114,26 @@ const Workshop = () => {
   const stock = data.stk || [];
 
   const filtered = useMemo(() => records.filter(r => {
-    const matchSearch = !search || (r.regNo || '').toLowerCase().includes(search.toLowerCase()) || (r.make || '').toLowerCase().includes(search.toLowerCase()) || (r.wsId || '').toLowerCase().includes(search.toLowerCase());
-    const matchStatus = !statusFilter || r.jStat === statusFilter;
+    const matchSearch = !search || (r.ws_vnum || r.regNo || '').toLowerCase().includes(search.toLowerCase()) || (r.ws_make || r.make || '').toLowerCase().includes(search.toLowerCase()) || (r.wsId || '').toLowerCase().includes(search.toLowerCase());
+    const matchStatus = !statusFilter || (r.ws_jstat || r.jStat) === statusFilter;
     return matchSearch && matchStatus;
   }), [records, search, statusFilter]);
 
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
-  const activeCount = records.filter(r => r.jStat === 'Open' || r.jStat === 'In Process').length;
-  const doneCount = records.filter(r => r.jStat === 'Complete').length;
-  const totalCost = records.filter(r => r.jStat !== 'Complete').reduce((s, r) => s + (parseFloat(r.total) || 0), 0);
+  const activeCount = records.filter(r => ['Open', 'In Process'].includes(r.ws_jstat || r.jStat)).length;
+  const doneCount = records.filter(r => (r.ws_jstat || r.jStat) === 'Complete').length;
+  const totalCost = records.filter(r => (r.ws_jstat || r.jStat) !== 'Complete').reduce((s, r) => s + (parseFloat(r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0))) || 0), 0);
   const avgAge = (() => {
-    const active = records.filter(r => r.jStat !== 'Complete' && r.date);
+    const active = records.filter(r => (r.ws_jstat || r.jStat) !== 'Complete' && (r.date || r.ws_indate));
     if (!active.length) return 0;
-    return Math.round(active.reduce((s, r) => s + ageDays(r.date), 0) / active.length);
+    return Math.round(active.reduce((s, r) => s + ageDays(r.date || r.ws_indate), 0) / active.length);
   })();
 
   const chartData = useMemo(() => {
     const counts = {};
-    records.filter(r => r.jStat !== 'Complete').forEach(r => {
-      const type = r.jobType || 'Other';
+    records.filter(r => (r.ws_jstat || r.jStat) !== 'Complete').forEach(r => {
+      const type = r.ws_wtype || r.jobType || 'Other';
       counts[type] = (counts[type] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
@@ -144,7 +144,15 @@ const Workshop = () => {
   const handleSave = async (fd) => {
     try {
       if (editRec) { await updateRecord('ws', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('ws'); await addRecord('ws', { ...fd, wsId: genId('WS', cnt), date: fd.date || today(), tasks: [] }); showToast('Workshop job added!'); }
+      else { 
+        let wsId = fd.wsId;
+        if (!wsId) {
+          const cnt = await getNextCounter('ws'); 
+          wsId = genId('JC', cnt);
+        }
+        await addRecord('ws', { ...fd, wsId, date: fd.ws_indate || fd.date || today(), tasks: fd.tasks || [] }); 
+        showToast('Workshop job added!'); 
+      }
       await refresh('ws'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
@@ -162,27 +170,32 @@ const Workshop = () => {
 
   const handleReadyToList = async (rec) => {
     // Cross-update matching stock record
-    const stkRec = stock.find(s => s.regNo === rec.regNo || s.stkId === rec.linkedStk);
+    const stkRec = stock.find(s => s.regNo === (rec.ws_vnum || rec.regNo) || s.stkId === (rec.ws_stkid || rec.linkedStk));
     if (stkRec) {
       try {
-        await updateRecord('stk', stkRec.id, { status: 'In Stock', refurbDone: today() });
+        await updateRecord('stk', stkRec.id, { status: 'Ready for Sale', refurbDone: today() });
         await refresh('stk');
-        showToast(`${rec.regNo} is now listed as "In Stock" in the Stock register! ✅`);
-      } catch (e) { showToast('Failed to update stock.', 'error'); }
+        showToast(`${rec.ws_vnum || rec.regNo} is now listed as "Ready for Sale" in the Stock register! ✨`);
+      } catch (e) { showToast('Failed to update stock.', 'error'); return; }
     } else {
-      showToast(`Job complete! No matching stock record found for ${rec.regNo}. Update stock manually.`, 'info');
+      showToast(`No matching stock record found for ${rec.ws_vnum || rec.regNo}.`, 'info');
     }
-    await updateRecord('ws', rec.id, { readyToList: true, listedAt: today() });
-    await refresh('ws');
+    
+    // Discard the workshop record
+    try {
+      await deleteRecord('ws', rec.id);
+      await refresh('ws');
+      showToast('Workshop job finalized and discarded!', 'success');
+    } catch (e) { showToast('Failed to discard workshop record.', 'error'); }
   };
 
   const handleExport = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
-      'Job ID': r.wsId, 'Date': r.date, 'Reg No': r.regNo, Make: r.make, Model: r.model,
-      'Job Type': r.jobType, 'Total Cost (INR)': r.total, 'Technician': r.tech || '',
+      'Job ID': r.wsId, 'Date': r.date || r.ws_indate, 'Reg No': r.ws_vnum || r.regNo, Make: r.ws_make || r.make, Model: r.ws_model || r.model,
+      'Job Type': r.ws_wtype || r.jobType, 'Total Cost (INR)': r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0)), 'Technician': r.ws_tech || r.tech || '',
       'Tasks Count': (r.tasks || []).length, 'Tasks Done': (r.tasks || []).filter(t => t.done).length,
-      Status: r.jStat, Notes: r.notes || '',
+      Status: r.ws_jstat || r.jStat, Notes: r.ws_rem || r.notes || '',
     }));
     exportToExcel(rows, `workshop_jobs_${today()}.xlsx`);
   };
@@ -280,13 +293,13 @@ const Workshop = () => {
                           <i className="fa fa-chevron-right"></i>
                         </button>
                       </td>
-                      <td style={{ fontWeight: 700, color: 'var(--warn)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.wsId || r.id?.slice(0, 12)}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--warn)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.wsId || `JC-${String(Array.from(r.id || '').reduce((a,c) => a + c.charCodeAt(0), 0)).padStart(4, '0')}`}</td>
                       <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.ws_inqid || '—'}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.date)}</td>
-                      <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.regNo}</td>
-                      <td>{r.make} {r.model}</td>
-                      <td>{r.jobType || '—'}</td>
-                      <td className="amt-or">{fmt(r.total)}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.date || r.ws_indate)}</td>
+                      <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.ws_vnum || r.regNo}</td>
+                      <td>{r.ws_make || r.make} {r.ws_model || r.model}</td>
+                      <td>{r.ws_wtype || r.jobType || '—'}</td>
+                      <td className="amt-or">{fmt(r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0)))}</td>
                       <td>
                         {tasks.length > 0 ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -297,19 +310,19 @@ const Workshop = () => {
                           </div>
                         ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>—</span>}
                       </td>
-                      <td><span className={`badge ${r.jStat === 'Open' ? 'b-open' : r.jStat === 'In Process' ? 'b-prog' : 'b-complete'}`}>{r.jStat}</span></td>
-                      <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.notes}>{r.notes || '—'}</td>
+                      <td><span className={`badge ${(r.ws_jstat || r.jStat) === 'Open' ? 'b-open' : (r.ws_jstat || r.jStat) === 'In Process' ? 'b-prog' : 'b-complete'}`}>{r.ws_jstat || r.jStat}</span></td>
+                      <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.ws_prob || r.ws_rem || r.notes}>{r.ws_prob || r.ws_rem || r.notes || '—'}</td>
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                           <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                           <button className="btn-icon" title="Tasks / Expand" onClick={() => setExpandedId(isExpanded ? null : r.id)}
                             style={{ background: isExpanded ? 'rgba(200,168,75,.15)' : 'rgba(74,124,222,.1)', color: isExpanded ? 'var(--or1)' : 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                             <i className={`fa fa-${isExpanded ? 'chevron-up' : 'list-check'}`}></i>
                           </button>
-                          {isManager && r.jStat === 'Complete' && !r.readyToList && (
-                            <button title="Ready to List" onClick={() => handleReadyToList(r)}
-                              style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap', padding: '0 6px', width: 'auto', minWidth: 28 }}>
-                              <i className="fa fa-warehouse"></i>
+                          {isManager && !r.readyToList && (
+                            <button title="Finalize & Release to Showroom" onClick={() => handleReadyToList(r)}
+                              style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', width: 28, height: 28, borderRadius: 5, border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
+                              <i className="fa fa-wand-magic-sparkles"></i>
                             </button>
                           )}
                           {r.readyToList && <span title="Listed in Stock" style={{ color: 'var(--success)', fontSize: 11, display: 'flex', alignItems: 'center' }}><i className="fa fa-circle-check"></i></span>}

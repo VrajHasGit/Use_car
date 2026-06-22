@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
@@ -12,50 +12,179 @@ const SalesFollowUp = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.sfu || [];
-  const filtered = records.filter(r => !search || (r.buyerName||'').toLowerCase().includes(search.toLowerCase()) || (r.mobile||'').includes(search));
+
+  // Auto-fix missing IDs
+  useEffect(() => {
+    let fixed = false;
+    const fixIds = async () => {
+      for (const r of records) {
+        if (!r.sfuId) {
+          const cnt = await getNextCounter('sfu');
+          await updateRecord('sfu', r.id, { sfuId: genId('SFU', cnt) });
+          fixed = true;
+        }
+      }
+      if (fixed) refresh('sfu');
+    };
+    if (records.length > 0) fixIds();
+  }, [records]);
+
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (r.sf_cname || r.buyerName || '').toLowerCase().includes(q) ||
+      (r.sf_mob || r.mobile || '').includes(q) ||
+      (r.sf_stkid || '').toLowerCase().includes(q) ||
+      (r.sf_make || '').toLowerCase().includes(q) ||
+      (r.sfuId || '').toLowerCase().includes(q);
+  });
+
   const handleSave = async (fd) => {
     try {
       if (editRec) { await updateRecord('sfu', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', {...fd, sfuId: genId('SFU', cnt), date: fd.date||today()}); showToast('Follow-up added!'); }
+      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', { ...fd, sfuId: genId('SFU', cnt), date: fd.sf_date || today() }); showToast('Follow-up added!'); }
       await refresh('sfu'); setIsModalOpen(false);
-    } catch(e) { showToast('Failed: '+e.message, 'error'); }
+    } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
-  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('sfu', rec.id); await refresh('sfu'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
-  const handleWA = (r) => { const m = encodeURIComponent(`Hello ${r.buyerName}, following up on your car inquiry at Carecay.`); window.open(`https://wa.me/91${r.mobile}?text=${m}`, '_blank'); };
+
+  const handleDelete = async (rec) => {
+    if (!window.confirm('Delete this follow-up record?')) return;
+    try { await deleteRecord('sfu', rec.id); await refresh('sfu'); showToast('Deleted.', 'info'); }
+    catch (e) { showToast('Delete failed.', 'error'); }
+  };
+
+  const handleWA = (r) => {
+    const vehicle = r.sf_make ? ` regarding the ${r.sf_make} ${r.sf_model || ''}` : '';
+    const m = encodeURIComponent(`Hello ${r.sf_cname || r.buyerName}, following up on your car inquiry${vehicle} at Carecay.`);
+    window.open(`https://wa.me/91${r.sf_mob || r.mobile}?text=${m}`, '_blank');
+  };
+
+  const handleSendToCloser = async (rec) => {
+    if (!window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Closer?`)) return;
+    try {
+      // Update follow-up status
+      await updateRecord('sfu', rec.id, { sf_stat: 'Closed-Won' });
+
+      // Auto-create closer record
+      const exists = data.scl?.find(p => p.sc_inqid === rec.sf_inqid);
+      if (!exists && rec.sf_inqid) {
+        const cnt = await getNextCounter('scl');
+        await addRecord('scl', {
+          sclId: genId('SCL', cnt),
+          sc_inqid: rec.sf_inqid,
+          sc_stkid: rec.sf_stkid || '',
+          sc_bname: rec.sf_cname || rec.buyerName || '',
+          sc_mob: rec.sf_mob || rec.mobile || '',
+          sc_make: rec.sf_make || '',
+          sc_model: rec.sf_model || '',
+          sc_year: rec.sf_year || '',
+          sc_regn: rec.sf_regn || '',
+          sc_mrp: rec.sf_budget || '',
+          sc_date: today(),
+          sc_stat: 'Confirmed',
+          buyerName: rec.sf_cname || rec.buyerName || '',
+          mobile: rec.sf_mob || rec.mobile || '',
+          make: rec.sf_make || '',
+          model: rec.sf_model || '',
+          regNo: rec.sf_regn || '',
+          status: 'Confirmed'
+        });
+      }
+
+      // Update parent inquiry status
+      const inqRec = data.sal_inq?.find(i => i.salId === rec.sf_inqid);
+      if (inqRec) await updateRecord('sal_inq', inqRec.id, { status: 'Closed-Won' });
+
+      showToast('Sent to Sales Closer! 🏆');
+      await refresh('sfu');
+      await refresh('scl');
+      await refresh('sal_inq');
+    } catch (e) {
+      showToast('Failed to send to closer.', 'error');
+    }
+  };
+
+  // KPIs
+  const interested = records.filter(r => r.sf_stat === 'Interested').length;
+  const callback = records.filter(r => r.sf_stat === 'Callback').length;
+  const won = records.filter(r => r.sf_stat === 'Closed-Won').length;
+  const overdue = records.filter(r => r.sf_nfd && r.sf_nfd < today() && r.sf_stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost').length;
+
   return (
     <div className="page on" id="pg_sal_follow">
-      {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
+      {toast && <div className="toast-wrap"><div className={`toast ${toast.type === 'success' ? 'suc' : toast.type === 'error' ? 'err' : 'inf'}`} style={{ display: 'flex' }}><span style={{ flex: 1 }}>{toast.msg}</span><button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>✕</button></div></div>}
       <div className="ph">
-        <div className="ph-left"><h1><div className="ph-icon"><i className="fa fa-comments"></i></div>Sales Follow-Up</h1><p>Follow-up on sales inquiries and buyer contacts</p></div>
+        <div className="ph-left"><h1><div className="ph-icon" style={{ background: 'linear-gradient(135deg,#F59E0B,#D97706)' }}><i className="fa fa-comments"></i></div>Sales Follow-Up</h1><p>Follow-up on sales inquiries and buyer contacts</p></div>
         <div className="ph-actions">
-          <input className="srch" placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> Add Follow-Up</button>
+          <input className="srch" placeholder="🔍 Search buyer / stock ID…" value={search} onChange={e => setSearch(e.target.value)} />
+          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Follow-Up</button>
         </div>
       </div>
-      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+
+      {/* KPI Strip */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
+        {[
+          { icon: 'fa-heart', val: interested, lbl: 'Interested', color: '#4A7CDE' },
+          { icon: 'fa-phone-flip', val: callback, lbl: 'Callback', color: '#F59E0B' },
+          { icon: 'fa-handshake', val: won, lbl: 'Closed Won', color: '#22C55E' },
+          { icon: 'fa-triangle-exclamation', val: overdue, lbl: 'Overdue F/U', color: '#EF4444' },
+        ].map((k, i) => (
+          <div key={i} className="kpi" style={{ borderLeft: `3px solid ${k.color}` }}>
+            <div className="kpi-icon"><i className={`fa ${k.icon}`} style={{ color: k.color }}></i></div>
+            <div className="kpi-val">{k.val}</div>
+            <div className="kpi-lbl">{k.lbl}</div>
+          </div>
+        ))}
+      </div>
+
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Sales Follow-Ups <span style={{background:'var(--bl5)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
-        <div className="tbl-wrap">
+        <div className="tc-hdr"><div className="tc-title"><i className="fa fa-comments" style={{ color: 'var(--warn)' }}></i> Sales Follow-Ups <span style={{ background: 'var(--bl5)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
+        <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table id="tbl_sfu">
-            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Status</th><th>Next F/U</th><th>Notes</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Stock ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Vehicle</th><th>Status</th><th>Next F/U</th><th>Notes</th><th style={{ minWidth: 180 }}>Actions</th></tr></thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(r => (
-                <tr key={r.id}>
-                  <td style={{fontWeight:700,color:'var(--bl5)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.sfuId||r.id?.slice(0,12)}</td>
-                  <td style={{fontWeight:600,color:'var(--text2)'}}>{r.sf_inqid||'—'}</td>
-                  <td>{fmtDate(r.date)}</td><td style={{fontWeight:600}}>{r.buyerName}</td>
-                  <td><a href={`tel:${r.mobile}`} style={{color:'var(--info)',textDecoration:'none'}}>{r.mobile}</a></td>
-                  <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
-                  <td>{r.nextFU?fmtDate(r.nextFU):'—'}</td><td>{r.notes||'—'}</td>
-                  <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
-                    <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
-                    {r.mobile&&<button title="WhatsApp" onClick={()=>handleWA(r)} style={{background:'#25D366',color:'#fff',width:28,height:28,borderRadius:5,border:'none',cursor:'pointer',fontSize:11}}><i className="fa-brands fa-whatsapp"></i></button>}
-                    <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
-                  </div></td>
-                </tr>
-              )) : <tr><td colSpan="8" className="empty"><i className="fa fa-comments"></i><br />{search?'No results found':'No follow-up records yet.'}</td></tr>}
+              {filtered.length > 0 ? filtered.map(r => {
+                const isOverdue = r.sf_nfd && r.sf_nfd < today() && r.sf_stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost' && r.sf_stat !== 'Not Interested';
+                return (
+                  <tr key={r.id} className={isOverdue ? 'doc-alert-row' : ''}>
+                    <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.sfuId || r.id?.slice(0, 12)}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sf_inqid || '—'}</td>
+                    <td>
+                      {r.sf_stkid ? (
+                        <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: '#059669', fontSize: 10, background: 'rgba(5,150,105,.1)', padding: '2px 8px', borderRadius: 10 }}>{r.sf_stkid}</span>
+                      ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>—</span>}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.sf_date || r.date)}</td>
+                    <td style={{ fontWeight: 600 }}>{r.sf_cname || r.buyerName}</td>
+                    <td><a href={`tel:${r.sf_mob || r.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{r.sf_mob || r.mobile}</a></td>
+                    <td style={{ fontSize: 11, color: 'var(--text2)' }}>{r.sf_make || ''} {r.sf_model || ''} {r.sf_year ? `(${r.sf_year})` : ''}</td>
+                    <td><span className={`badge ${statusBadge(r.sf_stat || r.status)}`}>{r.sf_stat || r.status}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {r.sf_nfd ? (
+                        <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
+                          {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
+                          {fmtDate(r.sf_nfd)}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11, color: 'var(--text3)' }}>{r.sf_rem || r.notes || '—'}</td>
+                    <td>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        <button className="btn-icon bi-next" title="Send to Closer" onClick={() => handleSendToCloser(r)}><i className="fa fa-handshake"></i></button>
+                        {(r.sf_mob || r.mobile) && <button title="WhatsApp" onClick={() => handleWA(r)} style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>}
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : <tr><td colSpan="11" className="empty"><i className="fa fa-comments"></i><br />{search ? 'No results found' : 'No follow-up records yet. Click "Add Follow-Up" to create one.'}</td></tr>}
             </tbody>
           </table>
+        </div>
+        <div className="tc-foot">
+          <span className="pg-info">Showing {filtered.length} of {records.length} follow-ups</span>
         </div>
       </div>
     </div>

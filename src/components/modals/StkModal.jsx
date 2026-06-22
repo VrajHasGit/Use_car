@@ -6,7 +6,7 @@ import { MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/
 
 export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId }) => {
   const [formData, setFormData] = useState({
-    sk_inqid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
+    sk_inqid: "", sk_docid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
     sk_model: "", sk_var: "", sk_year: "", sk_ryear: "", sk_fuel: "Petrol",
     sk_trans: "Manual", sk_color: "White", sk_km: "", sk_own: "1st",
     sk_stat: "In Stock", sk_loc: "", sk_pdate: "", sk_insval: "",
@@ -39,7 +39,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           }
         });
       } else if (quickDocId) {
-        setFormData(prev => ({ ...prev, sk_inqid: quickDocId })); // doc Id reference
+        setFormData(prev => ({ ...prev, sk_docid: quickDocId })); // doc Id reference
         autoFillFromDoc(quickDocId).then(docData => {
           if (docData) {
             setFormData(prev => ({
@@ -62,7 +62,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         });
       } else {
         setFormData({
-          sk_inqid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
+          sk_inqid: "", sk_docid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
           sk_model: "", sk_var: "", sk_year: "", sk_ryear: "", sk_fuel: "Petrol",
           sk_trans: "Manual", sk_color: "White", sk_km: "", sk_own: "1st",
           sk_stat: "In Stock", sk_loc: "", sk_pdate: new Date().toISOString().split('T')[0], sk_insval: "",
@@ -86,43 +86,43 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       setFormData(prev => ({ ...prev, sk_model: '' }));
     }
 
+    if (name === 'sk_docid' && value.length >= 5) {
+      autoFillFromDoc(value.toUpperCase()).then(docData => {
+        if (docData) {
+          setFormData(prev => ({
+            ...prev,
+            sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || prev.sk_regn,
+            sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || prev.sk_make,
+            sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || prev.sk_model,
+            sk_var: docData.ob_var || docData.variant || prev.sk_var,
+            sk_year: docData.ob_year || docData.year || prev.sk_year,
+            sk_fuel: docData.ob_fuel || docData.fuel || prev.sk_fuel,
+            sk_chas: docData.ob_chas || docData.chas || prev.sk_chas,
+            sk_eng: docData.ob_eng || docData.eng || prev.sk_eng,
+            sk_color: docData.ob_color || docData.color || prev.sk_color,
+            sk_km: docData.ob_km || docData.km || prev.sk_km,
+            sk_pp: docData.ob_pp || docData.pp || prev.sk_pp,
+            sk_rc: docData.dc_rc ? 'Yes' : prev.sk_rc
+          }));
+          setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
+        }
+      });
+    }
+
     if (name === 'sk_inqid' && value.length >= 5) {
-      if (value.toUpperCase().startsWith('DOC-')) {
-        autoFillFromDoc(value.toUpperCase()).then(docData => {
-          if (docData) {
-            setFormData(prev => ({
-              ...prev,
-              sk_regn: docData.dc_regn || docData.ob_regn || docData.regNo || '',
-              sk_make: docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make || '',
-              sk_model: docData.ob_model || docData.ob_mm?.split(' ').slice(1).join(' ') || docData.model || '',
-              sk_var: docData.ob_var || docData.variant || '',
-              sk_year: docData.ob_year || docData.year || '',
-              sk_fuel: docData.ob_fuel || docData.fuel || 'Petrol',
-              sk_chas: docData.ob_chas || docData.chas || '',
-              sk_eng: docData.ob_eng || docData.eng || '',
-              sk_color: docData.ob_color || docData.color || 'White',
-              sk_km: docData.ob_km || docData.km || '',
-              sk_pp: docData.ob_pp || docData.pp || '',
-              sk_rc: docData.dc_rc ? 'Yes' : 'No'
-            }));
-            setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
-          }
-        });
-      } else {
-        autoFillFromInq(value).then(inqData => {
-          if (inqData) {
-            setFormData(prev => ({
-              ...prev,
-              sk_make: inqData.make || '',
-              sk_model: inqData.model || '',
-              sk_var: inqData.variant || '',
-              sk_year: inqData.year || '',
-              sk_fuel: inqData.fuel || 'Petrol'
-            }));
-            setModelOptions(MODELS[inqData.make] || []);
-          }
-        });
-      }
+      autoFillFromInq(value).then(inqData => {
+        if (inqData) {
+          setFormData(prev => ({
+            ...prev,
+            sk_make: inqData.make || prev.sk_make,
+            sk_model: inqData.model || prev.sk_model,
+            sk_var: inqData.variant || prev.sk_var,
+            sk_year: inqData.year || prev.sk_year,
+            sk_fuel: inqData.fuel || prev.sk_fuel
+          }));
+          setModelOptions(MODELS[inqData.make] || []);
+        }
+      });
     }
   };
 
@@ -213,9 +213,15 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         <div className="m-body">
           <div style={{background:"rgba(255,107,0,.07)",border:"1px solid rgba(255,107,0,.25)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:"14px",display:"flex",alignItems:"center",gap:"10px"}}>
             <span style={{fontSize:"18px"}}>⚡</span>
-            <div className="fg" style={{margin:"0",flex:"1"}}>
-              <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Purchase INQ ID — Auto-Fill All Fields</label>
-              <input name="sk_inqid" value={formData.sk_inqid} onChange={handleChange} placeholder="INQ-2025-0001 — type karo, sab fill ho jayega" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+            <div style={{display:"flex",gap:"10px",width:"100%"}}>
+              <div className="fg" style={{margin:"0",flex:"1"}}>
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>DOC ID — Auto-Fill All Fields</label>
+                <input name="sk_docid" value={formData.sk_docid} onChange={handleChange} placeholder="DOC-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+              </div>
+              <div className="fg" style={{margin:"0",flex:"1"}}>
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>INQ ID — Auto-Fill All Fields</label>
+                <input name="sk_inqid" value={formData.sk_inqid} onChange={handleChange} placeholder="INQ-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+              </div>
             </div>
           </div>
           <div className="grid3">
