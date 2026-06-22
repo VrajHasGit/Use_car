@@ -19,27 +19,36 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
   const [partnerOptions, setPartnerOptions] = useState([
     'Rajan Desai', 'Ritesh Shah', 'Kalpesh Joshi', 'Marut Dandawala', 'Isha Dashraniya', 'Pinal Desai', 'Other'
   ]);
-  const [isAddingPartner, setIsAddingPartner] = useState(false);
+  const [addingPartnerIndex, setAddingPartnerIndex] = useState(null);
   const [newPartnerName, setNewPartnerName] = useState('');
+  const [partnerSelections, setPartnerSelections] = useState(['']);
 
   useEffect(() => {
     if (editData) {
+      const pSelections = editData.nameSource ? editData.nameSource.split(',').map(s => s.trim()) : [''];
+      setPartnerSelections(pSelections);
       setFormData({ 
         ...INIT, 
         ...editData,
+        nameSource: pSelections.join(', '),
         hypothecation: editData.loan === 'Yes' || editData.loan === 'No' ? editData.loan : editData.hypothecation || 'No',
         loan: editData.loan === 'Yes' || editData.loan === 'No' ? '' : editData.loan,
         insuranceStatus: editData.insurance ? 'Yes' : 'No'
       });
       setModels(MODELS[editData.make] || []);
-      if (editData.nameSource && !partnerOptions.includes(editData.nameSource)) {
-        setPartnerOptions(p => [...p, editData.nameSource]);
-      }
+      setPartnerOptions(p => {
+         const newP = [...p];
+         pSelections.forEach(ps => {
+            if(ps && !newP.includes(ps)) newP.push(ps);
+         })
+         return newP;
+      });
     } else {
+      setPartnerSelections(['']);
       setFormData({ ...INIT, date: today() });
       setModels([]);
     }
-  }, [editData, isOpen, partnerOptions]);
+  }, [editData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -88,48 +97,67 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
           <div className="grid1">
             <div className="fg">
               <label>Partner Name</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {!isAddingPartner ? (
-                  <select 
-                    name="nameSource" 
-                    value={formData.nameSource} 
-                    onChange={(e) => {
-                      if (e.target.value === 'ADD_NEW') {
-                        setIsAddingPartner(true);
-                        setNewPartnerName('');
-                      } else {
-                        handleChange(e);
-                      }
-                    }} 
-                    style={{ flex: 1 }}
-                  >
-                    <option value="">-- Select --</option>
-                    {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
-                    <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--or1)' }}>+ Add New Partner...</option>
-                  </select>
-                ) : (
-                  <>
-                    <input 
-                      value={newPartnerName} 
-                      onChange={e => setNewPartnerName(e.target.value)} 
-                      placeholder="Enter partner name..." 
-                      style={{ flex: 1 }} 
-                      autoFocus
-                    />
-                    <button type="button" className="btn btn-or" style={{ padding: '0 12px' }} onClick={() => {
-                      if (newPartnerName.trim()) {
-                        setPartnerOptions(prev => [...prev, newPartnerName.trim()]);
-                        set('nameSource', newPartnerName.trim());
-                      }
-                      setIsAddingPartner(false);
-                      setNewPartnerName('');
-                    }} title="Save Partner">✓</button>
-                    <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => {
-                      setIsAddingPartner(false);
-                      setNewPartnerName('');
-                    }} title="Cancel">✕</button>
-                  </>
-                )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {partnerSelections.map((selection, index) => (
+                  <div key={index} style={{ display: 'flex', gap: '8px' }}>
+                    {addingPartnerIndex !== index ? (
+                      <select 
+                        value={selection} 
+                        onChange={(e) => {
+                          if (e.target.value === 'ADD_NEW') {
+                            setAddingPartnerIndex(index);
+                            setNewPartnerName('');
+                          } else {
+                            const newSelections = [...partnerSelections];
+                            newSelections[index] = e.target.value;
+                            setPartnerSelections(newSelections);
+                            set('nameSource', newSelections.filter(Boolean).join(', '));
+                          }
+                        }} 
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">-- Select --</option>
+                        {partnerOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                        <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--or1)' }}>+ Create New Partner...</option>
+                      </select>
+                    ) : (
+                      <>
+                        <input 
+                          value={newPartnerName} 
+                          onChange={e => setNewPartnerName(e.target.value)} 
+                          placeholder="Enter partner name..." 
+                          style={{ flex: 1 }} 
+                          autoFocus
+                        />
+                        <button type="button" className="btn btn-or" style={{ padding: '0 12px' }} onClick={() => {
+                          if (newPartnerName.trim()) {
+                            setPartnerOptions(prev => [...prev, newPartnerName.trim()]);
+                            const newSelections = [...partnerSelections];
+                            newSelections[index] = newPartnerName.trim();
+                            setPartnerSelections(newSelections);
+                            set('nameSource', newSelections.filter(Boolean).join(', '));
+                          }
+                          setAddingPartnerIndex(null);
+                          setNewPartnerName('');
+                        }} title="Save Partner">✓</button>
+                        <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => {
+                          setAddingPartnerIndex(null);
+                          setNewPartnerName('');
+                        }} title="Cancel">✕</button>
+                      </>
+                    )}
+                    {index === partnerSelections.length - 1 && addingPartnerIndex !== index && (
+                      <button type="button" className="btn btn-out" style={{ padding: '0 12px' }} onClick={() => setPartnerSelections([...partnerSelections, ''])} title="Add another partner">+</button>
+                    )}
+                    {partnerSelections.length > 1 && addingPartnerIndex !== index && (
+                      <button type="button" className="btn btn-out" style={{ padding: '0 12px', color: 'red' }} onClick={() => {
+                        const newSelections = partnerSelections.filter((_, i) => i !== index);
+                        setPartnerSelections(newSelections);
+                        set('nameSource', newSelections.filter(Boolean).join(', '));
+                      }} title="Remove partner">✕</button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
