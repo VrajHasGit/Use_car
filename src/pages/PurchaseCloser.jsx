@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { PclModal } from '../components/modals/PclModal';
-import { ObModal } from '../components/modals/ObModal';
+import { RcDetailsModal } from '../components/modals/RcDetailsModal';
 
 const PurchaseCloser = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -37,8 +39,11 @@ const PurchaseCloser = () => {
 
   const handleSave = async (formData) => {
     try {
-      if (editRec) { await updateRecord('pcl', editRec.id, formData); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('pcl'); await addRecord('pcl', {...formData, pclId: genId('PCL', cnt), date: formData.date||today()}); showToast('Purchase closer added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      const nm = formData.sellerName || formData.pc_sname || '';
+      const car = `${formData.make || ''} ${formData.model || ''}`.trim() || formData.pc_veh || '';
+      if (editRec) { await updateRecord('pcl', editRec.id, formData, { title: 'Purchase Closer Updated', message: `${nm} — ${car}`, link: '/purchase-closer', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('pcl'); await addRecord('pcl', {...formData, pclId: genId('PCL', cnt), date: formData.date||today()}, { title: 'Purchase Deal', message: `${nm} — ${car}`, link: '/purchase-closer', actor }); showToast('Purchase closer added!'); }
       await refresh('pcl'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
@@ -77,30 +82,57 @@ const PurchaseCloser = () => {
         </div>
       </div>
       {isModalOpen && <PclModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
-      <ObModal isOpen={quickModal.type === 'ob'} onClose={closeQuickModal} onSuccess={() => markShifted('OrderBooking', quickModal.pclId)} quickPclId={quickModal.pclId} />
+      <RcDetailsModal isOpen={quickModal.type === 'rc'} onClose={closeQuickModal} inqId={quickModal.inqId} />
       
       <div className="tc">
         <div className="tc-hdr"><div className="tc-title">Purchase Closer Records <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Closer Date</th><th>Vehicle</th><th>Agreed Price</th><th>Token Paid</th><th>Balance</th><th>Payment Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(r => (
+              {filtered.length > 0 ? filtered.map(r => {
+                let basePrice = parseFloat(r.pc_price) || parseFloat(r.amount) || 0;
+                let closerDate = r.pc_date || r.date;
+                
+                const pfuRec = data.pfu?.find(p => p.pf_inqid === (r.inqId || r.pc_inqid));
+                if (pfuRec && pfuRec.followUps) {
+                  const cwFu = [...pfuRec.followUps].reverse().find(fu => fu.stat === 'Closed-Won');
+                  if (cwFu) {
+                    if (cwFu.date) closerDate = cwFu.date;
+                    if (cwFu.dealPrice && basePrice === 0) basePrice = parseFloat(cwFu.dealPrice) || 0;
+                  }
+                }
+
+                const price = basePrice;
+                const token = parseFloat(r.pc_tok) || 0;
+                const paidTotal = Array.isArray(r.payments) && r.payments.length > 0
+                  ? r.payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0)
+                  : (parseFloat(r.pc_p1)||0) + (parseFloat(r.pc_p2)||0) + (parseFloat(r.pc_p3)||0);
+                const remBal = price - token - paidTotal;
+                
+                let pStatus = 'New Deal';
+                if (price > 0) {
+                  if (remBal <= 0) pStatus = 'Paid in Full';
+                  else pStatus = 'Pending Payment';
+                }
+                
+                return (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--or1)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.pclId||r.id?.slice(0,12)}</td>
                   <td style={{fontWeight:600,color:'var(--text2)'}}>{r.inqId || r.pc_inqid || '—'}</td>
-                  <td>{fmtDate(r.date || r.pc_date)}</td>
-                  <td style={{fontWeight:600}}>{r.sellerName || r.pc_sname}</td>
+                  <td>{fmtDate(closerDate)}</td>
                   <td>{r.make || r.pc_veh} {r.model}</td>
-                  <td className="amt-or">{fmt(r.amount || r.pc_price)}</td>
-                  <td><span className={`badge ${statusBadge(r.status || r.pc_stat)}`}>{r.status || r.pc_stat}</span></td>
+                  <td className="amt-or">{fmt(price)}</td>
+                  <td style={{color: 'var(--success)', fontWeight: 600}}>{fmt(token)}</td>
+                  <td style={{color: remBal > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600}}>{fmt(remBal)}</td>
+                  <td><span className={`badge ${pStatus === 'Paid in Full' ? 'suc' : pStatus === 'Pending Payment' ? 'wrn' : 'blu'}`}>{pStatus}</span></td>
                   <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
-                    <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
-                    <button className="btn-icon bi-next" title="Send to Order Booking" onClick={() => setQuickModal({ type: 'ob', pclId: r.id })}><i className="fa fa-file-contract"></i></button>
-                    <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      <button className="btn-icon bi-edit" style={{ background: 'var(--or1)', color: '#fff' }} title="Edit Customer Details (As per RC)" onClick={() => setQuickModal({ type: 'rc', inqId: r.inqId || r.pc_inqid })}><i className="fa fa-id-card"></i></button>
+                      <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
+                      <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>
                 </tr>
-              )) : <tr><td colSpan="7" className="empty"><i className="fa fa-handshake"></i><br />{search?'No results found':'No purchase closer records yet.'}</td></tr>}
+              )}) : <tr><td colSpan="9" className="empty"><i className="fa fa-handshake"></i><br />{search?'No results found':'No purchase closer records yet.'}</td></tr>}
             </tbody>
           </table>
         </div>

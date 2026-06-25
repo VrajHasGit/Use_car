@@ -10,8 +10,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const { data: ctxData } = useData();
   const [formData, setFormData] = useState({
     pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: "", pc_type: "Direct Purchase",
-    pc_stat: "Confirmed", pc_price: "", pc_tok: "", pc_pm1: "Cash", pc_p1: "",
-    pc_pm2: "-None-", pc_p2: "", pc_pm3: "-None-", pc_p3: "", pc_newcar: "",
+    pc_stat: "Confirmed", pc_price: "", pc_tok: "", payments: [],
+    pc_newcar: "",
     pc_loan: "No", pc_lbank: "", pc_tokd: "", pc_dby: "Ritesh Shah", pc_mgr: "",
     pc_edd: "", pc_cncl: "", pc_rem: ""
   });
@@ -32,6 +32,20 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
   const applyAutoFill = async (inqId) => {
     const inqData = await lookupInquiry(inqId);
+    let finalDate = "";
+    let finalDealPrice = "";
+    
+    if (ctxData?.pfu) {
+      const pfuRec = ctxData.pfu.find(r => (r.pf_inqid || '').toLowerCase() === (inqId || '').toLowerCase());
+      if (pfuRec && pfuRec.followUps) {
+        const cwFu = [...pfuRec.followUps].reverse().find(fu => fu.stat === 'Closed-Won');
+        if (cwFu) {
+          if (cwFu.date) finalDate = cwFu.date;
+          if (cwFu.dealPrice) finalDealPrice = cwFu.dealPrice;
+        }
+      }
+    }
+
     if (inqData) {
       setFormData(prev => ({
         ...prev,
@@ -44,6 +58,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         pc_fuel: inqData.fuel || prev.pc_fuel,
         pc_km: inqData.km || prev.pc_km,
         pc_regn: inqData.regNo || prev.pc_regn,
+        pc_date: prev.pc_date || finalDate || today(),
+        pc_price: prev.pc_price || finalDealPrice,
       }));
       setAutoFillMsg(`✅ Auto-filled from: ${inqData.sellerName || inqId}`);
       setTimeout(() => setAutoFillMsg(''), 4000);
@@ -54,16 +70,17 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     if (isOpen) {
       setAutoFillMsg('');
       if (editData) {
-        setFormData({ ...editData });
-        if (editData.pc_inqid) applyAutoFill(editData.pc_inqid);
+        const inqIdToUse = editData.pc_inqid || editData.inqId || '';
+        setFormData({ ...editData, pc_inqid: inqIdToUse });
+        if (inqIdToUse) applyAutoFill(inqIdToUse);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, pc_inqid: quickInqId }));
         applyAutoFill(quickInqId);
       } else {
         setFormData({
           pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: new Date().toISOString().split('T')[0], pc_type: "Direct Purchase",
-          pc_stat: "Confirmed", pc_price: "", pc_tok: "", pc_pm1: "Cash", pc_p1: "",
-          pc_pm2: "-None-", pc_p2: "", pc_pm3: "-None-", pc_p3: "", pc_newcar: "",
+          pc_stat: "Confirmed", pc_price: "", pc_tok: "", payments: [],
+          pc_newcar: "",
           pc_loan: "No", pc_lbank: "", pc_tokd: "", pc_dby: "Ritesh Shah", pc_mgr: "",
           pc_edd: "", pc_cncl: "", pc_rem: ""
         });
@@ -81,6 +98,24 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     }
   };
 
+  const addPayment = () => {
+    setFormData(prev => ({
+      ...prev,
+      payments: [...(prev.payments || []), { mode: 'CASH', amount: '' }]
+    }));
+  };
+
+  const handlePaymentChange = (index, field, value) => {
+    const updated = [...(formData.payments || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData(prev => ({ ...prev, payments: updated }));
+  };
+
+  const removePayment = (index) => {
+    const updated = (formData.payments || []).filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, payments: updated }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -92,7 +127,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         if (onSave) { await onSave({...formData, pclId}); } 
         else {
           await addRecord('pcl', { ...formData, pclId, date: formData.date || today() });
-          if (onSuccess) onSuccess();
+          if (onSuccess) await onSuccess();
         }
       }
       onClose();
@@ -106,12 +141,10 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
   const price = Number(formData.pc_price || 0);
   const token = Number(formData.pc_tok || 0);
-  const p1 = Number(formData.pc_p1 || 0);
-  const p2 = Number(formData.pc_p2 || 0);
-  const p3 = Number(formData.pc_p3 || 0);
+  const totalPaid = (formData.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
 
   const balPending = price - token;
-  const remBal = price - token - p1 - p2 - p3;
+  const remBal = price - token - totalPaid;
 
   return (
     <div className="overlay on" id="m_pcl">
@@ -128,31 +161,50 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             </div>
           )}
           <div className="grid3">
-            <div className="fg"><label>Inquiry ID <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill</span></label><input name="pc_inqid" value={formData.pc_inqid} onChange={handleChange} placeholder="INQ-2025-0001" /></div>
-            <div className="fg"><label>Seller Name</label><input name="pc_sname" value={formData.pc_sname} onChange={handleChange} placeholder="Name" /></div>
-            <div className="fg"><label>Vehicle Details</label><input name="pc_veh" value={formData.pc_veh} onChange={handleChange} placeholder="Make Model Year" /></div>
+            <div className="fg"><label>Inquiry ID <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill</span></label><input name="pc_inqid" value={formData.pc_inqid} onChange={handleChange} placeholder="INQ-2025-0001" disabled={!!editData || !!quickInqId} /></div>
+            <div className="fg"><label>Seller Name</label><input name="pc_sname" value={formData.pc_sname} onChange={handleChange} placeholder="Name" disabled={!!editData || !!quickInqId} /></div>
+            <div className="fg"><label>Vehicle Details</label><input name="pc_veh" value={formData.pc_veh} onChange={handleChange} placeholder="Make Model Year" disabled={!!editData || !!quickInqId} /></div>
           </div>
           <div className="grid3">
-            <div className="fg"><label>Closer Date *</label><input type="date" name="pc_date" value={formData.pc_date} onChange={handleChange} /></div>
-            <div className="fg"><label>Closer Type</label><select name="pc_type" value={formData.pc_type} onChange={handleChange}><option>Direct Purchase</option><option>Exchange</option><option>Auction</option></select></div>
-            <div className="fg"><label>Closer Status</label><select name="pc_stat" value={formData.pc_stat} onChange={handleChange}><option>Confirmed</option><option>Cancelled</option><option>On Hold</option></select></div>
+            <div className="fg"><label>Closer Date *</label><input type="date" name="pc_date" value={formData.pc_date} onChange={handleChange} disabled /></div>
           </div>
           <div className="sect-lbl"><i className="fa fa-indian-rupee-sign"></i> Price & Payment (Auto-Calc)</div>
           <div className="grid3">
-            <div className="fg"><label>Final Agreed Price ₹</label><input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" /></div>
+            <div className="fg"><label>Final Agreed Price ₹</label><input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" style={{ background: 'rgba(16,185,129,.08)', borderColor: 'var(--success)', color: 'var(--success)', fontWeight: 700 }} /></div>
             <div className="fg"><label>Token Amount ₹</label><input type="number" name="pc_tok" value={formData.pc_tok} onChange={handleChange} placeholder="0" /></div>
             <div className="fg"><label>Balance Pending ₹ (Auto)</label><div className="calc-out" style={{ color: balPending > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {balPending.toLocaleString()}</div></div>
           </div>
-          <div className="grid3">
-            <div className="fg"><label>Payment Mode 1</label><select name="pc_pm1" value={formData.pc_pm1} onChange={handleChange}><option>Cash</option><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cheque</option></select></div>
-            <div className="fg"><label>1st Payment ₹</label><input type="number" name="pc_p1" value={formData.pc_p1} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Payment Mode 2</label><select name="pc_pm2" value={formData.pc_pm2} onChange={handleChange}><option>-None-</option><option>Cash</option><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cheque</option></select></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>2nd Payment ₹</label><input type="number" name="pc_p2" value={formData.pc_p2} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Payment Mode 3</label><select name="pc_pm3" value={formData.pc_pm3} onChange={handleChange}><option>-None-</option><option>Cash</option><option>NEFT</option><option>RTGS</option><option>UPI</option><option>Cheque</option></select></div>
-            <div className="fg"><label>3rd Payment ₹</label><input type="number" name="pc_p3" value={formData.pc_p3} onChange={handleChange} placeholder="0" /></div>
-          </div>
+          {(formData.payments || []).map((pmt, idx) => (
+            <div key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: idx < (formData.payments.length - 1) ? '1px dashed var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ background: 'var(--or1)', color: '#fff', width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{idx + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>Payment {idx + 1}</span>
+                <button type="button" onClick={() => removePayment(idx)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }} title="Remove">✕</button>
+              </div>
+              <div className="grid3">
+                <div className="fg">
+                  <label>Mode</label>
+                  <select value={pmt.mode} onChange={e => handlePaymentChange(idx, 'mode', e.target.value)}>
+                    <option>CASH</option>
+                    <option>CHEQUE</option>
+                    <option>ONLINE</option>
+                  </select>
+                </div>
+                <div className="fg">
+                  <label>Amount ₹</label>
+                  <input type="number" value={pmt.amount} onChange={e => handlePaymentChange(idx, 'amount', e.target.value)} placeholder="0" />
+                </div>
+                <div className="fg" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button type="button" className="btn btn-out" style={{ width: '100%', opacity: 0.5, cursor: 'not-allowed' }} disabled title="Voucher PDF — coming soon">
+                    <i className="fa fa-download"></i> Download Voucher
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addPayment} className="btn btn-out" style={{ width: '100%', padding: 10, borderStyle: 'dashed', marginBottom: 14 }}>
+            <i className="fa fa-plus"></i> Add Payment
+          </button>
           <div className="grid3">
             <div className="fg"><label>Remaining Balance (Auto) ₹</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--danger)' : 'var(--success)' }}>₹ {remBal.toLocaleString()}</div></div>
             <div className="fg"><label>New Car Exchange ₹</label><input type="number" name="pc_newcar" value={formData.pc_newcar} onChange={handleChange} placeholder="0" /></div>
@@ -176,7 +228,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save</>}
           </button>
         </div>
       </div>
