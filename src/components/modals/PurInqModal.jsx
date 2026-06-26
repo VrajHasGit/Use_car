@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { today } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
+import { today, genId } from '../../utils/helpers';
+import { getNextCounter } from '../../services/db';
 import { MAKES, MODELS, YEARS, CITIES, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
 const INIT = {
   inqId: '',
   source: 'Walk-in', sourceName: '', sourceNumber: '', nameSource: '', date: today(),
+  teleCallerName: '', branch: 'SG Highway',
   sellerName: '', mobile: '', altMobile: '', email: '', city: '', state: 'Gujarat', address: '',
   make: '', model: '', variant: '', year: '', regYear: '', fuel: 'Petrol', trans: 'Manual',
-  color: 'White', km: '', owners: '1st', regNo: '', rto: '', insuranceStatus: 'No', insurance: '', 
+  color: 'White', km: '', owners: '1st', regState: '', regRto: '', regSeries: '', regNum: '', rto: '', insuranceStatus: 'No', insurance: '', 
   hypothecation: 'No', loanBank: '', loan: '',
   assigned: 'Ritesh Shah', status: 'New', nextFU: '', updatedBy: '', remarks: ''
 };
 
 export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState(INIT);
   const [saving, setSaving] = useState(false);
   const [models, setModels] = useState([]);
@@ -27,13 +31,18 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
     if (editData) {
       const pSelections = editData.nameSource ? editData.nameSource.split(',').map(s => s.trim()) : [''];
       setPartnerSelections(pSelections);
+      const regParts = editData.regNo ? editData.regNo.split('-') : [];
       setFormData({ 
         ...INIT, 
         ...editData,
         nameSource: pSelections.join(', '),
         hypothecation: editData.loan === 'Yes' || editData.loan === 'No' ? editData.loan : editData.hypothecation || 'No',
         loan: editData.loan === 'Yes' || editData.loan === 'No' ? '' : editData.loan,
-        insuranceStatus: editData.insurance ? 'Yes' : 'No'
+        insuranceStatus: editData.insurance ? 'Yes' : 'No',
+        regState: regParts[0] || '',
+        regRto: regParts[1] || '',
+        regSeries: regParts[2] || '',
+        regNum: regParts[3] || ''
       });
       setModels(MODELS[editData.make] || []);
       setPartnerOptions(p => {
@@ -45,8 +54,18 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
       });
     } else {
       setPartnerSelections(['']);
-      setFormData({ ...INIT, date: today() });
       setModels([]);
+      if (isOpen) {
+        let mounted = true;
+        getNextCounter('pur').then(cnt => {
+          if (mounted) {
+            setFormData({ ...INIT, date: today(), inqId: genId('INQ', cnt) });
+          }
+        });
+        return () => { mounted = false; };
+      } else {
+        setFormData({ ...INIT, date: today() });
+      }
     }
   }, [editData, isOpen]);
 
@@ -62,12 +81,14 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
     set('model', '');
   };
 
-  const handleSave = async () => {
+  const handleSave = async (shiftToVal = false) => {
     if (!formData.sellerName.trim()) return alert('Seller Name is required.');
     if (!formData.make) return alert('Vehicle Make is required.');
     setSaving(true);
     try {
-      await onSave(formData);
+      const parts = [formData.regState, formData.regRto, formData.regSeries, formData.regNum].filter(Boolean);
+      const regNo = parts.length > 0 ? parts.join('-').toUpperCase() : '';
+      await onSave({ ...formData, regNo }, shiftToVal);
     } finally {
       setSaving(false);
     }
@@ -84,14 +105,45 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
         <div className="m-body">
           {/* Inquiry Details */}
           <div className="sect-lbl"><i className="fa fa-circle-info"></i> Inquiry Details</div>
-          <div className="grid2">
+          <div className="grid3">
             <div className="fg">
               <label>Inquiry ID</label>
-              <input name="inqId" value={formData.inqId} onChange={handleChange} placeholder="Auto-generated or Enter ID" readOnly={!!editData?.inqId} />
+              <input name="inqId" value={formData.inqId} onChange={handleChange} placeholder="Generating..." readOnly style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600 }} />
             </div>
             <div className="fg">
               <label>Inquiry Date *</label>
               <input type="date" name="date" value={formData.date} onChange={handleChange} />
+            </div>
+            <div className="fg">
+              <label>Branch</label>
+              <select name="branch" value={formData.branch} onChange={handleChange}>
+                <option>SG Highway</option>
+                <option>Vastral</option>
+                <option>Navrangpura</option>
+                <option>Mithakali</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid3">
+            <div className="fg">
+              <label>Inquiry Source *</label>
+              <select name="source" value={formData.source} onChange={handleChange}>
+                <option>Walk-in</option><option>Call</option><option>Online</option>
+                <option>Reference</option><option>Dealer</option><option>Partner</option><option>OLX</option>
+                <option>CarDekho</option><option>Cars24</option><option>WhatsApp</option>
+              </select>
+            </div>
+            <div className="fg">
+              <label>Source Name</label>
+              <input name="sourceName" value={formData.sourceName} onChange={handleChange} placeholder="Source Name" disabled={formData.source === 'Walk-in'} />
+            </div>
+            <div className="fg">
+              <label>Source Number</label>
+              <input name="sourceNumber" value={formData.sourceNumber} onChange={handleChange} type="tel" maxLength="10" placeholder="Source Number" disabled={formData.source === 'Walk-in'} />
+            </div>
+            <div className="fg">
+              <label>Telecaller Name</label>
+              <input name="teleCallerName" value={formData.teleCallerName} onChange={handleChange} placeholder="Name" disabled={!['Online', 'OLX', 'CarDekho', 'Cars24'].includes(formData.source)} />
             </div>
           </div>
           <div className="grid1">
@@ -159,24 +211,6 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-          <div className="grid3">
-            <div className="fg">
-              <label>Inquiry Source *</label>
-              <select name="source" value={formData.source} onChange={handleChange}>
-                <option>Walk-in</option><option>Call</option><option>Online</option>
-                <option>Reference</option><option>Dealer/Partner</option><option>OLX</option>
-                <option>CarDekho</option><option>Cars24</option><option>WhatsApp</option>
-              </select>
-            </div>
-            <div className="fg">
-              <label>Source Name</label>
-              <input name="sourceName" value={formData.sourceName} onChange={handleChange} placeholder="Source Name" disabled={formData.source === 'Walk-in'} />
-            </div>
-            <div className="fg">
-              <label>Source Number</label>
-              <input name="sourceNumber" value={formData.sourceNumber} onChange={handleChange} type="number" placeholder="Source Number" disabled={formData.source === 'Walk-in'} />
             </div>
           </div>
 
@@ -292,13 +326,46 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
                 {OWNERS.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
-            <div className="fg">
-              <label>Reg Number</label>
-              <input name="regNo" value={formData.regNo} onChange={handleChange} placeholder="GJ-01-AB-1234" />
+          </div>
+
+          <div style={{ marginBottom: '20px', background: 'var(--surface)', padding: '16px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+            <label style={{ fontSize: '13px', color: 'var(--text)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+              <i className="fa fa-id-card" style={{ color: 'var(--or1)' }}></i> Registration Number
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
+              <div className="fg" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>State</label>
+                <input name="regState" value={formData.regState} onChange={handleChange} placeholder="SS" maxLength={2} style={{ textTransform: 'uppercase', textAlign: 'center', background: 'var(--bg)' }} />
+              </div>
+              <div className="fg" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>RTO No.</label>
+                <input name="regRto" value={formData.regRto} onChange={handleChange} placeholder="NN" maxLength={2} style={{ textAlign: 'center', background: 'var(--bg)' }} />
+              </div>
+              <div className="fg" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Series</label>
+                <input name="regSeries" value={formData.regSeries} onChange={handleChange} placeholder="PP" maxLength={3} style={{ textTransform: 'uppercase', textAlign: 'center', background: 'var(--bg)' }} />
+              </div>
+              <div className="fg" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Number</label>
+                <input name="regNum" value={formData.regNum} onChange={handleChange} placeholder="XXXX" maxLength={4} style={{ textAlign: 'center', background: 'var(--bg)' }} />
+              </div>
             </div>
-            <div className="fg">
-              <label>RTO State</label>
-              <input name="rto" value={formData.rto} onChange={handleChange} placeholder="Gujarat" />
+            
+            <div className="fg" style={{ marginTop: '16px', marginBottom: 0 }}>
+              <label style={{ fontSize: '11px', color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Final Reg No.</label>
+              <input 
+                value={[formData.regState, formData.regRto, formData.regSeries, formData.regNum].filter(Boolean).join('-').toUpperCase()} 
+                readOnly 
+                placeholder="SS-NN-PP-XXXX"
+                style={{ 
+                  background: 'rgba(16,185,129,.08)', 
+                  borderColor: 'var(--success)', 
+                  color: 'var(--success)', 
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  letterSpacing: '1px'
+                }} 
+              />
             </div>
           </div>
           <div className="grid2">
@@ -358,7 +425,7 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
           <div className="grid2">
             <div className="fg">
               <label>Updated By</label>
-              <input name="updatedBy" value={formData.updatedBy} onChange={handleChange} placeholder="User name" />
+              <input name="updatedBy" value={editData?.updatedBy || currentUser?.name || ''} readOnly style={{ background: 'var(--bg-card-hover)', color: 'var(--text2)', cursor: 'not-allowed' }} placeholder="User name" />
             </div>
             <div className="fg">
               <label>Remarks</label>
@@ -368,8 +435,8 @@ export const PurInqModal = ({ isOpen, onClose, onSave, editData }) => {
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Inquiry</>}
+          <button className="btn btn-or" onClick={() => handleSave(false)} disabled={saving}>
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Inquiry</>}
           </button>
         </div>
       </div>

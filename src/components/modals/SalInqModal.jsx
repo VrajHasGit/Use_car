@@ -269,7 +269,7 @@ export const SalInqModal = ({ isOpen, onClose, onSave, editData }) => {
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Inquiry</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Inquiry</>}
           </button>
         </div>
       </div>

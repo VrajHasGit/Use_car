@@ -136,7 +136,8 @@ const Stock = () => {
 
   const handleSave = async (formData) => {
     try {
-      if (editRec) { await updateRecord('stk', editRec.id, formData); showToast('Stock updated!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('stk', editRec.id, formData, { title: 'Stock Updated', message: (formData.sk_regn || formData.regNo || '') + ' — ' + (formData.sk_make || formData.make || '') + ' ' + (formData.sk_model || formData.model || ''), link: '/stock', actor }); showToast('Stock updated!'); }
       else {
         const cnt = await getNextCounter('stk');
         const stkId = genId('STK', cnt);
@@ -147,7 +148,7 @@ const Stock = () => {
         const tcp = pp + refurb + rto + ins;
         const sp = parseFloat(formData.sk_sp || formData.sp || 0);
         const profit = sp - tcp;
-        await addRecord('stk', { ...formData, stkId, regNo: formData.sk_regn || formData.regNo, make: formData.sk_make || formData.make, model: formData.sk_model || formData.model, variant: formData.sk_var || formData.variant, year: formData.sk_year || formData.year, fuel: formData.sk_fuel || formData.fuel, trans: formData.sk_trans || formData.trans, color: formData.sk_color || formData.color, km: formData.sk_km || formData.km, status: formData.sk_stat || formData.status || 'In Stock', pDate: formData.sk_pdate || formData.pDate || today(), pp, refurb, rto, ins, tcp, sp, profit });
+        await addRecord('stk', { ...formData, stkId, regNo: formData.sk_regn || formData.regNo, make: formData.sk_make || formData.make, model: formData.sk_model || formData.model, variant: formData.sk_var || formData.variant, year: formData.sk_year || formData.year, fuel: formData.sk_fuel || formData.fuel, trans: formData.sk_trans || formData.trans, color: formData.sk_color || formData.color, km: formData.sk_km || formData.km, status: formData.sk_stat || formData.status || 'In Stock', pDate: formData.sk_pdate || formData.pDate || today(), pp, refurb, rto, ins, tcp, sp, profit }, { title: 'Car Added to Stock', message: (formData.sk_regn || formData.regNo || '') + ' — ' + (formData.sk_make || formData.make || '') + ' ' + (formData.sk_model || formData.model || ''), link: '/stock', actor, carInfo: { make: formData.sk_make || formData.make, model: formData.sk_model || formData.model, regNo: formData.sk_regn || formData.regNo } });
         showToast('Stock record added!');
       }
       await refresh('stk'); setIsModalOpen(false);

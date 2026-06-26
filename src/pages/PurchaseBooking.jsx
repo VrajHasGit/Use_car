@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
@@ -58,13 +59,41 @@ const PurchaseBooking = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete this booking?')) return;
+    if (!window.confirm('Delete this order booking?')) return;
     try {
       await deleteRecord('ob', rec.id);
       await refresh('ob');
       showToast('Deleted.', 'info');
     } catch (e) {
       showToast('Delete failed.', 'error');
+    }
+  };
+
+  const handleSendToCloser = async (rec) => {
+    if (!window.confirm(`Send Order Booking for ${rec.ob_cname || 'this vehicle'} to Purchase Closer?`)) return;
+    try {
+      const cnt = await getNextCounter('pcl');
+      const pclId = genId('PCL', cnt);
+      
+      const pclData = {
+        pclId,
+        pc_date: today(),
+        status: 'Pending',
+        stage: 'Closer',
+        pc_inqid: rec.ob_inqid || '',
+        pc_sname: rec.ob_cname || '',
+        pc_veh: rec.ob_mm || '',
+        pc_regn: rec.ob_regn || '',
+        pc_price: rec.ob_pp || ''
+      };
+      
+      await addRecord('pcl', pclData);
+      await updateRecord('ob', rec.id, { stage: 'Closer' });
+      await refresh('pcl');
+      await refresh('ob');
+      showToast('Sent to Purchase Closer!');
+    } catch (e) {
+      showToast('Failed to send to Purchase Closer', 'error');
     }
   };
 
@@ -210,7 +239,7 @@ const PurchaseBooking = () => {
                     {r.obId || r.id?.slice(0, 12)}
                   </td>
                   <td style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    {r.ob_inqid || '—'}
+                    {r.ob_inqid || r.inqId || '—'}
                   </td>
                   <td>{fmtDate(r.date || r.ob_date)}</td>
                   <td style={{ fontWeight: 600 }}>{r.ob_cname || r.sellerName || r.ob_bname}</td>
@@ -221,29 +250,18 @@ const PurchaseBooking = () => {
                   <td className="amt-or">{fmt(r.ob_pp || r.pp)}</td>
                   <td className="amt-or">{fmt(r.tcp || r.ob_tcp)}</td>
                   <td>
-                    {r.ob_doc_stat ? (
-                      <span className={`badge ${r.ob_doc_stat === 'Complete' ? 'b-won' : r.ob_doc_stat === 'Partial' ? 'b-prog' : 'b-pend'}`}>
-                        {r.ob_doc_stat}
-                      </span>
-                    ) : '—'}
+                    <span className={`badge ${(r.ob_doc_stat || 'Pending') === 'Complete' ? 'b-won' : (r.ob_doc_stat || 'Pending') === 'Partial' ? 'b-prog' : 'b-pend'}`}>
+                      {r.ob_doc_stat || 'Pending'}
+                    </span>
                   </td>
-                  <td>{r.ob_branch || r.branch || '—'}</td>
+                  <td>{r.ob_branch || r.branch || 'SG Highway'}</td>
                   <td>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4, width: 'fit-content' }}>
-                      <button className="btn-icon bi-edit" title="Send to Payment" onClick={() => setQuickModal({ type: 'pay', obId: r.obId || r.id })}>
-                        <i className="fa fa-indian-rupee-sign"></i>
-                      </button>
-                      <button className="btn-icon bi-edit" title="Send to Delivery" onClick={() => setQuickModal({ type: 'del', obId: r.obId || r.id })}>
-                        <i className="fa fa-truck"></i>
-                      </button>
-                      <button className="btn-icon bi-edit" title="Send to Documents" onClick={() => setQuickModal({ type: 'doc', obId: r.obId || r.id })}>
-                        <i className="fa fa-file-lines"></i>
-                      </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, width: 'fit-content' }}>
                       <button className="btn-icon bi-print" title="Print Booking" onClick={() => handlePrintRecord(r)}>
                         <i className="fa fa-print"></i>
                       </button>
-                      <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}>
-                        <i className="fa fa-pen"></i>
+                      <button className="btn-icon bi-next" style={{ background: 'var(--bl5)', color: '#fff' }} title="Send to Purchase Closer" onClick={() => handleSendToCloser(r)}>
+                        <i className="fa fa-handshake"></i>
                       </button>
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}>
                         <i className="fa fa-trash"></i>

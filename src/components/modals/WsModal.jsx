@@ -235,11 +235,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-or" onClick={() => handleSave(false)} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Job Card</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Job Card</>}
           </button>
           {stockDocId && (
             <button className="btn btn-or" onClick={() => handleSave(true)} disabled={saving} style={{ background: 'var(--bl5)', borderColor: 'var(--bl5)' }}>
-              {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-share"></i> Save & Move to Workshop</>}
+              {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-share"></i> Save & Move to Workshop</>}
             </button>
           )}
         </div>

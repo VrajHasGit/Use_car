@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { autoFillFromOb, autoFillFromSob } from '../../utils/relations';
-import { today } from '../../utils/helpers';
+import { today, printDocument } from '../../utils/helpers';
 
 export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId, type }) => {
   const emptyForm = {
@@ -141,14 +141,8 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
 
     const fmt2 = n => n ? '₹ '+Number(n).toLocaleString('en-IN') : '₹ 0';
 
-    const win = window.open('','_blank','width=900,height=750');
-    win.document.write(`<!DOCTYPE html><html lang="gu">
-<head><meta charset="UTF-8">
-<title>વેચાણ ખત અને ડીલીવરી નોટ — ${regNo}</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Noto Sans Gujarati',Arial,sans-serif;font-size:12px;color:#000;padding:20px;max-width:800px;margin:0 auto}
-  h1{text-align:center;font-size:18px;font-weight:900;letter-spacing:2px;border:3px solid #000;padding:8px 20px;display:inline-block;margin:0 auto 16px;background:#000;color:#fff}
+    const customStyles = `
+  h1.vh-title{text-align:center;font-size:18px;font-weight:900;letter-spacing:2px;border:3px solid #000;padding:8px 20px;display:inline-block;margin:0 auto 16px;background:#000;color:#fff}
   .title-row{text-align:center;margin-bottom:14px}
   .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
   .box{border:1.5px solid #000;padding:8px 10px;border-radius:2px}
@@ -158,10 +152,7 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   td,th{border:1px solid #333;padding:5px 8px;font-size:11.5px;vertical-align:top}
   th{background:#333;color:#fff;font-size:10px;letter-spacing:1px;text-align:center;font-weight:700}
   .label{color:#555;font-size:10px}
-  .amount-row td{font-weight:700}
   .total-row td{background:#000;color:#fff;font-weight:800;font-size:13px}
-  .dotted{border-bottom:1px dotted #000;min-width:120px;display:inline-block}
-  .section-hdr{background:#222;color:#fff;text-align:center;padding:5px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
   .terms{font-size:10px;line-height:1.6;margin-bottom:12px;border:1px solid #ccc;padding:10px;background:#f9f9f9}
   .terms ul{padding-left:16px;margin-top:4px}
   .terms li{margin-bottom:3px}
@@ -169,11 +160,10 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   .sig-box{text-align:center}
   .sig-line{border-top:1.5px solid #000;margin:0 auto;width:80%;margin-top:40px;padding-top:5px;font-size:10px;font-weight:700;letter-spacing:.5px}
   .photo-box{border:1px solid #000;width:80px;height:90px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#999;margin:0 auto}
-  @page { size: auto; margin: 5mm; }
-  @media print { body { padding: 5px; zoom: 0.85; } .no-print { display: none; } }
-</style></head>
-<body>
-<div class="title-row"><h1>વેચાણ ખત અને ડીલીવરી નોટ</h1></div>
+`;
+
+    const htmlContent = `
+<div class="title-row"><h1 class="vh-title">વેચાણ ખત અને ડીલીવરી નોટ</h1></div>
 <div class="top-grid">
   <div class="box"><div class="box-label">ગાડી નં.</div><div class="box-val">${regNo}</div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -267,14 +257,10 @@ export const PayModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
 </div>
 <div style="text-align:right;margin-top:20px">
   <div class="photo-box">વાહન લેનારનો ફોટો</div>
-</div>
-<div class="no-print" style="text-align:center;margin-top:20px">
-  <button onclick="window.print()" style="padding:10px 30px;background:#000;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;margin-right:10px">🖨️ Print</button>
-  <button onclick="window.close()" style="padding:10px 30px;background:#ccc;color:#000;border:none;border-radius:4px;font-size:14px;cursor:pointer">✕ Close</button>
-</div>
-<script>setTimeout(()=>window.print(),600);<\/script>
-</body></html>`);
-    win.document.close();
+</div>`;
+
+    const title = editData?.id ? `PAY-${editData.id.slice(0,6).toUpperCase()}` : (formData.py_obid || formData.py_sobid || regNo);
+    printDocument(title, htmlContent, customStyles);
   };
 
   const handleBlurOb = () => { if (formData.py_obid) fillFromOb(formData.py_obid); };

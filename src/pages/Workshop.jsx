@@ -143,14 +143,15 @@ const Workshop = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('ws', editRec.id, fd); showToast('Updated!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('ws', editRec.id, fd, { title: 'Workshop Job Updated', message: (fd.ws_vnum || fd.regNo || '') + ' — ' + (fd.ws_make || fd.make || '') + ' ' + (fd.ws_model || fd.model || ''), link: '/workshop', actor }); showToast('Updated!'); }
       else { 
         let wsId = fd.wsId;
         if (!wsId) {
           const cnt = await getNextCounter('ws'); 
           wsId = genId('JC', cnt);
         }
-        await addRecord('ws', { ...fd, wsId, date: fd.ws_indate || fd.date || today(), tasks: fd.tasks || [] }); 
+        await addRecord('ws', { ...fd, wsId, date: fd.ws_indate || fd.date || today(), tasks: fd.tasks || [] }, { title: 'Workshop Job Created', message: (fd.ws_vnum || fd.regNo || '') + ' — ' + (fd.ws_wtype || fd.jobType || ''), link: '/workshop', actor }); 
         showToast('Workshop job added!'); 
       }
       await refresh('ws'); setIsModalOpen(false);

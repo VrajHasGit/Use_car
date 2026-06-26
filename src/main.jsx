@@ -4,11 +4,11 @@ import './index.css'
 import App from './App.jsx'
 
 // ── Boot: apply saved theme + font before first render (no FOUC) ──
-let savedTheme = localStorage.getItem('cc_theme') || 'black-darkblue';
+let savedTheme = localStorage.getItem('cc_theme') || 'navy-white';
 const validThemes = ['black-darkblue', 'navy-white', 'black-gold', 'darkblue-orange', 'white-green', 'grey-blue', 'maroon-cream'];
-if (!validThemes.includes(savedTheme)) savedTheme = 'black-darkblue';
+if (!validThemes.includes(savedTheme)) savedTheme = 'navy-white';
 
-const savedFont  = localStorage.getItem('cc_font')  || 'inter';
+let savedFont = localStorage.getItem('cc_font') || 'space';
 document.body.setAttribute('data-theme', savedTheme);
 document.body.setAttribute('data-font', savedFont);
 

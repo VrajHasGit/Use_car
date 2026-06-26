@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import { DataProvider } from './contexts/DataContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, ROUTE_ROLES } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import PurchaseDashboard from './pages/PurchaseDashboard';
@@ -39,16 +40,32 @@ import './index.css';
 
 import SplashLoader from './components/SplashLoader';
 
+// ── Protected Route: must be logged in ──
 const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, authLoading } = useAuth();
+  if (authLoading) return null; // Wait for auth to initialize
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
   return children;
 };
 
-function AppInner() {
+// ── Role Route: must have one of the allowed roles ──
+const RoleRoute = ({ children, allowedRoles }) => {
   const { currentUser } = useAuth();
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (!allowedRoles.includes(currentUser.role)) {
+    // Redirect unauthorized users to dashboard
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+function AppInner() {
+  const { currentUser, authLoading } = useAuth();
+
+  if (authLoading) return null; // Splash handles loading state
+
   return (
     <Routes>
       <Route path="/login" element={
@@ -58,45 +75,99 @@ function AppInner() {
       <Route path="/" element={
         <ProtectedRoute>
           <DataProvider>
-            <Layout />
+            <NotificationProvider>
+              <Layout />
+            </NotificationProvider>
           </DataProvider>
         </ProtectedRoute>
       }>
+        {/* Dashboards — All roles */}
         <Route index element={<Dashboard />} />
         <Route path="purchase-dashboard" element={<PurchaseDashboard />} />
         <Route path="sales-dashboard" element={<SalesDashboard />} />
-        {/* Purchase Pipeline */}
-        <Route path="purchase-inquiry" element={<PurchaseInquiry />} />
-        <Route path="valuation" element={<Valuation />} />
-        <Route path="purchase-follow" element={<PurchaseFollowUp />} />
-        <Route path="purchase-closer" element={<PurchaseCloser />} />
-        <Route path="purchase-booking" element={<PurchaseBooking />} />
+
+        {/* Purchase Pipeline — purchase roles */}
+        <Route path="purchase-inquiry" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><PurchaseInquiry /></RoleRoute>
+        } />
+        <Route path="valuation" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><Valuation /></RoleRoute>
+        } />
+        <Route path="purchase-follow" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><PurchaseFollowUp /></RoleRoute>
+        } />
+        <Route path="purchase-closer" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><PurchaseCloser /></RoleRoute>
+        } />
+        <Route path="purchase-booking" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><PurchaseBooking /></RoleRoute>
+        } />
         <Route path="payment" element={<Payment />} />
         <Route path="documents" element={<Documents />} />
-        {/* Sales Pipeline */}
-        <Route path="sales-inquiry" element={<SalesInquiry />} />
-        <Route path="sales-follow" element={<SalesFollowUp />} />
-        <Route path="test-drive" element={<TestDrive />} />
-        <Route path="sales-closer" element={<SalesCloser />} />
-        <Route path="sales-booking" element={<SalesBooking />} />
-        <Route path="finance" element={<Finance />} />
-        <Route path="gst-invoice" element={<GstInvoice />} />
-        <Route path="delivery" element={<Delivery />} />
-        <Route path="delivery-note" element={<DeliveryNote />} />
-        <Route path="gate-pass" element={<GatePass />} />
-        {/* Inventory & Workshop */}
+
+        {/* Stock & Workshop — purchase + sales */}
         <Route path="stock" element={<Stock />} />
-        <Route path="workshop" element={<Workshop />} />
-        <Route path="expenses" element={<Expenses />} />
-        {/* Sales Tools */}
-        <Route path="customers" element={<Customers />} />
-        <Route path="targets" element={<Targets />} />
-        <Route path="emp-perf" element={<EmpPerf />} />
-        {/* Admin */}
-        <Route path="user-mgmt" element={<UserMgmt />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="workshop" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><Workshop /></RoleRoute>
+        } />
+        <Route path="expenses" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><Expenses /></RoleRoute>
+        } />
+
+        {/* Sales Pipeline — sales roles */}
+        <Route path="sales-inquiry" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesInquiry /></RoleRoute>
+        } />
+        <Route path="sales-follow" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesFollowUp /></RoleRoute>
+        } />
+        <Route path="test-drive" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><TestDrive /></RoleRoute>
+        } />
+        <Route path="sales-closer" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesCloser /></RoleRoute>
+        } />
+        <Route path="sales-booking" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesBooking /></RoleRoute>
+        } />
+        <Route path="finance" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><Finance /></RoleRoute>
+        } />
+        <Route path="gst-invoice" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><GstInvoice /></RoleRoute>
+        } />
+        <Route path="delivery" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><Delivery /></RoleRoute>
+        } />
+        <Route path="delivery-note" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><DeliveryNote /></RoleRoute>
+        } />
+        <Route path="gate-pass" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><GatePass /></RoleRoute>
+        } />
+
+        {/* Sales Tools — sales roles */}
+        <Route path="customers" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><Customers /></RoleRoute>
+        } />
+        <Route path="targets" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><Targets /></RoleRoute>
+        } />
+        <Route path="emp-perf" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><EmpPerf /></RoleRoute>
+        } />
         <Route path="tasks" element={<Tasks />} />
+
+        {/* Admin / Management */}
+        <Route path="user-mgmt" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.admin}><UserMgmt /></RoleRoute>
+        } />
+        <Route path="reports" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.admin}><Reports /></RoleRoute>
+        } />
+        <Route path="settings" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.admin}><Settings /></RoleRoute>
+        } />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

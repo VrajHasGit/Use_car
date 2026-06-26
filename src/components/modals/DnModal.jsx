@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { printDocument } from '../../utils/helpers';
 
 export const DnModal = ({ isOpen, onClose, onSave, editData }) => {
   const [formData, setFormData] = useState({
@@ -50,6 +51,109 @@ export const DnModal = ({ isOpen, onClose, onSave, editData }) => {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
     }
+  };
+
+  const handlePrint = () => {
+    const customStyles = `
+      .section { margin-bottom: 16px; }
+      .section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #1A56DB; border-bottom: 1px solid #1A56DB; padding-bottom: 4px; margin-bottom: 10px; }
+      .doc-title { font-size: 16px; font-weight: 700; text-align: center; background: #1A56DB; color: #fff; padding: 8px; border-radius: 4px; margin-bottom: 16px; letter-spacing: 1px; }
+      .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; color: #444; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+      .field { margin-bottom: 8px; }
+      .field label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #888; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+      .field .value { font-size: 12px; font-weight: 600; color: #111; border-bottom: 1px dotted #ccc; padding-bottom: 3px; min-height: 18px; }
+      .sign-section { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+      .sign-box { text-align: center; }
+      .sign-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 50px; font-size: 10px; color: #555; }
+      .booking-id-badge { display: inline-block; background: #1A56DB; color: #fff; padding: 3px 12px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+    `;
+
+    const htmlContent = `
+        <div class="doc-title">DELIVERY NOTE</div>
+        <div class="info-row">
+          <span>Date: <strong>${formData.dn_date || '—'}</strong></span>
+          <span>DN Number: <span class="booking-id-badge">${formData.dn_id || formData.dnId || '—'}</span></span>
+        </div>
+        ${formData.dn_obid ? `<div class="info-row"><span>Booking ID: <strong>${formData.dn_obid}</strong></span></div>` : ''}
+
+        <div class="section" style="margin-top:12px">
+          <div class="section-title">Customer Details</div>
+          <div class="grid">
+            <div class="field"><label>Customer Name</label><div class="value">${formData.dn_cname || ''}</div></div>
+            <div class="field"><label>Mobile</label><div class="value">${formData.dn_mob || ''}</div></div>
+            <div class="field"><label>Address</label><div class="value">${formData.dn_addr || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Vehicle Details</div>
+          <div class="grid">
+            <div class="field"><label>Registration No.</label><div class="value">${formData.dn_regn || ''}</div></div>
+            <div class="field"><label>Make / Model</label><div class="value">${formData.dn_mm || ''}</div></div>
+            <div class="field"><label>Year / Color</label><div class="value">${formData.dn_yrclr || ''}</div></div>
+          </div>
+          <div class="grid">
+            <div class="field"><label>KM at Delivery</label><div class="value">${formData.dn_km ? Number(formData.dn_km).toLocaleString('en-IN') : ''}</div></div>
+            <div class="field"><label>Fuel Level</label><div class="value">${formData.dn_fuel || ''}</div></div>
+            <div class="field"><label>Battery Condition</label><div class="value">${formData.dn_bat || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Keys & Accessories</div>
+          <div class="grid">
+            <div class="field"><label>No. of Keys</label><div class="value">${formData.dn_keys || ''}</div></div>
+            <div class="field"><label>Tool Kit</label><div class="value">${formData.dn_tools || ''}</div></div>
+            <div class="field"><label>Spare Tyre</label><div class="value">${formData.dn_spare || ''}</div></div>
+          </div>
+          <div class="grid">
+            <div class="field"><label>Jack</label><div class="value">${formData.dn_jack || ''}</div></div>
+            <div class="field"><label>Owner Manual</label><div class="value">${formData.dn_manual || ''}</div></div>
+            <div class="field"><label>Charger / Accessories</label><div class="value">${formData.dn_acc || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Documents Given to Buyer</div>
+          <div class="grid">
+            <div class="field"><label>RC Book</label><div class="value">${formData.dn_rc || ''}</div></div>
+            <div class="field"><label>Insurance</label><div class="value">${formData.dn_ins || ''}</div></div>
+            <div class="field"><label>PUC Certificate</label><div class="value">${formData.dn_puc || ''}</div></div>
+          </div>
+          <div class="grid">
+            <div class="field"><label>Form 28 (NOC)</label><div class="value">${formData.dn_f28 || ''}</div></div>
+            <div class="field"><label>Form 29</label><div class="value">${formData.dn_f29 || ''}</div></div>
+            <div class="field"><label>Form 30</label><div class="value">${formData.dn_f30 || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Document Expiry Dates</div>
+          <div class="grid">
+            <div class="field"><label>Insurance Valid Till</label><div class="value">${formData.dn_ins_exp || ''}</div></div>
+            <div class="field"><label>PUC Valid Till</label><div class="value">${formData.dn_puc_exp || ''}</div></div>
+            <div class="field"><label>Fitness Certificate (FC)</label><div class="value">${formData.dn_fc_exp || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Delivery Details</div>
+          <div class="grid">
+            <div class="field"><label>Delivered By</label><div class="value">${formData.dn_by || ''}</div></div>
+            <div class="field"><label>Status</label><div class="value">${formData.dn_stat || ''}</div></div>
+            <div class="field"><label>Remarks</label><div class="value">${formData.dn_rem || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="sign-section">
+          <div class="sign-box"><div class="sign-line">Customer Signature</div></div>
+          <div class="sign-box"><div class="sign-line">Delivered By</div></div>
+        </div>
+    `;
+
+    const title = formData.dn_id || formData.dnId || 'DN-Draft';
+    printDocument(title, htmlContent, customStyles);
   };
 
   return (
@@ -122,7 +226,7 @@ export const DnModal = ({ isOpen, onClose, onSave, editData }) => {
   </div>
   <div className="m-foot">
    <button className="btn btn-out"  onClick={onClose}>Cancel</button>
-   <button className="btn btn-bl" ><i className="fa fa-print"></i> Print</button>
+   <button className="btn btn-bl" onClick={handlePrint}><i className="fa fa-print"></i> Print</button>
    <button className="btn btn-or" onClick={handleSave} ><i className="fa fa-save"></i> Save</button>
   </div>
  </div>

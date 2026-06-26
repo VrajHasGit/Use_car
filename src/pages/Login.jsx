@@ -2,27 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-
-const BRANCHES = ['SG Highway', 'Vastral', 'Head Office'];
-
 const Login = () => {
-  const [activeTab, setActiveTab] = useState('admin');
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-  const [branch, setBranch] = useState('SG Highway');
-  const [showBranch, setShowBranch] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-
-  const selectTab = (tab) => {
-    setActiveTab(tab);
-    setError('');
-    setLoginId('');
-    setPassword('');
-    setShowBranch(tab !== 'admin');
-  };
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password.trim()) {
@@ -32,7 +18,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const result = await login(loginId.trim(), password.trim(), showBranch ? branch : undefined);
+      const result = await login(loginId.trim(), password.trim(), undefined);
       if (result.success) {
         navigate('/', { replace: true });
       } else {
@@ -49,39 +35,17 @@ const Login = () => {
     <div id="loginWrap">
       <div className="lx">
         <div className="lx-top">
-          <div className="lx-logo" id="lxLogoWrap">
-            <i className="fa fa-car" id="lxLogoIcon"></i>
+          <div className="lx-logo" id="lxLogoWrap" style={{ background: 'transparent', height: '140px', width: 'auto', marginBottom: '16px' }}>
+            <img src="/logo.png" alt="Carecay Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
-          <div className="lx-brand">CARE<em>CAY</em></div>
           <div className="lx-sub">Carecay Private Limited — Used Car ERP</div>
         </div>
 
         <div className="lx-body">
-          <div className="lx-tabs">
-            <button
-              className={`lx-tab ${activeTab === 'admin' ? 'on' : ''}`}
-              onClick={() => selectTab('admin')}
-            >
-              <i className="fa fa-shield-halved"></i> Admin
-            </button>
-            <button
-              className={`lx-tab ${activeTab === 'purchase' ? 'on' : ''}`}
-              onClick={() => selectTab('purchase')}
-            >
-              <i className="fa fa-car"></i> Purchase
-            </button>
-            <button
-              className={`lx-tab ${activeTab === 'sales' ? 'on' : ''}`}
-              onClick={() => selectTab('sales')}
-            >
-              <i className="fa fa-chart-line"></i> Sales
-            </button>
-          </div>
-
-          <label>Login ID</label>
+          <label style={{ marginTop: 0 }}>Login ID</label>
           <input
             id="lId"
-            placeholder="Enter Login ID"
+            placeholder="Enter Login ID or Email"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -96,15 +60,6 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
-
-          {showBranch && (
-            <div id="lBranch">
-              <label>Branch</label>
-              <select id="lBranchSel" value={branch} onChange={(e) => setBranch(e.target.value)}>
-                {BRANCHES.map(b => <option key={b}>{b}</option>)}
-              </select>
-            </div>
-          )}
 
           {error && (
             <div style={{
@@ -121,16 +76,17 @@ const Login = () => {
             className="btn-login"
             onClick={handleLogin}
             disabled={loading}
-            style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+            style={{
+              marginTop: 8,
+              ...(loading ? { opacity: 0.7, cursor: 'not-allowed' } : {})
+            }}
           >
             {loading ? (
-              <><i className="fa fa-spinner fa-spin"></i> &nbsp;SIGNING IN…</>
+              <><i className="car-spinner"></i> &nbsp;SIGNING IN…</>
             ) : (
               <><i className="fa fa-right-to-bracket"></i> &nbsp;SIGN IN</>
             )}
           </button>
-
-
         </div>
       </div>
     </div>

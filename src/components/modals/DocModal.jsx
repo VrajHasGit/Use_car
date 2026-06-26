@@ -87,43 +87,49 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   }, [isOpen, quickId, data.ob, data.pay, data.del]);
 
   useEffect(() => {
-    if (formData.dc_obid && formData.dc_obid.length >= 8) {
-      const ob = data.ob?.find(r => r.obId === formData.dc_obid || r.id === formData.dc_obid);
-      if (ob) {
+    if (formData.dc_obid && formData.dc_obid.length >= 3) {
+      const term = formData.dc_obid.toLowerCase();
+      const inq = data.pur_inq?.find(r => (r.inqId || r.inquiryId || r.pi_inqid || r.id || '').toLowerCase() === term);
+      const ob = data.ob?.find(r => (r.obId || r.id || '').toLowerCase() === term);
+      const match = inq || ob;
+      
+      if (match) {
         setFormData(prev => ({
           ...prev,
-          dc_cname: ob.ob_cname || ob.client || prev.dc_cname,
-          dc_carinfo: `${ob.ob_mm || ob.mm || ''}${(ob.ob_year || ob.year) ? ' · ' + (ob.ob_year || ob.year) : ''}${(ob.ob_regn || ob.regNo) ? ' · ' + (ob.ob_regn || ob.regNo) : ''}`,
-          dc_regn: ob.ob_regn || ob.regNo || prev.dc_regn
+          dc_cname: match.sellerName || match.pi_sname || match.ob_cname || match.client || prev.dc_cname,
+          dc_carinfo: `${match.make || match.pi_make || match.ob_mm || match.mm || ''} ${match.model || match.pi_model || ''} ${match.year || match.pi_year || match.ob_year || ''} ${match.regNo || match.pi_regn || match.ob_regn || ''}`.replace(/\s+/g, ' ').trim(),
+          dc_regn: match.regNo || match.pi_regn || match.ob_regn || prev.dc_regn
         }));
       }
     }
-  }, [formData.dc_obid, data.ob]);
+  }, [formData.dc_obid, data.ob, data.pur_inq]);
 
   useEffect(() => {
     if (formData.dc_regn && formData.dc_regn.length >= 6) {
       const rn = formData.dc_regn.replace(/\s/g, '').toUpperCase();
+      const inq = data.pur_inq?.find(r => (r.regNo || r.pi_regn) && (r.regNo || r.pi_regn).replace(/\s/g, '').toUpperCase() === rn);
       const ob = data.ob?.find(r => (r.ob_regn || r.regNo) && (r.ob_regn || r.regNo).replace(/\s/g, '').toUpperCase() === rn);
-      if (ob) {
+      const match = inq || ob;
+      
+      if (match) {
         setFormData(prev => ({
           ...prev,
-          dc_obid: ob.obId || ob.id || prev.dc_obid,
-          dc_cname: ob.ob_cname || ob.client || prev.dc_cname,
-          dc_carinfo: `${ob.ob_mm || ob.mm || ''}${(ob.ob_year || ob.year) ? ' · ' + (ob.ob_year || ob.year) : ''}${(ob.ob_regn || ob.regNo) ? ' · ' + (ob.ob_regn || ob.regNo) : ''}`
+          dc_obid: match.inqId || match.inquiryId || match.obId || match.id || prev.dc_obid,
+          dc_cname: match.sellerName || match.pi_sname || match.ob_cname || match.client || prev.dc_cname,
+          dc_carinfo: `${match.make || match.pi_make || match.ob_mm || match.mm || ''} ${match.model || match.pi_model || ''} ${match.year || match.pi_year || match.ob_year || ''} ${match.regNo || match.pi_regn || match.ob_regn || ''}`.replace(/\s+/g, ' ').trim()
         }));
       } else {
         const stk = data.stk?.find(r => (r.sk_regn || r.regNo) && (r.sk_regn || r.regNo).replace(/\s/g, '').toUpperCase() === rn);
         if (stk) {
-          const linkedOB = data.ob?.find(r => (r.ob_regn || r.regNo) && (r.ob_regn || r.regNo).replace(/\s/g, '').toUpperCase() === rn);
           setFormData(prev => ({
             ...prev,
-            dc_cname: linkedOB ? (linkedOB.ob_cname || linkedOB.client) : (stk.cust || stk.src || ''),
-            dc_carinfo: `${stk.sk_make || stk.make || ''} ${stk.sk_model || stk.model || ''}${(stk.sk_year || stk.year) ? ' · ' + (stk.sk_year || stk.year) : ''}${(stk.sk_regn || stk.regNo) ? ' · ' + (stk.sk_regn || stk.regNo) : ''}`
+            dc_cname: stk.cust || stk.src || '',
+            dc_carinfo: `${stk.sk_make || stk.make || ''} ${stk.sk_model || stk.model || ''} ${stk.sk_year || stk.year || ''} ${stk.sk_regn || stk.regNo || ''}`.replace(/\s+/g, ' ').trim()
           }));
         }
       }
     }
-  }, [formData.dc_regn, data.ob, data.stk]);
+  }, [formData.dc_regn, data.ob, data.pur_inq, data.stk]);
 
   const handleChange = (e) => {
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -159,8 +165,8 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   <div className="m-body">
 
    
-   <div className="grid3">
-    <div className="fg"><label>Order Booking ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="dc_obid" name="dc_obid" value={formData['dc_obid'] || ''} onChange={handleChange} placeholder="OB-2025-0001"  /></div>
+    <div className="grid3">
+    <div className="fg"><label>Inquiry / Booking ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="dc_obid" name="dc_obid" value={formData['dc_obid'] || ''} onChange={handleChange} placeholder="INQ-... / OB-..."  /></div>
     <div className="fg"><label>Vehicle Reg Number <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill by RegNo</span></label><input id="dc_regn" name="dc_regn" value={formData['dc_regn'] || ''} onChange={handleChange} placeholder="GJ-01-AB-1234"  /></div>
     <div className="fg"><label>Document Date</label><input type="date" id="dc_date" name="dc_date" value={formData['dc_date'] || ''} onChange={handleChange} /></div>
    </div>
@@ -340,77 +346,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
 
    </div>
 
-   
-   <div className="sect-lbl" style={{"marginTop":"4px"}}><i className="fa fa-rupee-sign"></i> Sale Documents <span style={{"color":"var(--bl5)","fontSize":"9px","marginLeft":"6px"}}>(BUYER KYC + RTO Transfer)</span></div>
-   <div style={{"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"10px","marginBottom":"14px"}}>
 
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_badh" name="dc_badh" checked={!!formData['dc_badh']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>Buyer Aadhaar</div>
-      <div id="dc_badh_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_badh_btn">📎 Upload</button>
-     <input type="file" id="dcu_badh" name="dcu_badh" value={formData['dcu_badh'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
-    </div>
-
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_bpan" name="dc_bpan" checked={!!formData['dc_bpan']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>Buyer PAN Card</div>
-      <div id="dc_bpan_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_bpan_btn">📎 Upload</button>
-     <input type="file" id="dcu_bpan" name="dcu_bpan" value={formData['dcu_bpan'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
-    </div>
-
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_lbill" name="dc_lbill" checked={!!formData['dc_lbill']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>Light Bill <span style={{"fontSize":"10px","color":"var(--text3)"}}>(Address Proof)</span></div>
-      <div id="dc_lbill_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_lbill_btn">📎 Upload</button>
-     <input type="file" id="dcu_lbill" name="dcu_lbill" value={formData['dcu_lbill'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
-    </div>
-
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_rent" name="dc_rent" checked={!!formData['dc_rent']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>Rent Agreement <span style={{"fontSize":"10px","color":"var(--text3)"}}>(If rented)</span></div>
-      <div id="dc_rent_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_rent_btn">📎 Upload</button>
-     <input type="file" id="dcu_rent" name="dcu_rent" value={formData['dcu_rent'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
-    </div>
-
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_tto" name="dc_tto" checked={!!formData['dc_tto']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>TTO <span style={{"fontSize":"10px","color":"var(--text3)"}}>(Transfer of Title / Ownership)</span></div>
-      <div id="dc_tto_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_tto_btn">📎 Upload</button>
-     <input type="file" id="dcu_tto" name="dcu_tto" value={formData['dcu_tto'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
-    </div>
-
-    
-    <div style={{"background":"var(--bl7)","border":"1px solid rgba(37,99,235,.2)","borderRadius":"var(--radius-sm)","padding":"10px 12px","display":"flex","alignItems":"center","gap":"10px"}}>
-     <input type="checkbox" id="dc_bphoto" name="dc_bphoto" checked={!!formData['dc_bphoto']} onChange={handleChange} style={{"width":"16px","height":"16px","accentColor":"var(--bl5)","flexShrink":"0"}}  />
-     <div style={{"flex":"1","minWidth":"0"}}>
-      <div style={{"fontSize":"12px","fontWeight":"600","color":"var(--text)"}}>Buyer Photo</div>
-      <div id="dc_bphoto_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
-     </div>
-     <button  style={{"background":"rgba(37,99,235,.15)","border":"1px solid rgba(37,99,235,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_bphoto_btn">📎 Upload</button>
-     <input type="file" id="dcu_bphoto" name="dcu_bphoto" value={formData['dcu_bphoto'] || ''} onChange={handleChange} accept="image/*" style={{"display":"none"}}  />
-    </div>
-
-   </div>
 
    
    <div id="dc_upload_summary" style={{"background":"var(--surface2)","border":"1px solid var(--border2)","borderRadius":"var(--radius-sm)","padding":"10px 14px","marginBottom":"14px","display":"flex","alignItems":"center","justifyContent":"space-between","flexWrap":"wrap","gap":"8px"}}>

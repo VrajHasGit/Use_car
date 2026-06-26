@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SobModal } from '../components/modals/SobModal';
@@ -7,6 +8,7 @@ import { DelModal } from '../components/modals/DelModal';
 
 const SalesBooking = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,8 +32,9 @@ const SalesBooking = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('sob', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('sob'); await addRecord('sob', { ...fd, sobId: genId('SOB', cnt), date: fd.sob_date || today(), status: 'Pending' }); showToast('Sales booking added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('sob', editRec.id, fd, { title: 'Sales Booking Updated', message: (fd.sob_bname || fd.buyerName || '') + ' — ' + (fd.sob_regn || fd.regNo || ''), link: '/sales-booking', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('sob'); await addRecord('sob', { ...fd, sobId: genId('SOB', cnt), date: fd.sob_date || today(), status: 'Pending' }, { title: 'Sales Booking', message: (fd.sob_bname || fd.buyerName || '') + ' — ' + (fd.sob_regn || fd.regNo || ''), link: '/sales-booking', actor }); showToast('Sales booking added!'); }
       await refresh('sob'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
@@ -57,6 +60,11 @@ const SalesBooking = () => {
       await refresh('stk');
       showToast('Marked as Delivered! 🎉');
     } catch (e) { showToast('Failed.', 'error'); }
+  };
+
+  const handlePrintRecord = (r) => {
+    setEditRec(r);
+    setIsModalOpen(true);
   };
 
   const closeQuickModal = () => setQuickModal({ type: null, sobId: null });
@@ -139,7 +147,7 @@ const SalesBooking = () => {
                     <td>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon bi-print" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
+                        <button className="btn-icon bi-print" title="Print" onClick={() => handlePrintRecord(r)}><i className="fa fa-print"></i></button>
                         {(r.status !== 'Delivered') && (
                           <button className="btn-icon" title="Mark Delivered" onClick={() => handleMarkDelivered(r)}
                             style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>

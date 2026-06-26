@@ -32,7 +32,7 @@ function RejectModal({ rec, onClose, onReject }) {
             <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }}
               disabled={!reason.trim() || saving}
               onClick={async () => { setSaving(true); await onReject(rec.id, reason); setSaving(false); onClose(); }}>
-              {saving ? <><i className="fa fa-spinner fa-spin"></i> Rejecting…</> : <><i className="fa fa-xmark"></i> Reject</>}
+              {saving ? <><i className="car-spinner"></i> Rejecting…</> : <><i className="fa fa-xmark"></i> Reject</>}
             </button>
           </div>
         </div>
@@ -115,8 +115,9 @@ const Expenses = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('exp_rec', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('EXP'); await addRecord('exp_rec', { ...fd, expId: genId('EXP', cnt), date: fd.date || today(), status: 'Pending' }); showToast('Expense added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('exp_rec', editRec.id, fd, { title: 'Expense Updated', message: '₹' + (fd.amount || '') + ' — ' + (fd.category || '') + ' — ' + (fd.description || ''), link: '/expenses', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('EXP'); await addRecord('exp_rec', { ...fd, expId: genId('EXP', cnt), date: fd.date || today(), status: 'Pending' }, { title: 'Expense Recorded', message: '₹' + (fd.amount || '') + ' — ' + (fd.category || '') + ' — ' + (fd.description || ''), link: '/expenses', actor }); showToast('Expense added!'); }
       await refresh('exp_rec'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };

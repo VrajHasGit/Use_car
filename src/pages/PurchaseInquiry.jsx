@@ -5,11 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, statusBadge, ageDays } from '../utils/helpers';
 import { PurInqModal } from '../components/modals/PurInqModal';
-import { ValModal } from '../components/modals/ValModal';
-import { PfuModal } from '../components/modals/PfuModal';
-import { PclModal } from '../components/modals/PclModal';
-import { StkModal } from '../components/modals/StkModal';
-import { WsModal } from '../components/modals/WsModal';
 
 const Toast = ({ message, type, onClose }) => (
   <div className={`toast ${type === 'success' ? 'suc' : type === 'error' ? 'err' : 'inf'}`} style={{ display: 'flex' }}>
@@ -27,7 +22,6 @@ const PurchaseInquiry = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
-  const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = 'success') => {
@@ -52,32 +46,80 @@ const PurchaseInquiry = () => {
   const handleAdd = () => { setEditRecord(null); setIsModalOpen(true); };
   const handleEdit = (rec) => { setEditRecord(rec); setIsModalOpen(true); };
 
-  const handleSave = async (formData) => {
+  const handleSave = async (formData, shiftToValuation = false) => {
     try {
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      const carLabel = `${formData.make || ''} ${formData.model || ''}`.trim();
+      const targetStage = shiftToValuation ? 'Valuation' : (editRecord?.stage || 'Inquiry');
+      
+      let currentInqId = editRecord?.inqId;
+
       if (editRecord) {
         await updateRecord('pur_inq', editRecord.id, {
           ...formData,
-          updatedBy: currentUser?.name || 'Admin',
+          stage: targetStage,
+          updatedBy: actor.name,
+        }, {
+          title: 'Purchase Inquiry Updated',
+          message: `${formData.sellerName} — ${carLabel}`,
+          link: '/purchase-inquiry',
+          actor,
+          carInfo: { make: formData.make, model: formData.model, regNo: formData.regNo },
         });
         showToast('Purchase inquiry updated!');
       } else {
-        const cnt = await getNextCounter('pur');
-        const inqId = genId('INQ', cnt);
+        currentInqId = formData.inqId || genId('INQ', await getNextCounter('pur'));
         await addRecord('pur_inq', {
           ...formData,
-          inqId,
+          inqId: currentInqId,
           date: formData.date || today(),
           status: formData.status || 'New',
-          createdBy: currentUser?.name || 'Admin',
+          createdBy: actor.name,
+          updatedBy: actor.name,
+          stage: targetStage,
+        }, {
+          title: 'New Purchase Inquiry',
+          message: `${formData.sellerName} — ${carLabel}`,
+          link: '/purchase-inquiry',
+          actor,
+          carInfo: { make: formData.make, model: formData.model, regNo: formData.regNo },
         });
         showToast('Purchase inquiry added!');
       }
+
+      if (shiftToValuation) {
+        const valCnt = await getNextCounter('val');
+        const valId = genId('VAL', valCnt);
+        await addRecord('val', {
+          valId,
+          v_inqid: currentInqId,
+          v_date: today(),
+          v_vnum: [formData.regState, formData.regRto, formData.regSeries, formData.regNum].filter(Boolean).join('-').toUpperCase(),
+          v_cname: formData.sellerName || '',
+          v_cont: formData.mobile || '',
+          v_km: formData.km || '',
+          v_make: formData.make || '',
+          v_model: formData.model || '',
+          v_var: formData.variant || '',
+          v_year: formData.year || '',
+          v_fuel: formData.fuel || '',
+          v_own: formData.owners || '',
+          v_rc: false, v_svc: false, v_acc: false, v_tyre: "Good", v_eng: "Good",
+          v_ovr: "Good", v_stat: "Pending", v_nextfu: formData.nextFU || "", v_rem: formData.remarks || "",
+          v_media: [],
+          date: today(),
+          stage: 'Valuation'
+        });
+        await refresh('val');
+      }
+
       await refresh('pur_inq');
       setIsModalOpen(false);
     } catch (e) {
       showToast('Failed to save: ' + e.message, 'error');
     }
   };
+
 
   const handleDelete = async (rec) => {
     if (!window.confirm(`Delete inquiry for ${rec.sellerName}?`)) return;
@@ -110,19 +152,74 @@ const PurchaseInquiry = () => {
     }
   };
 
-  const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
+  const handleShiftToValuation = async (inq) => {
+    if (!window.confirm(`Send ${inq.sellerName}'s inquiry to Valuation?`)) return;
+    try {
+      const valCnt = await getNextCounter('val');
+      const valId = genId('VAL', valCnt);
+      await addRecord('val', {
+        valId,
+        v_inqid: inq.inqId || inq.id,
+        v_date: today(),
+        v_vnum: inq.regNo || '',
+        v_cname: inq.sellerName || '',
+        v_cont: inq.mobile || '',
+        v_make: inq.make || '',
+        v_model: inq.model || '',
+        v_var: inq.variant || '',
+        v_year: inq.year || '',
+        v_fuel: inq.fuel || '',
+        v_km: inq.km || '',
+        v_own: inq.owners || '',
+        v_status: 'Scheduled',
+        v_media: [],
+        date: today(),
+        stage: 'Valuation'
+      });
+      await updateRecord('pur_inq', inq.id, { stage: 'Valuation' });
+      await refresh('val');
+      await refresh('pur_inq');
+      showToast('Sent to Valuation!');
+    } catch (e) {
+      showToast('Failed to send to valuation.', 'error');
+    }
+  };
 
-  const markShifted = async (targetStage, recId) => {
-    const rec = data.pur_inq.find(r => r.id === recId || r.inqId === recId);
-    if (rec) {
-      try {
-        await updateRecord('pur_inq', rec.id, { stage: targetStage });
-        await refresh('pur_inq');
-        showToast(`Shifted to ${targetStage}`);
-        closeQuickModal();
-      } catch (e) {
-        showToast('Failed to shift', 'error');
-      }
+  const handleShiftToOrderBooking = async (inq) => {
+    if (!window.confirm(`Send ${inq.sellerName}'s inquiry to Order Booking?`)) return;
+    try {
+      const obCnt = await getNextCounter('ob');
+      const obId = genId('OB', obCnt);
+      await addRecord('ob', {
+        obId,
+        ob_inqid: inq.inqId || inq.id,
+        ob_date: today(),
+        ob_cname: inq.sellerName || '',
+        ob_cont: inq.mobile || '',
+        ob_email: inq.email || '',
+        ob_addr: inq.address || '',
+        ob_mm: [inq.make, inq.model, inq.variant].filter(Boolean).join(' '),
+        ob_fuel: inq.fuel || '',
+        ob_regn: inq.regNo || '',
+        ob_year: inq.year || '',
+        ob_km: inq.km || '',
+        ob_color: inq.color || '',
+        ob_insval: inq.insurance || '',
+        ob_rtoname: inq.sellerName || '',
+        ob_branch: 'SG Highway',
+        ob_instype: 'Comprehensive',
+        ob_ownt: '1st Owner',
+        ob_src: 'Walk-in',
+        ob_doc_stat: 'Pending',
+        date: today(),
+        stage: 'OrderBooking'
+      });
+      await updateRecord('pur_inq', inq.id, { stage: 'OrderBooking' });
+      await refresh('ob');
+      await refresh('pur_inq');
+      showToast('Sent to Order Booking!');
+    } catch (e) {
+      showToast('Failed to send to Order Booking.', 'error');
     }
   };
 
@@ -168,13 +265,6 @@ const PurchaseInquiry = () => {
       </div>
 
       <PurInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
-      
-      {/* Quick Action Modals */}
-      <ValModal isOpen={quickModal.type === 'val'} onClose={closeQuickModal} onSuccess={() => markShifted('Valuation', quickModal.inqId)} quickInqId={quickModal.inqId} />
-      <PfuModal isOpen={quickModal.type === 'pfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <PclModal isOpen={quickModal.type === 'pcl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.inqId)} quickInqId={quickModal.inqId} />
-      <StkModal isOpen={quickModal.type === 'stk'} onClose={closeQuickModal} onSuccess={() => markShifted('Stock', quickModal.inqId)} quickInqId={quickModal.inqId} />
-      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} onSuccess={() => markShifted('Workshop', quickModal.inqId)} quickInqId={quickModal.inqId} />
 
       <div className="tc">
         <div className="tc-hdr">
@@ -240,19 +330,14 @@ const PurchaseInquiry = () => {
                       ) : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit Inquiry" onClick={() => handleEdit(inq)}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon bi-next" title="Valuation" onClick={() => setQuickModal({ type: 'val', inqId: inq.inqId || inq.id })}><i className="fa fa-magnifying-glass-dollar"></i></button>
-                        <button className="btn-icon bi-view" title="Follow Up" onClick={() => setQuickModal({ type: 'pfu', inqId: inq.inqId || inq.id })}><i className="fa fa-phone-volume"></i></button>
-                        
-                        <button className="btn-icon bi-next" title="Closure" onClick={() => setQuickModal({ type: 'pcl', inqId: inq.inqId || inq.id })}><i className="fa fa-handshake"></i></button>
-                        <button className="btn-icon bi-view" title="Add to Stock" onClick={() => setQuickModal({ type: 'stk', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(8,145,178,.1)', color: '#0891B2' }}><i className="fa fa-warehouse"></i></button>
-                        <button className="btn-icon bi-del" title="Workshop" onClick={() => setQuickModal({ type: 'ws', inqId: inq.inqId || inq.id })} style={{ background: 'rgba(220,38,38,.1)', color: '#DC2626' }}><i className="fa fa-screwdriver-wrench"></i></button>
-                        
                         <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
                         {inq.mobile ? (
                           <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>
                         ) : <div />}
+                        <button className="btn-icon bi-next" title="Send to Valuation" onClick={() => handleShiftToValuation(inq)}><i className="fa fa-arrow-right"></i></button>
+                        <button className="btn-icon bi-next" title="Send to Order Booking" onClick={() => handleShiftToOrderBooking(inq)} style={{ background: 'rgba(249,115,22,.1)', color: '#f97316' }}><i className="fa fa-file-pen"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>

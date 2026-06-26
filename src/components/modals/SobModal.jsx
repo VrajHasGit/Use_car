@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { autoFillFromStock, autoFillFromStockId } from '../../utils/relations';
-import { today } from '../../utils/helpers';
+import { today, printDocument } from '../../utils/helpers';
 
 export const SobModal = ({ isOpen, onClose, onSave, editData }) => {
   const blank = {
@@ -128,6 +128,100 @@ export const SobModal = ({ isOpen, onClose, onSave, editData }) => {
 
   const fmtAmt = (n) => '₹ ' + Number(n || 0).toLocaleString('en-IN');
 
+  const handlePrint = () => {
+    const customStyles = `
+      .section { margin-bottom: 16px; }
+      .section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #1A56DB; border-bottom: 1px solid #1A56DB; padding-bottom: 4px; margin-bottom: 10px; }
+      .doc-title { font-size: 16px; font-weight: 700; text-align: center; background: #1A56DB; color: #fff; padding: 8px; border-radius: 4px; margin-bottom: 16px; letter-spacing: 1px; }
+      .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; color: #444; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .field { margin-bottom: 8px; }
+      .field label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #888; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+      .field .value { font-size: 12px; font-weight: 600; color: #111; border-bottom: 1px dotted #ccc; padding-bottom: 3px; min-height: 18px; }
+      .cost-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      .cost-table th { background: #F0F4F8; padding: 7px 10px; text-align: left; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; border: 1px solid #ddd; }
+      .cost-table td { padding: 7px 10px; border: 1px solid #ddd; font-size: 11px; }
+      .cost-total { font-weight: 800; font-size: 13px; color: #1A56DB; background: #EFF6FF; }
+      .sign-section { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+      .sign-box { text-align: center; }
+      .sign-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 50px; font-size: 10px; color: #555; }
+      .booking-id-badge { display: inline-block; background: #1A56DB; color: #fff; padding: 3px 12px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+    `;
+
+    const htmlContent = `
+        <div class="doc-title">SALES ORDER BOOKING FORM</div>
+        <div class="info-row">
+          <span>Booking Date: <strong>${formData.sob_date || '—'}</strong></span>
+          <span>Branch: <strong>${formData.sob_branch || '—'}</strong></span>
+          <span>Booking ID: <span class="booking-id-badge">${formData.sobId || formData.sob_sclid || '—'}</span></span>
+        </div>
+        ${formData.sob_stkid ? `<div class="info-row"><span>Stock ID: <strong>${formData.sob_stkid}</strong></span><span>Sales Closer ID: <strong>${formData.sob_sclid || '—'}</strong></span></div>` : ''}
+
+        <div class="section" style="margin-top:12px">
+          <div class="section-title">Client Details</div>
+          <div class="grid">
+            <div class="field"><label>Client Name</label><div class="value">${formData.sob_cname || ''}</div></div>
+            <div class="field"><label>Contact No.</label><div class="value">${formData.sob_cont || ''}</div></div>
+            <div class="field"><label>Email</label><div class="value">${formData.sob_email || ''}</div></div>
+          </div>
+          <div class="field"><label>Address</label><div class="value">${formData.sob_addr || ''}</div></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Vehicle Details</div>
+          <div class="grid">
+            <div class="field"><label>Make & Model</label><div class="value">${formData.sob_mm || ''}</div></div>
+            <div class="field"><label>Color</label><div class="value">${formData.sob_color || ''}</div></div>
+            <div class="field"><label>Fuel Type</label><div class="value">${formData.sob_fuel || ''}</div></div>
+          </div>
+          <div class="grid">
+            <div class="field"><label>Chassis No.</label><div class="value">${formData.sob_chas || ''}</div></div>
+            <div class="field"><label>Reg. No.</label><div class="value">${formData.sob_regn || ''}</div></div>
+            <div class="field"><label>Year</label><div class="value">${formData.sob_year || ''}</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Deal Calculation</div>
+          <table class="cost-table">
+            <thead><tr><th>Description</th><th>Amount (INR)</th></tr></thead>
+            <tbody>
+              <tr><td>Sale Price</td><td>${fmtAmt(formData.sob_saleprice)}</td></tr>
+              <tr><td>TCS</td><td>${fmtAmt(formData.sob_tcs)}</td></tr>
+              <tr><td>RTO Charge</td><td>${fmtAmt(formData.sob_rto)}</td></tr>
+              <tr><td>Insurance Charge</td><td>${fmtAmt(formData.sob_inschrg)}</td></tr>
+              <tr><td>Extended Warranty</td><td>${fmtAmt(formData.sob_warranty)}</td></tr>
+              <tr><td>Accessories</td><td>${fmtAmt(formData.sob_acc)}</td></tr>
+              <tr><td>Other Charges</td><td>${fmtAmt(formData.sob_other)}</td></tr>
+              <tr class="cost-total"><td><strong>TOTAL AMOUNT</strong></td><td><strong>${fmtAmt(dealTotal)}</strong></td></tr>
+              <tr><td>Total Paid (Online + Cash)</td><td>${fmtAmt(totalPaid)}</td></tr>
+              <tr class="cost-total" style="background:#FEF2F2;color:#DC2626"><td><strong>BALANCE PENDING</strong></td><td><strong>${fmtAmt(balance)}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Additional Info</div>
+          <div class="grid">
+            <div class="field"><label>Sales Executive</label><div class="value">${formData.sob_exec || ''}</div></div>
+            <div class="field"><label>Broker Name</label><div class="value">${formData.sob_broker || ''}</div></div>
+            <div class="field"><label>Source Channel</label><div class="value">${formData.sob_src || ''}</div></div>
+          </div>
+          ${formData.sob_rem ? `<div class="field"><label>Remarks</label><div class="value">${formData.sob_rem}</div></div>` : ''}
+        </div>
+
+        <div class="sign-section">
+          <div class="sign-box"><div class="sign-line">Client Signature</div></div>
+          <div class="sign-box"><div class="sign-line">Authorized Signatory</div></div>
+          <div class="sign-box"><div class="sign-line">Manager / Partner</div></div>
+        </div>
+    `;
+
+    const title = formData.sobId || formData.sob_sclid || 'SOB-Draft';
+    printDocument(title, htmlContent, customStyles);
+  };
+
   const payRows = [
     { label: 'Booking Amt', idx: 1, highlight: true },
     { label: '1st Payment', idx: 2 },
@@ -145,7 +239,7 @@ export const SobModal = ({ isOpen, onClose, onSave, editData }) => {
           <div className="m-hdr-icon">📋</div>
           <h3>Sales Order Booking</h3>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button className="btn btn-bl btn-sm" onClick={() => window.print()}><i className="fa fa-print"></i> Print Form</button>
+            <button className="btn btn-bl btn-sm" onClick={handlePrint}><i className="fa fa-print"></i> Print Form</button>
             <button className="m-close" onClick={onClose}>✕</button>
           </div>
         </div>
@@ -349,9 +443,9 @@ export const SobModal = ({ isOpen, onClose, onSave, editData }) => {
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn btn-bl" onClick={() => window.print()}><i className="fa fa-print"></i> Print</button>
+          <button className="btn btn-bl" onClick={handlePrint}><i className="fa fa-print"></i> Print</button>
           <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Booking</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Booking</>}
           </button>
         </div>
       </div>

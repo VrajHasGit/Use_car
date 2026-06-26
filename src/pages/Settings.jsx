@@ -80,8 +80,8 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
 
   // Theme/Font state (live from body attributes)
-  const [activeTheme, setActiveTheme] = useState(document.body.getAttribute('data-theme') || 'black-darkblue');
-  const [activeFont, setActiveFont] = useState(document.body.getAttribute('data-font') || 'inter');
+  const [activeTheme, setActiveTheme] = useState(document.body.getAttribute('data-theme') || 'navy-white');
+  const [activeFont, setActiveFont] = useState(document.body.getAttribute('data-font') || 'space');
 
   // GST state
   const [gstRates, setGstRates] = useState(DEFAULT_GST_RATES);
@@ -135,7 +135,7 @@ const Settings = () => {
   const isAdmin = currentUser?.role?.toLowerCase() === 'admin';
   const isManager = currentUser?.role?.toLowerCase() === 'manager';
 
-  if (loading) return <div className="page on"><div style={{ padding: 48, textAlign: 'center' }}><i className="fa fa-spinner fa-spin" style={{ fontSize: 24, color: 'var(--or1)' }}></i></div></div>;
+  if (loading) return <div className="page on"><div style={{ padding: 48, textAlign: 'center' }}><i className="car-spinner" style={{ fontSize: 24, color: 'var(--or1)' }}></i></div></div>;
 
   const TABS = [
     { id: 'general', label: 'General', icon: 'fa-building' },
@@ -159,7 +159,7 @@ const Settings = () => {
         {activeTab === 'general' && (
           <div className="ph-actions">
             <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-              {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Settings</>}
+              {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Settings</>}
             </button>
           </div>
         )}
@@ -268,7 +268,7 @@ const Settings = () => {
               <div className="tc-title"><i className="fa fa-percent" style={{ color: 'var(--or1)' }}></i> GST Rates Configuration</div>
               <div className="tc-acts">
                 <button className="btn btn-or btn-sm" onClick={handleGstSave} disabled={gstSaving}>
-                  {gstSaving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save All Changes</>}
+                  {gstSaving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save All Changes</>}
                 </button>
               </div>
             </div>
@@ -501,7 +501,7 @@ const Settings = () => {
                 These operations affect the live Firestore database. Use with caution.
               </div>
               <button className="btn btn-out" onClick={handleSeed} disabled={seeding} style={{ fontSize: 11, width: '100%', marginBottom: 12 }}>
-                {seeding ? <><i className="fa fa-spinner fa-spin"></i> Seeding…</> : <><i className="fa fa-database"></i> Re-Seed Firestore (Sample Data)</>}
+                {seeding ? <><i className="car-spinner"></i> Seeding…</> : <><i className="fa fa-database"></i> Re-Seed Firestore (Sample Data)</>}
               </button>
               <button className="btn" onClick={() => exportMultipleToExcel(data, `carecay_full_backup_${today()}.xlsx`)} style={{ fontSize: 11, width: '100%', background: 'var(--bl5)', color: '#fff', border: 'none' }}>
                 <i className="fa fa-file-export"></i> Export Full System Data (Excel)

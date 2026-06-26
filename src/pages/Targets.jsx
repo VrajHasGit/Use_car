@@ -65,10 +65,11 @@ const Targets = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('targets', editRec.id, fd); showToast('Target updated!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('targets', editRec.id, fd, { title: 'Target Updated', message: (fd.userName || fd.name || '') + ' — ' + (fd.month || ''), link: '/targets', actor }); showToast('Target updated!'); }
       else {
         const cnt = await getNextCounter('TGT');
-        await addRecord('targets', { ...fd, tgtId: genId('TGT', cnt), date: fd.date || today(), month: fd.month || selectedMonth });
+        await addRecord('targets', { ...fd, tgtId: genId('TGT', cnt), date: fd.date || today(), month: fd.month || selectedMonth }, { title: 'Target Set', message: (fd.userName || fd.name || '') + ' — ' + (fd.month || selectedMonth || ''), link: '/targets', actor });
         showToast('Target added!');
       }
       await refresh('targets'); setIsModalOpen(false);

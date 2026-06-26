@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toEmail } from '../../contexts/AuthContext';
 
 const ReadOnlyVal = ({ value }) => (
   <div style={{ padding: '8px 12px', background: 'var(--surface2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text2)', minHeight: '34px' }}>
@@ -8,7 +9,6 @@ const ReadOnlyVal = ({ value }) => (
 
 export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'create' }) => {
   const [mode, setMode] = useState(initialMode);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "", lid: "", password: "", role: "Sales", branch: "Head Office", mobile: "", email: "", status: "Active"
   });
@@ -16,10 +16,8 @@ export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'cr
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      setShowPassword(false);
       if (editData) {
-        const { pw, password, ...rest } = editData;
-        setFormData({ ...rest, password: password || pw || "" }); // Preserve existing password
+        setFormData({ ...editData }); // Keep all fields including password/pw for viewing
       } else {
         setFormData({
           name: "", lid: "", password: "", role: "Sales", branch: "Head Office", mobile: "", email: "", status: "Active"
@@ -31,7 +29,12 @@ export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'cr
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const updated = { ...formData, [e.target.name]: e.target.value };
+    // Auto-populate email from loginId
+    if (e.target.name === 'lid') {
+      updated.email = toEmail(e.target.value);
+    }
+    setFormData(updated);
   };
 
   const handleSave = async () => {
@@ -48,13 +51,14 @@ export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'cr
   };
 
   const isView = mode === 'view';
+  const isCreate = mode === 'create';
 
   return (
     <div className="overlay on" id="m_user">
       <div className="mbox" style={{ maxWidth: '600px' }}>
         <div className="m-hdr">
           <div className="m-hdr-icon">👤</div>
-          <h3>{mode === 'create' ? 'Add User' : mode === 'edit' ? 'Edit User' : 'View User Details'}</h3>
+          <h3>{isCreate ? 'Add User' : mode === 'edit' ? 'Edit User' : 'View User Details'}</h3>
           <button className="m-close" onClick={onClose}>✕</button>
         </div>
         <div className="m-body">
@@ -65,23 +69,38 @@ export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'cr
             </div>
             <div className="fg">
               <label>Login ID *</label>
-              {isView ? <ReadOnlyVal value={formData.lid} /> : <input name="lid" value={formData.lid} onChange={handleChange} placeholder="e.g. rajan.desai" />}
+              {isView ? <ReadOnlyVal value={formData.lid} /> : (
+                <input name="lid" value={formData.lid} onChange={handleChange} placeholder="e.g. rajan.desai" disabled={!isCreate} />
+              )}
+              {isCreate && formData.lid && (
+                <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>
+                  <i className="fa fa-envelope" style={{ marginRight: 4 }}></i>
+                  Auth email: {toEmail(formData.lid)}
+                </div>
+              )}
             </div>
             <div className="fg">
-              <label>Password</label>
+              <label>{isCreate ? 'Password *' : 'Password'}</label>
               {isView ? (
-                <div style={{ position: 'relative' }}>
-                  <ReadOnlyVal value={showPassword ? formData.password : '••••••••'} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: 8, background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }} title={showPassword ? "Hide Password" : "Show Password"}>
-                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
-                </div>
+                <ReadOnlyVal value={formData.password || formData.pw || 'Not stored'} />
+              ) : isCreate ? (
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password || ''}
+                  onChange={handleChange}
+                  placeholder="Min 6 characters"
+                  minLength={6}
+                />
               ) : (
-                <div style={{ position: 'relative' }}>
-                  <input type={showPassword ? "text" : "password"} name="password" value={formData.password || ''} onChange={handleChange} placeholder="Set password" style={{ width: '100%', paddingRight: '32px' }} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer' }} title={showPassword ? "Hide Password" : "Show Password"}>
-                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
+                <div style={{
+                  padding: '8px 12px', background: 'var(--surface2)',
+                  borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
+                  fontSize: '12px', color: 'var(--text3)', minHeight: '34px',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <i className="fa fa-lock" style={{ fontSize: 10 }}></i>
+                  Can only be set on creation
                 </div>
               )}
             </div>
@@ -113,7 +132,18 @@ export const UserModal = ({ isOpen, onClose, onSave, editData, initialMode = 'cr
           <div className="grid2">
             <div className="fg">
               <label>Email</label>
-              {isView ? <ReadOnlyVal value={formData.email} /> : <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" />}
+              {isView ? (
+                <ReadOnlyVal value={formData.email || (formData.lid ? toEmail(formData.lid) : '—')} />
+              ) : (
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ''}
+                  onChange={handleChange}
+                  placeholder="Auto-set from Login ID"
+                  disabled={isCreate} // Auto-derived from loginId in create mode
+                />
+              )}
             </div>
             <div className="fg">
               <label>Status</label>

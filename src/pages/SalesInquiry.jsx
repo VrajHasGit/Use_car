@@ -55,7 +55,7 @@ function LogCallModal({ rec, onClose, onSave }) {
           <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
             <button className="btn btn-out" onClick={onClose}>Cancel</button>
             <button className="btn btn-or" onClick={handleSave} disabled={!notes.trim() || saving}>
-              {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-check"></i> Log Interaction</>}
+              {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-check"></i> Log Interaction</>}
             </button>
           </div>
         </div>
@@ -127,11 +127,12 @@ const SalesInquiry = () => {
 
   const handleSave = async (formData) => {
     try {
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
       if (editRecord) { await updateRecord('sal_inq', editRecord.id, formData); showToast('Sales inquiry updated!'); }
       else {
         const cnt = await getNextCounter('sal');
         const salId = genId('SIN', cnt);
-        await addRecord('sal_inq', { ...formData, salId, date: formData.date || today(), status: formData.status || 'New' });
+        await addRecord('sal_inq', { ...formData, salId, date: formData.date || today(), status: formData.status || 'New' }, { title: 'New Sales Inquiry', message: (formData.buyerName || '') + ' — ' + (formData.make || '') + ' ' + (formData.model || ''), link: '/sales-inquiry', actor });
         showToast('Sales inquiry added!');
       }
       await refresh('sal_inq'); setIsModalOpen(false);

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SfuModal } from '../components/modals/SfuModal';
 
 const SalesFollowUp = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -42,8 +44,9 @@ const SalesFollowUp = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('sfu', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', { ...fd, sfuId: genId('SFU', cnt), date: fd.sf_date || today() }); showToast('Follow-up added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('sfu', editRec.id, fd, { title: 'Sales Follow-Up Updated', message: (fd.sf_bname || fd.buyerName || '') + ' — ' + (fd.sf_veh || ''), link: '/sales-follow', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', { ...fd, sfuId: genId('SFU', cnt), date: fd.sf_date || today() }, { title: 'Sales Follow-Up Added', message: (fd.sf_bname || fd.buyerName || '') + ' — ' + (fd.sf_veh || ''), link: '/sales-follow', actor }); showToast('Follow-up added!'); }
       await refresh('sfu'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };

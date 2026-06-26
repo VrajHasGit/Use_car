@@ -35,8 +35,8 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
   return (
     <div id="sb" className={`${isSlim ? 'slim' : ''}${isMobileOpen ? ' mob-on' : ''}`}>
       <div className="sb-hdr">
-        <div className="sb-logo" id="sbLogoWrap" title="Carecay ERP">
-          <i className="fa fa-car" id="sbLogoIcon"></i>
+        <div className="sb-logo" id="sbLogoWrap" title="Carecay ERP" style={{ background: 'transparent' }}>
+          <img src="/logo.png" alt="Carecay Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <div className="sb-brand">
           <div className="sb-name" id="sbName">CARE<em>CAY</em></div>
@@ -60,10 +60,9 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
           {navItem('/purchase-inquiry', 'fa fa-car-side', 'Purchase Inquiry')}
           {navItem('/valuation', 'fa fa-magnifying-glass-dollar', 'Valuation', null, { paddingLeft: '22px' })}
           {navItem('/purchase-follow', 'fa fa-phone-volume', 'Purchase Follow-Up', null, { paddingLeft: '22px' })}
-          {navItem('/purchase-closer', 'fa fa-handshake', 'Purchase Closer', null, { paddingLeft: '22px' })}
-          {navItem('/purchase-booking', 'fa fa-file-pen', 'Order Booking', null, { paddingLeft: '22px' })}
-          {navItem('/payment', 'fa fa-money-bill-wave', 'Purchase Payment', null, { paddingLeft: '22px' })}
           {navItem('/documents', 'fa fa-file-contract', 'Documents', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-booking', 'fa fa-file-pen', 'Order Booking', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-closer', 'fa fa-handshake', 'Purchase Closer', null, { paddingLeft: '22px' })}
           {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
           {navItem('/workshop', 'fa fa-screwdriver-wrench', 'Workshop / Refurb', null, { paddingLeft: '22px' })}
           {navItem('/expenses', 'fa fa-receipt', 'Expenses', null, { paddingLeft: '22px' })}

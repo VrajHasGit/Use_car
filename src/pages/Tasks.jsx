@@ -58,7 +58,7 @@ function TaskModal({ editData, users, currentUser, onClose, onSave }) {
           <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
             <button className="btn btn-out" onClick={onClose}>Cancel</button>
             <button className="btn btn-or" onClick={handleSave} disabled={!form.title.trim() || saving}>
-              {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-check"></i> {editData ? 'Save Changes' : 'Add Task'}</>}
+              {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-check"></i> {editData ? 'Save Changes' : 'Add Task'}</>}
             </button>
           </div>
         </div>
@@ -110,12 +110,13 @@ const Tasks = () => {
 
   const handleSave = async (formData) => {
     try {
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
       if (editTask) {
-        await updateRecord('tasks', editTask.id, formData);
+        await updateRecord('tasks', editTask.id, formData, { title: 'Task Updated', message: formData.title + ' — assigned to ' + (formData.assignedTo || ''), link: '/tasks', actor });
         showToast('Task updated!');
       } else {
         const cnt = await getNextCounter('TASK');
-        await addRecord('tasks', { ...formData, taskId: genId('TASK', cnt), createdBy: currentUser?.name, createdAt: new Date().toISOString() });
+        await addRecord('tasks', { ...formData, taskId: genId('TASK', cnt), createdBy: currentUser?.name, createdAt: new Date().toISOString() }, { title: 'New Task Assigned', message: formData.title + ' — assigned to ' + (formData.assignedTo || ''), link: '/tasks', actor });
         showToast('Task added! ✅');
       }
       await refresh('tasks'); setIsModalOpen(false); setEditTask(null);

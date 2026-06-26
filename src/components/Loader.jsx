@@ -57,25 +57,15 @@ const Loader = ({ onFinish }) => {
 
       {/* Logo/Icon */}
       <div style={{
-        width: 80, height: 80,
-        background: 'linear-gradient(135deg, #1A56DB, #60A5FA)',
-        borderRadius: 20,
+        width: 200, height: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 36, marginBottom: 24,
-        boxShadow: '0 0 40px rgba(26,86,219,0.5)',
+        marginBottom: 24,
         animation: 'float 3s ease-in-out infinite',
       }}>
-        🚗
+        <img src="/logo.png" alt="Carecay Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
       </div>
 
       {/* Brand */}
-      <div style={{
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 32, fontWeight: 800, letterSpacing: 2,
-        color: '#fff', marginBottom: 6,
-      }}>
-        CARE<span style={{ color: '#60A5FA' }}>CAY</span>
-      </div>
       <div style={{
         fontSize: 12, color: 'rgba(255,255,255,0.45)',
         letterSpacing: 3, textTransform: 'uppercase', marginBottom: 40,

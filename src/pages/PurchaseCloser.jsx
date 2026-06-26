@@ -71,6 +71,35 @@ const PurchaseCloser = () => {
     }
   };
 
+  const handleSendToBooking = async (rec) => {
+    if (!window.confirm(`Create Order Booking for ${rec.pc_sname || rec.sellerName || 'this vehicle'}?`)) return;
+    try {
+      const cnt = await getNextCounter('ob');
+      const obId = genId('OB', cnt);
+      
+      const obData = {
+        obId,
+        ob_date: today(),
+        status: 'Pending',
+        linkedCloser: rec.id,
+        ob_clid: rec.pclId || rec.id,
+        ob_inqid: rec.pc_inqid || rec.inqId || '',
+        ob_cname: rec.pc_sname || rec.sellerName || '',
+        ob_mm: rec.pc_veh || rec.make || '',
+        ob_regn: rec.pc_regn || rec.regNo || '',
+        ob_pp: rec.pc_price || rec.amount || ''
+      };
+      
+      await addRecord('ob', obData);
+      await updateRecord('pcl', rec.id, { stage: 'OrderBooking' });
+      await refresh('ob');
+      await refresh('pcl');
+      showToast('Order booking created!');
+    } catch (e) {
+      showToast('Failed to create booking', 'error');
+    }
+  };
+
   return (
     <div className="page on" id="pg_pur_closer">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
@@ -88,7 +117,7 @@ const PurchaseCloser = () => {
         <div className="tc-hdr"><div className="tc-title">Purchase Closer Records <span style={{background:'var(--or1)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Inq ID</th><th>Closer Date</th><th>Vehicle</th><th>Agreed Price</th><th>Token Paid</th><th>Balance</th><th>Payment Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Closer Date</th><th>Seller Name</th><th>Reg No.</th><th>Vehicle</th><th>Agreed Price</th><th>Token Paid</th><th>Balance</th><th>Payment Status</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => {
                 let basePrice = parseFloat(r.pc_price) || parseFloat(r.amount) || 0;
@@ -116,18 +145,24 @@ const PurchaseCloser = () => {
                   else pStatus = 'Pending Payment';
                 }
                 
+                const inqRec = data.pur_inq?.find(p => p.inqId === (r.inqId || r.pc_inqid) || p.id === (r.inqId || r.pc_inqid));
+                const isRcEdited = inqRec?.rcEdited === true;
+
                 return (
                 <tr key={r.id}>
                   <td style={{fontWeight:700,color:'var(--or1)',fontFamily:"'Space Grotesk',sans-serif"}}>{r.pclId||r.id?.slice(0,12)}</td>
                   <td style={{fontWeight:600,color:'var(--text2)'}}>{r.inqId || r.pc_inqid || '—'}</td>
                   <td>{fmtDate(closerDate)}</td>
+                  <td>{r.pc_sname || r.sellerName || '—'}</td>
+                  <td className="plate">{r.pc_regn || r.regNo || '—'}</td>
                   <td>{r.make || r.pc_veh} {r.model}</td>
                   <td className="amt-or">{fmt(price)}</td>
                   <td style={{color: 'var(--success)', fontWeight: 600}}>{fmt(token)}</td>
                   <td style={{color: remBal > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600}}>{fmt(remBal)}</td>
                   <td><span className={`badge ${pStatus === 'Paid in Full' ? 'suc' : pStatus === 'Pending Payment' ? 'wrn' : 'blu'}`}>{pStatus}</span></td>
-                  <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
-                      <button className="btn-icon bi-edit" style={{ background: 'var(--or1)', color: '#fff' }} title="Edit Customer Details (As per RC)" onClick={() => setQuickModal({ type: 'rc', inqId: r.inqId || r.pc_inqid })}><i className="fa fa-id-card"></i></button>
+                  <td><div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, width: 64}}>
+                      <button className="btn-icon bi-edit" style={{ background: isRcEdited ? 'var(--border)' : 'var(--or1)', color: isRcEdited ? 'var(--text3)' : '#fff', cursor: isRcEdited ? 'not-allowed' : 'pointer' }} title={isRcEdited ? "RC Details Already Edited" : "Edit Customer Details (As per RC)"} onClick={() => { if (!isRcEdited) setQuickModal({ type: 'rc', inqId: r.inqId || r.pc_inqid }); }} disabled={isRcEdited}><i className="fa fa-id-card"></i></button>
+                      <button className="btn-icon bi-next" style={{ background: 'var(--bl5)', color: '#fff' }} title="Send to Order Booking" onClick={() => handleSendToBooking(r)}><i className="fa fa-clipboard-list"></i></button>
                       <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                       <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>

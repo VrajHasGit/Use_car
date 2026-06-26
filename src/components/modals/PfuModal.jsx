@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { useData } from '../../contexts/DataContext';
 import { autoFillFromInq } from '../../utils/relations';
 import { FUELS, OWNERS } from '../../utils/constants';
+import { uploadAudioToStorage } from '../../utils/uploadMedia';
 
-export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
+export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSendToCloser }) => {
   const { data: ctxData } = useData();
   const [formData, setFormData] = useState({
     pf_inqid: "", pf_sname: "", pf_smob: "", pf_veh: "", pf_var: "",
-    pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st", pf_date: "",
-    pf_time: "", pf_mode: "Call", pf_by: "", pf_seq: "1st Call", pf_exch: "No",
-    pf_stat: "Interested", pf_nfd: "", pf_exec: "Ritesh Shah", pf_nego: "",
-    pf_exp: "", pf_offer: "", pf_close: "", pf_rej: "", pf_rem: ""
+    pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st",
+    pf_inqid: "", pf_sname: "", pf_smob: "", pf_veh: "", pf_var: "",
+    pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st",
+    followUps: []
   });
   
   const [saving, setSaving] = useState(false);
   const [autoFillMsg, setAutoFillMsg] = useState('');
+  const [expandedSection, setExpandedSection] = useState('customer'); // 'customer', 'followups'
+  const [audioFiles, setAudioFiles] = useState({}); // { index: File }
 
-  // In-memory lookup first, Firestore fallback
   const lookupInquiry = async (inqId) => {
     if (!inqId) return null;
     const local = (ctxData?.pur_inq || []).find(r =>
@@ -51,19 +53,48 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
   useEffect(() => {
     if (isOpen) {
       setAutoFillMsg('');
+      setExpandedSection('customer');
+      setAudioFiles({});
+      
       if (editData) {
-        setFormData({ ...editData });
-        if (editData.pf_inqid) applyAutoFill(editData.pf_inqid);
+        const migratedData = { ...editData };
+        // Migrate legacy flat structure to followUps array
+        if (!migratedData.followUps && (migratedData.pf_date || migratedData.pf_time || migratedData.pf_rem)) {
+          migratedData.followUps = [{
+            date: migratedData.pf_date || "",
+            time: migratedData.pf_time || "",
+            mode: migratedData.pf_mode || "Call",
+            seq: migratedData.pf_seq || "1st Call",
+            stat: migratedData.pf_stat || "Interested",
+            nfd: migratedData.pf_nfd || "",
+            exec: migratedData.pf_exec || "Ritesh Shah",
+            rem: migratedData.pf_rem || "",
+            exp: migratedData.pf_exp || "",
+            offer: migratedData.pf_offer || "",
+            dealPrice: migratedData.pf_close || migratedData.pf_nego || ""
+          }];
+          delete migratedData.pf_date; delete migratedData.pf_time; delete migratedData.pf_mode;
+          delete migratedData.pf_seq; delete migratedData.pf_stat; delete migratedData.pf_nfd;
+          delete migratedData.pf_exec; delete migratedData.pf_rem; delete migratedData.pf_exp; delete migratedData.pf_offer; delete migratedData.pf_close; delete migratedData.pf_nego;
+        }
+        if (!migratedData.followUps) migratedData.followUps = [];
+        
+        // Mark existing follow-ups as saved/locked
+        migratedData.followUps = migratedData.followUps.map(fu => ({ ...fu, isSaved: true }));
+
+        const inqIdToUse = migratedData.pf_inqid || migratedData.inqId || '';
+        setFormData({ ...migratedData, pf_inqid: inqIdToUse });
+        if (inqIdToUse) applyAutoFill(inqIdToUse);
       } else if (quickInqId) {
-        setFormData(prev => ({ ...prev, pf_inqid: quickInqId }));
+        setFormData({
+          pf_inqid: quickInqId, pf_sname: "", pf_smob: "", pf_veh: "", pf_var: "",
+          pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st", followUps: []
+        });
         applyAutoFill(quickInqId);
       } else {
         setFormData({
           pf_inqid: "", pf_sname: "", pf_smob: "", pf_veh: "", pf_var: "",
-          pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st", pf_date: new Date().toISOString().split('T')[0],
-          pf_time: "", pf_mode: "Call", pf_by: "", pf_seq: "1st Call", pf_exch: "No",
-          pf_stat: "Interested", pf_nfd: "", pf_exec: "Ritesh Shah", pf_nego: "",
-          pf_exp: "", pf_offer: "", pf_close: "", pf_rej: "", pf_rem: ""
+          pf_year: "", pf_fuel: "Petrol", pf_km: "", pf_own: "1st", followUps: []
         });
       }
     }
@@ -79,14 +110,62 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
     }
   };
 
+  const handleFollowUpChange = (index, field, value) => {
+    const newFollowUps = [...formData.followUps];
+    newFollowUps[index][field] = value;
+    if (index === 0 && field === 'exec') {
+      for (let i = 1; i < newFollowUps.length; i++) {
+        if (!newFollowUps[i].isSaved) {
+          newFollowUps[i].exec = value;
+        }
+      }
+    }
+    setFormData(prev => ({ ...prev, followUps: newFollowUps }));
+  };
+
+  const addFollowUp = () => {
+    if (formData.followUps.length >= 4) return;
+    const previousExec = formData.followUps.length > 0 ? formData.followUps[0].exec : "Ritesh Shah";
+    setFormData(prev => ({
+      ...prev,
+      followUps: [...prev.followUps, {
+        date: new Date().toISOString().split('T')[0],
+        time: "", mode: "Call", seq: `${prev.followUps.length + 1}${['st','nd','rd','th'][Math.min(prev.followUps.length, 3)]} Call`,
+        stat: "Interested", nfd: "", exec: previousExec, rem: "", audioUrl: "", audioName: "",
+        exp: "", offer: "", dealPrice: ""
+      }]
+    }));
+    setExpandedSection('followups');
+  };
+
+  const handleAudioChange = (index, e) => {
+    if (e.target.files && e.target.files[0]) {
+      setAudioFiles(prev => ({ ...prev, [index]: e.target.files[0] }));
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      const newFollowUps = [...formData.followUps];
+      // Upload any newly selected audio files
+      for (let i = 0; i < newFollowUps.length; i++) {
+        if (audioFiles[i]) {
+          const url = await uploadAudioToStorage(audioFiles[i], formData.pf_inqid || 'pfu');
+          newFollowUps[i].audioUrl = url;
+          newFollowUps[i].audioName = audioFiles[i].name;
+        }
+      }
+      
+      const dataToSave = { ...formData, followUps: newFollowUps };
+
       if (onSave && editData) {
-        await onSave(formData);
+        // If we want to directly update within this component or rely on parent
+        await updateDoc(doc(db, 'pfu', editData.id), dataToSave);
+        await onSave(dataToSave);
       } else {
-        await addDoc(collection(db, 'pfu'), { ...formData, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave(formData); } else { onClose(); }
+        const docRef = await addDoc(collection(db, 'pfu'), { ...dataToSave, createdAt: new Date().toISOString() });
+        if (onSave) { await onSave({ ...dataToSave, id: docRef.id }); } else { onClose(); }
       }
     } catch (error) {
       console.error("Error saving record: ", error);
@@ -96,81 +175,199 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId }) => {
     }
   };
 
-  const diff = Number(formData.pf_nego || 0) - Number(formData.pf_offer || 0);
+  const handleSaveAndSendToCloser = async () => {
+    if (!window.confirm('Save changes and send this inquiry to closer?')) return;
+    setSaving(true);
+    try {
+      const newFollowUps = [...formData.followUps];
+      for (let i = 0; i < newFollowUps.length; i++) {
+        if (audioFiles[i]) {
+          const url = await uploadAudioToStorage(audioFiles[i], formData.pf_inqid || 'pfu');
+          newFollowUps[i].audioUrl = url;
+          newFollowUps[i].audioName = audioFiles[i].name;
+        }
+      }
+      const dataToSave = { ...formData, followUps: newFollowUps };
+
+      let savedRec = { ...dataToSave };
+      if (editData) {
+        await updateDoc(doc(db, 'pfu', editData.id), dataToSave);
+        savedRec.id = editData.id;
+      } else {
+        const docRef = await addDoc(collection(db, 'pfu'), { ...dataToSave, createdAt: new Date().toISOString() });
+        savedRec.id = docRef.id;
+      }
+
+      if (onSendToCloser) {
+        await onSendToCloser(savedRec);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error saving record: ", error);
+      alert('Failed to save and send to closer.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getValRemarks = () => {
+    if (!formData.pf_inqid) return '';
+    const valRec = (ctxData?.val || []).find(r => r.v_inqid === formData.pf_inqid);
+    return valRec ? (valRec.remarks || valRec.v_rem || '') : '';
+  };
+  const valRemarks = getValRemarks();
+
+  const toggleSection = (sec) => {
+    setExpandedSection(prev => prev === sec ? '' : sec);
+  };
 
   return (
     <div className="overlay on" id="m_pfu">
-      <div className="mbox">
+      <div className="mbox" style={{ maxWidth: '800px' }}>
         <div className="m-hdr">
           <div className="m-hdr-icon">📞</div>
           <h3>Purchase Follow-Up</h3>
           <button className="m-close" onClick={onClose}>✕</button>
         </div>
-        <div className="m-body">
+        <div className="m-body" style={{ padding: '16px' }}>
           {autoFillMsg && (
             <div style={{ background: 'rgba(16,185,129,.1)', border: '1px solid #10B981', borderRadius: 'var(--radius-sm)', padding: '8px 14px', fontSize: 12, color: '#10B981', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
               {autoFillMsg}
             </div>
           )}
-          <div className="grid3">
-            <div className="fg"><label>Inquiry ID <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill</span></label><input name="pf_inqid" value={formData.pf_inqid} onChange={handleChange} placeholder="INQ-2025-0001" /></div>
-            <div className="fg"><label>Seller Name</label><input name="pf_sname" value={formData.pf_sname} onChange={handleChange} placeholder="Auto-filled" /></div>
-            <div className="fg"><label>Seller Mobile</label><input name="pf_smob" value={formData.pf_smob} onChange={handleChange} type="tel" placeholder="Mobile" /></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Vehicle Make/Model</label><input name="pf_veh" value={formData.pf_veh} onChange={handleChange} placeholder="Make Model Year" /></div>
-            <div className="fg"><label>Variant</label><input name="pf_var" value={formData.pf_var} onChange={handleChange} placeholder="Variant" /></div>
-            <div className="fg"><label>Year</label><input name="pf_year" value={formData.pf_year} onChange={handleChange} placeholder="Year" type="number" /></div>
-          </div>
-          <div className="grid3">
-            <div className="fg">
-              <label>Fuel Type</label>
-              <select name="pf_fuel" value={formData.pf_fuel} onChange={handleChange}>
-                {FUELS.map(f => <option key={f}>{f}</option>)}
-              </select>
+
+          {/* ACCORDION 1: CUSTOMER INFO */}
+          <div className="accordion-section" style={{ marginBottom: 10, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <div className="accordion-header" onClick={() => toggleSection('customer')} style={{ padding: '12px 16px', background: 'var(--bg2)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
+              <span><i className="fa fa-user" style={{marginRight: 8, color: 'var(--or1)'}}></i> Customer & Vehicle Info</span>
+              <span>{expandedSection === 'customer' ? '▲' : '▼'}</span>
             </div>
-            <div className="fg"><label>KM Driven</label><input name="pf_km" value={formData.pf_km} onChange={handleChange} type="number" placeholder="KM" /></div>
-            <div className="fg">
-              <label>Owners</label>
-              <select name="pf_own" value={formData.pf_own} onChange={handleChange}>
-                {OWNERS.map(o => <option key={o}>{o}</option>)}
-              </select>
+            {expandedSection === 'customer' && (
+              <div className="accordion-content" style={{ padding: '16px', background: 'var(--bg)' }}>
+                <div className="grid3">
+                  <div className="fg"><label>Inquiry ID <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill</span></label><input name="pf_inqid" value={formData.pf_inqid} onChange={handleChange} placeholder="INQ-2025-0001" disabled={!!editData || !!quickInqId} /></div>
+                  <div className="fg"><label>Seller Name</label><input name="pf_sname" value={formData.pf_sname} onChange={handleChange} placeholder="Auto-filled" disabled={!!formData.pf_inqid} /></div>
+                  <div className="fg"><label>Seller Mobile</label><input name="pf_smob" value={formData.pf_smob} onChange={handleChange} type="tel" placeholder="Mobile" disabled={!!formData.pf_inqid} /></div>
+                </div>
+                <div className="grid3">
+                  <div className="fg"><label>Vehicle Make/Model</label><input name="pf_veh" value={formData.pf_veh} onChange={handleChange} placeholder="Make Model Year" disabled={!!formData.pf_inqid} /></div>
+                  <div className="fg"><label>Variant</label><input name="pf_var" value={formData.pf_var} onChange={handleChange} placeholder="Variant" disabled={!!formData.pf_inqid} /></div>
+                  <div className="fg"><label>Year</label><input name="pf_year" value={formData.pf_year} onChange={handleChange} placeholder="Year" type="number" disabled={!!formData.pf_inqid} /></div>
+                </div>
+                <div className="grid3">
+                  <div className="fg">
+                    <label>Fuel Type</label>
+                    <select name="pf_fuel" value={formData.pf_fuel} onChange={handleChange} disabled={!!formData.pf_inqid}>
+                      {FUELS.map(f => <option key={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="fg"><label>KM Driven</label><input name="pf_km" value={formData.pf_km} onChange={handleChange} type="number" placeholder="KM" disabled={!!formData.pf_inqid} /></div>
+                  <div className="fg">
+                    <label>Owners</label>
+                    <select name="pf_own" value={formData.pf_own} onChange={handleChange} disabled={!!formData.pf_inqid}>
+                      {OWNERS.map(o => <option key={o}>{o}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {valRemarks && (
+                  <div className="fg" style={{ marginTop: 8 }}>
+                    <label><span style={{background: 'var(--or1)', color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, marginRight: 6}}>Valuator Remarks</span></label>
+                    <textarea value={valRemarks} disabled rows="2" style={{width: '100%', padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', resize: 'none'}} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ACCORDION 2: PRICE DETAILS (Removed - now per follow-up) */}
+          {/* ACCORDION 3: FOLLOW-UPS */}
+          <div className="accordion-section" style={{ marginBottom: 10, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <div className="accordion-header" onClick={() => toggleSection('followups')} style={{ padding: '12px 16px', background: 'var(--bg2)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
+              <span><i className="fa fa-list-check" style={{marginRight: 8, color: 'var(--primary)'}}></i> Follow-Ups ({formData.followUps.length}/4)</span>
+              <span>{expandedSection === 'followups' ? '▲' : '▼'}</span>
             </div>
+            {expandedSection === 'followups' && (
+              <div className="accordion-content" style={{ padding: '16px', background: 'var(--bg)' }}>
+                {formData.followUps.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text2)' }}>No follow-ups recorded yet.</div>
+                ) : (
+                  formData.followUps.map((fu, idx) => (
+                    <div key={idx} style={{ marginBottom: 20, paddingBottom: 20, borderBottom: idx < formData.followUps.length - 1 ? '1px dashed var(--border)' : 'none' }}>
+                      <h4 style={{ margin: '0 0 12px 0', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{background: 'var(--primary)', color: '#fff', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12}}>{idx + 1}</span>
+                        Follow Up - {fu.seq || `${idx+1} Call`}
+                      </h4>
+                      <div className="grid3">
+                        <div className="fg"><label>Date *</label><input type="date" value={fu.date} onChange={(e) => handleFollowUpChange(idx, 'date', e.target.value)} disabled={fu.isSaved} /></div>
+                        <div className="fg"><label>Time</label><input type="time" value={fu.time} onChange={(e) => handleFollowUpChange(idx, 'time', e.target.value)} disabled={fu.isSaved} /></div>
+                        <div className="fg"><label>Mode</label><select value={fu.mode} onChange={(e) => handleFollowUpChange(idx, 'mode', e.target.value)} disabled={fu.isSaved}><option>Call</option><option>WhatsApp</option><option>Visit</option><option>Email</option><option>SMS</option></select></div>
+                      </div>
+                      <div className="grid3">
+                        <div className="fg"><label>Status</label><select value={fu.stat} onChange={(e) => handleFollowUpChange(idx, 'stat', e.target.value)} disabled={fu.isSaved}><option>Interested</option><option>Not Interested</option><option>Callback</option><option>Price Nego</option><option>Closed-Won</option><option>Closed-Lost</option></select></div>
+                        <div className="fg"><label>Next Follow-Up</label><input type="date" value={fu.stat?.startsWith('Closed') ? '' : fu.nfd} onChange={(e) => handleFollowUpChange(idx, 'nfd', e.target.value)} disabled={fu.isSaved || fu.stat?.startsWith('Closed')} /></div>
+                        <div className="fg"><label>Executive</label><select value={fu.exec} onChange={(e) => handleFollowUpChange(idx, 'exec', e.target.value)} disabled={fu.isSaved || idx > 0}><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option></select></div>
+                      </div>
+                      <div className="grid3" style={{ marginTop: 10 }}>
+                        <div className="fg"><label>Customer Expectation ₹</label><input type="number" value={fu.exp || ''} onChange={(e) => handleFollowUpChange(idx, 'exp', e.target.value)} placeholder="0" disabled={fu.isSaved} /></div>
+                        <div className="fg"><label>Offer Price ₹</label><input type="number" value={fu.offer || ''} onChange={(e) => handleFollowUpChange(idx, 'offer', e.target.value)} placeholder="0" disabled={fu.isSaved} /></div>
+                        <div className="fg">
+                          <label>Difference (Offer - Exp.) ₹</label>
+                          <div style={{ padding: '8px 12px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: (Number(fu.offer || 0) - Number(fu.exp || 0)) >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
+                            ₹ {(Number(fu.offer || 0) - Number(fu.exp || 0)).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      {fu.stat === 'Closed-Won' && (
+                        <div className="fg" style={{ marginTop: 10, background: 'rgba(16, 185, 129, 0.05)', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--success)' }}>
+                          <label style={{ color: 'var(--success)', fontWeight: 600 }}>Deal Close Price ₹ *</label>
+                          <input type="number" value={fu.dealPrice || ''} onChange={(e) => handleFollowUpChange(idx, 'dealPrice', e.target.value)} placeholder="Final agreed amount" disabled={fu.isSaved} style={{ borderColor: 'var(--success)' }} />
+                        </div>
+                      )}
+                      <div className="fg" style={{ marginTop: 10 }}>
+                        <label>Remarks / Notes</label>
+                        <textarea value={fu.rem} onChange={(e) => handleFollowUpChange(idx, 'rem', e.target.value)} rows="2" placeholder="Discussion summary..." style={{width: '100%', padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)'}} disabled={fu.isSaved} />
+                      </div>
+                      <div className="fg" style={{ marginTop: 10, background: 'var(--bg2)', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}><i className="fa fa-microphone" style={{color: 'var(--danger)'}}></i> Call Recording (Voice Note)</label>
+                        {fu.audioUrl ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                            <audio src={fu.audioUrl} controls style={{ height: 36 }} />
+                            {fu.audioUrl.startsWith('data:') ? (
+                              <a href={fu.audioUrl} download={fu.audioName || 'audio.mp3'} style={{ fontSize: 12, color: 'var(--or1)' }}>Download</a>
+                            ) : (
+                              <a href={fu.audioUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--or1)' }}>Download</a>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ marginTop: 6 }}>
+                            <input type="file" accept="audio/*" onChange={(e) => handleAudioChange(idx, e)} style={{ fontSize: 13 }} disabled={fu.isSaved} />
+                            {audioFiles[idx] && (
+                              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <span style={{ fontSize: 12, color: 'var(--success)' }}>Ready to upload: {audioFiles[idx].name}</span>
+                                <audio src={URL.createObjectURL(audioFiles[idx])} controls style={{ height: 36 }} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                {!formData.followUps.some(fu => fu.stat === 'Closed-Won' || fu.stat === 'Closed-Lost') && formData.followUps.length < 4 && (
+                  <button onClick={addFollowUp} className="btn btn-out" style={{ width: '100%', padding: 12, borderStyle: 'dashed', marginTop: 10 }}>
+                    <i className="fa fa-plus"></i> Add Follow-Up
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <div className="grid3">
-            <div className="fg"><label>Follow-Up Date *</label><input type="date" name="pf_date" value={formData.pf_date} onChange={handleChange} /></div>
-            <div className="fg"><label>Follow-Up Time</label><input type="time" name="pf_time" value={formData.pf_time} onChange={handleChange} /></div>
-            <div className="fg"><label>Follow-Up Mode</label><select name="pf_mode" value={formData.pf_mode} onChange={handleChange}><option>Call</option><option>WhatsApp</option><option>Visit</option><option>Email</option><option>SMS</option></select></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Follow-Up By</label><input name="pf_by" value={formData.pf_by} onChange={handleChange} placeholder="Executive name" /></div>
-            <div className="fg"><label>Call Sequence</label><select name="pf_seq" value={formData.pf_seq} onChange={handleChange}><option>1st Call</option><option>2nd Call</option><option>3rd Call</option><option>Final Call</option></select></div>
-            <div className="fg"><label>Exchange Vehicle</label><select name="pf_exch" value={formData.pf_exch} onChange={handleChange}><option>No</option><option>Yes</option></select></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Follow-Up Status</label><select name="pf_stat" value={formData.pf_stat} onChange={handleChange}><option>Interested</option><option>Not Interested</option><option>Callback</option><option>Price Nego</option><option>Closed-Won</option><option>Closed-Lost</option></select></div>
-            <div className="fg"><label>Next Follow-Up Date</label><input type="date" name="pf_nfd" value={formData.pf_nfd} onChange={handleChange} /></div>
-            <div className="fg"><label>Follow-Up Executive</label><select name="pf_exec" value={formData.pf_exec} onChange={handleChange}><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option></select></div>
-          </div>
-          <div className="sect-lbl"><i className="fa fa-indian-rupee-sign"></i> Price Negotiation (Auto-Calc)</div>
-          <div className="grid3">
-            <div className="fg"><label>Negotiable Price ₹</label><input type="number" name="pf_nego" value={formData.pf_nego} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Customer Expectation ₹</label><input type="number" name="pf_exp" value={formData.pf_exp} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Offer Price ₹</label><input type="number" name="pf_offer" value={formData.pf_offer} onChange={handleChange} placeholder="0" /></div>
-          </div>
-          <div className="grid2">
-            <div className="fg"><label>Deal Close Price ₹</label><input type="number" name="pf_close" value={formData.pf_close} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Difference (Nego - Offer) ₹</label><div className="calc-out" style={{ color: diff < 0 ? 'var(--danger)' : 'var(--success)' }}>₹ {diff.toLocaleString()}</div></div>
-          </div>
-          <div className="grid2">
-            <div className="fg"><label>Rejection Reason</label><input name="pf_rej" value={formData.pf_rej} onChange={handleChange} placeholder="If rejected…" /></div>
-            <div className="fg"><label>Remarks</label><input name="pf_rem" value={formData.pf_rem} onChange={handleChange} placeholder="Notes" /></div>
-          </div>
+
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save</>}
           </button>
         </div>
       </div>

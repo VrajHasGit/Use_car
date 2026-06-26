@@ -4,9 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { ValModal } from '../components/modals/ValModal';
-import { PfuModal } from '../components/modals/PfuModal';
+
 import { PclModal } from '../components/modals/PclModal';
-import { AIPriceModal } from '../components/modals/AIPriceModal';
+import MediaViewer from '../components/MediaViewer';
+import { loadMediaFromFirestore } from '../utils/uploadMedia';
 
 const Valuation = () => {
   const { data, refresh } = useData();
@@ -16,7 +17,7 @@ const Valuation = () => {
   const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
-  const [aiRec, setAiRec] = useState(null);
+  const [viewer, setViewer] = useState(null); // { media: [], index: 0 }
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   const records = data.val || [];
@@ -42,20 +43,74 @@ const Valuation = () => {
     if (records.length > 0) fixIds();
   }, [records]);
 
-  const handleSave = async (formData) => {
+  const handleSave = async (formData, shiftToPfu = false) => {
     try {
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      const carLabel = `${formData.make || formData.v_make || ''} ${formData.model || formData.v_model || ''}`.trim();
+      let savedId = null;
+      let newFormData = { ...formData };
+      if (shiftToPfu) {
+        newFormData.stage = 'Purchase FollowUp';
+      }
+
       if (editRec) {
-        await updateRecord('val', editRec.id, formData);
+        await updateRecord('val', editRec.id, newFormData, {
+          title: 'Valuation Updated',
+          message: `${newFormData.sellerName || newFormData.v_cname || ''} — ${carLabel}`,
+          link: '/valuation', actor,
+          carInfo: { make: newFormData.make, model: newFormData.model, regNo: newFormData.regNo },
+        });
+        savedId = editRec.id;
         showToast('Valuation updated!');
       } else {
         const cnt = await getNextCounter('val');
-        await addRecord('val', { ...formData, valId: genId('VAL', cnt), date: formData.date || today() });
+        const valId = genId('VAL', cnt);
+        savedId = await addRecord('val', { ...newFormData, valId, date: newFormData.date || today() }, {
+          title: 'New Valuation',
+          message: `${newFormData.sellerName || newFormData.v_cname || ''} — ${carLabel}`,
+          link: '/valuation', actor,
+          carInfo: { make: newFormData.make, model: newFormData.model, regNo: newFormData.regNo },
+        });
         showToast('Valuation added!');
       }
+
+      if (shiftToPfu) {
+        const pfCnt = await getNextCounter('pfu');
+        await addRecord('pfu', {
+          pfId: genId('PFU', pfCnt),
+          pf_inqid: newFormData.v_inqid || '',
+          valId: savedId,
+          pf_sname: newFormData.v_cname || newFormData.sellerName || '',
+          pf_smob: newFormData.v_cont || newFormData.mobile || '',
+          pf_veh: newFormData.v_make || '',
+          pf_model: newFormData.v_model || '',
+          pf_var: newFormData.v_var || '',
+          pf_year: newFormData.v_year || '',
+          pf_fuel: newFormData.v_fuel || 'Petrol',
+          pf_km: newFormData.v_km || '',
+          pf_own: newFormData.v_own || '1st',
+          pf_date: today(),
+          pf_stat: 'Interested',
+          pf_seq: '1st Call',
+          pf_mode: 'Call',
+          pf_rem: newFormData.v_rem || ''
+        });
+
+        if (newFormData.v_inqid) {
+          const inqRec = data.pur_inq?.find(r => r.inqId === newFormData.v_inqid);
+          if (inqRec) {
+            await updateRecord('pur_inq', inqRec.id, { stage: 'Purchase FollowUp' });
+          }
+        }
+      }
+
       await refresh('val');
+      if (shiftToPfu) { await refresh('pfu'); await refresh('pur_inq'); }
       setIsModalOpen(false);
+      return savedId;
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
+
 
   const handleDelete = async (rec) => {
     if (!window.confirm(`Delete valuation?`)) return;
@@ -63,21 +118,47 @@ const Valuation = () => {
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
-  const valToFU = (r) => {
-    if (r.v_inqid) {
-      setQuickModal({ type: 'pfu', inqId: r.v_inqid });
-    } else {
-      showToast('No linked inquiry found.', 'warn');
+  const valToFU = async (r) => {
+    if (!window.confirm(`Send ${r.sellerName || r.v_cname || 'this'}'s valuation to Purchase Follow-up?`)) return;
+    try {
+      const pfCnt = await getNextCounter('pfu');
+      await addRecord('pfu', {
+        pfId: genId('PFU', pfCnt),
+        pf_inqid: r.v_inqid || '',
+        valId: r.id,
+        pf_sname: r.sellerName || r.v_cname || '',
+        pf_smob: r.mobile || r.v_cont || '',
+        pf_veh: r.make || r.v_make || '',
+        pf_model: r.model || r.v_model || '',
+        pf_var: r.variant || r.v_var || '',
+        pf_year: r.year || r.v_year || '',
+        pf_fuel: r.fuel || r.v_fuel || 'Petrol',
+        pf_km: r.km || r.v_km || '',
+        pf_own: r.owners || r.v_own || '1st',
+        pf_date: today(),
+        pf_stat: 'Interested',
+        pf_seq: '1st Call',
+        pf_mode: 'Call',
+        pf_rem: r.remarks || r.v_rem || '',
+        followUps: []
+      });
+
+      await updateRecord('val', r.id, { stage: 'Purchase FollowUp' });
+
+      if (r.v_inqid) {
+        const inqRec = data.pur_inq?.find(inq => inq.inqId === r.v_inqid);
+        if (inqRec) {
+          await updateRecord('pur_inq', inqRec.id, { stage: 'Purchase FollowUp' });
+        }
+      }
+      
+      await refresh('val');
+      await refresh('pfu');
+      await refresh('pur_inq');
+      showToast('Sent to Purchase Follow-up!');
+    } catch (e) {
+      showToast('Failed to send: ' + e.message, 'error');
     }
-  };
-
-  const showAIPrice = (r) => setAiRec(r);
-
-  const handleSaveAI = async ({ aiSuggestion }) => {
-    if (!aiRec?.id) return;
-    await updateRecord('val', aiRec.id, { aiSuggestion });
-    await refresh('val');
-    showToast('AI suggestion saved to record! ✅');
   };
 
   const closeQuickModal = () => setQuickModal({ type: null, inqId: null, valId: null });
@@ -96,6 +177,27 @@ const Valuation = () => {
     }
   };
 
+  const openViewer = async (record) => {
+    if (!record?.id) return;
+    try {
+      // Load from sub-collection (new approach)
+      const subMedia = await loadMediaFromFirestore('val', record.id);
+      
+      // Fallback for older records where media was stored directly in the document
+      const directMedia = Array.isArray(record.v_media) ? record.v_media : [];
+      
+      const allMedia = [...subMedia, ...directMedia.filter(m => m.url)];
+
+      if (allMedia.length > 0) {
+        setViewer({ media: allMedia, index: 0 });
+      } else {
+        showToast('No photos found. Try editing the record to add photos.', 'info');
+      }
+    } catch (e) {
+      showToast('Failed to load media', 'error');
+    }
+  };
+
   return (
     <div className="page on" id="pg_valuation">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type === 'success' ? 'suc' : toast.type === 'error' ? 'err' : 'inf'}`} style={{ display: 'flex' }}><span style={{ flex: 1 }}>{toast.msg}</span><button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>✕</button></div></div>}
@@ -111,38 +213,65 @@ const Valuation = () => {
       </div>
       
       {isModalOpen && <ValModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
-      <PfuModal isOpen={quickModal.type === 'pfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
       <PclModal isOpen={quickModal.type === 'pcl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.valId)} quickInqId={quickModal.inqId} />
-      <AIPriceModal isOpen={!!aiRec} onClose={() => setAiRec(null)} record={aiRec} onSavePrice={handleSaveAI} />
+
+      {/* Media Viewer Lightbox */}
+      {viewer && (
+        <MediaViewer
+          media={viewer.media}
+          index={viewer.index}
+          onClose={() => setViewer(null)}
+        />
+      )}
 
       <div className="tc">
         <div className="tc-hdr"><div className="tc-title">Valuation Records <span style={{ background: 'var(--or1)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table>
-            <thead><tr><th>Val ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Expected Price</th><th>Our Price</th><th>Remarks</th><th style={{ minWidth: 160 }}>Actions</th></tr></thead>
+            <thead><tr><th>Val ID</th><th>Inq ID</th><th>Date</th><th>Seller</th><th>Vehicle</th><th>Reg No.</th><th>Fuel & KM</th><th>Condition</th><th>Media</th><th>Remarks</th><th style={{ minWidth: 160 }}>Actions</th></tr></thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(r => (
+              {filtered.length > 0 ? filtered.map(r => {
+                const mediaCount = r.v_media_count || (r.v_media || []).length;
+                return (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.valId || r.id?.slice(0, 12)}</td>
                   <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.v_inqid || '—'}</td>
                   <td>{fmtDate(r.date || r.v_date)}</td>
                   <td style={{ fontWeight: 600 }}>{r.sellerName || r.v_cname}</td>
                   <td>{r.make || r.v_make} {r.model || r.v_model} ({r.year || r.v_year})</td>
-                  <td className="amt-or">{fmt(r.expectedPrice || 0)}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.ourPrice || r.v_stat || 'Pending')}</td>
+                  <td style={{ fontWeight: 600 }}>{r.regNo || r.v_vnum || '—'}</td>
+                  <td>{r.v_fuel || '—'} <br/><span style={{ fontSize: 11, color: 'var(--text3)' }}>{r.v_km ? r.v_km + ' km' : '—'}</span></td>
+                  <td>
+                    <div style={{ fontSize: 11, color: 'var(--text2)' }}>Eng: {r.v_eng || '—'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text2)' }}>Tyre: {r.v_tyre || '—'}</div>
+                  </td>
+                  <td>
+                    {mediaCount > 0 ? (
+                      <span
+                        className="media-badge media-badge-has"
+                        onClick={() => openViewer(r)}
+                        title={`View ${mediaCount} file${mediaCount > 1 ? 's' : ''}`}
+                      >
+                        <i className="fa fa-images"></i> {mediaCount}
+                      </span>
+                    ) : (
+                      <span className="media-badge media-badge-none">
+                        <i className="fa fa-image" style={{ opacity: 0.5 }}></i> 0
+                      </span>
+                    )}
+                  </td>
                   <td>{r.remarks || r.v_rem || '—'}</td>
                     <td>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon bi-next" onClick={() => valToFU(r)} title="Follow-Up"><i className="fa fa-phone"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(124,58,237,.12)', color: '#7C3AED' }} onClick={() => showAIPrice(r)} title="AI Price Suggestion"><i className="fa fa-robot"></i></button>
-                        <button className="btn-icon bi-next" title="Send to Closer" onClick={() => setQuickModal({ type: 'pcl', inqId: r.v_inqid, valId: r.valId || r.id })}><i className="fa fa-handshake"></i></button>
+                        <button className="btn-icon bi-next" title="Send to Purchase Follow-up" onClick={() => valToFU(r)}><i className="fa fa-arrow-right"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>
                 </tr>
-              )) : (
-                <tr><td colSpan="8" className="empty"><i className="fa fa-magnifying-glass-dollar"></i><br />{search ? 'No results found' : 'No valuation records yet.'}</td></tr>
+                );
+              }) : (
+                <tr><td colSpan="10" className="empty"><i className="fa fa-magnifying-glass-dollar"></i><br />{search ? 'No results found' : 'No valuation records yet.'}</td></tr>
               )}
             </tbody>
           </table>
@@ -153,3 +282,4 @@ const Valuation = () => {
 };
 
 export default Valuation;
+

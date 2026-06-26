@@ -5,6 +5,7 @@ import {
   query, orderBy, where, serverTimestamp,
   onSnapshot
 } from 'firebase/firestore';
+import { createNotification } from './notificationService';
 
 // ── Collections ──
 export const COL = {
@@ -60,14 +61,18 @@ export async function getById(colName, id) {
   }
 }
 
-// ── Generic add ──
-export async function addRecord(colName, data) {
+// ── Generic add (with optional notification) ──
+export async function addRecord(colName, data, notificationMeta) {
   try {
     const ref = await addDoc(collection(db, colName), {
       ...data,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    // Fire notification if meta provided
+    if (notificationMeta) {
+      createNotification({ collection: colName, action: 'created', ...notificationMeta });
+    }
     return ref.id;
   } catch (e) {
     console.error(`addRecord(${colName}):`, e);
@@ -75,13 +80,17 @@ export async function addRecord(colName, data) {
   }
 }
 
-// ── Generic update ──
-export async function updateRecord(colName, id, data) {
+// ── Generic update (with optional notification) ──
+export async function updateRecord(colName, id, data, notificationMeta) {
   try {
     await updateDoc(doc(db, colName, id), {
       ...data,
       updatedAt: serverTimestamp(),
     });
+    // Fire notification if meta provided
+    if (notificationMeta) {
+      createNotification({ collection: colName, action: 'updated', ...notificationMeta });
+    }
   } catch (e) {
     console.error(`updateRecord(${colName}, ${id}):`, e);
     throw e;

@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import WelcomeModal from './WelcomeModal';
 import DailyTaskManager from './DailyTaskManager';
+import NotificationToast from './NotificationToast';
 
 const Layout = () => {
   const [isSlim, setIsSlim] = useState(false);
@@ -43,8 +44,10 @@ const Layout = () => {
       </div>
       <WelcomeModal />
       <DailyTaskManager isOpen={isDTMOpen} onClose={() => setIsDTMOpen(false)} />
+      <NotificationToast />
     </>
   );
 };
 
 export default Layout;
+

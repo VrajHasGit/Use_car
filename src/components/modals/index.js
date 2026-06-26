@@ -33,3 +33,4 @@ export { DelModal } from './DelModal';
 export { DocModal } from './DocModal';
 export { CustModal } from './CustModal';
 export { CompanyModal } from './CompanyModal';
+export { RcDetailsModal } from './RcDetailsModal';

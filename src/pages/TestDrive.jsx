@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { TestdriveModal } from '../components/modals/TestdriveModal';
 
 const TestDrive = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
   const [gridDate, setGridDate] = useState(today());
@@ -21,8 +23,9 @@ const TestDrive = () => {
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('td', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('TD'); await addRecord('td', {...fd, tdId: genId('TD', cnt), date: fd.date||today()}); showToast('Test Drive record added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('td', editRec.id, fd, { title: 'Test Drive Updated', message: (fd.td_bname || fd.buyerName || '') + ' — ' + (fd.td_regn || fd.regNo || ''), link: '/test-drive', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('TD'); await addRecord('td', {...fd, tdId: genId('TD', cnt), date: fd.date||today()}, { title: 'Test Drive Scheduled', message: (fd.td_bname || fd.buyerName || '') + ' — ' + (fd.td_regn || fd.regNo || ''), link: '/test-drive', actor }); showToast('Test Drive record added!'); }
       await refresh('td'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };

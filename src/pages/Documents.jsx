@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { DocModal } from '../components/modals/DocModal';
@@ -8,6 +9,7 @@ import { StkModal } from '../components/modals/StkModal';
 
 const Documents = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -20,15 +22,16 @@ const Documents = () => {
   });
   const handleSave = async (fd) => {
     try {
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
       let savedId;
       if (editRec) { 
-        await updateRecord('doc', editRec.id, fd); 
+        await updateRecord('doc', editRec.id, fd, { title: 'Documents Updated', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/documents', actor }); 
         showToast('Updated!'); 
         savedId = editRec.id || editRec.docId;
       } else { 
         const cnt = await getNextCounter('DOC'); 
         savedId = genId('DOC', cnt);
-        await addRecord('doc', {...fd, docId: savedId, date: fd.date||today()}); 
+        await addRecord('doc', {...fd, docId: savedId, date: fd.date||today()}, { title: 'Documents Added', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/documents', actor }); 
         showToast('Documents record added!'); 
       }
       await refresh('doc'); 

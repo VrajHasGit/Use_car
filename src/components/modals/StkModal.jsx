@@ -58,10 +58,12 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   useEffect(() => {
     if (isOpen) {
       if (editData) {
-        setFormData({ ...editData });
+        const inqIdToUse = editData.sk_inqid || editData.inqId || '';
+        const docIdToUse = editData.sk_docid || editData.docId || '';
+        setFormData({ ...editData, sk_inqid: inqIdToUse, sk_docid: docIdToUse });
         setModelOptions(MODELS[editData.sk_make] || []);
-        if (editData.sk_inqid) applyAutoFillInq(editData.sk_inqid);
-        if (editData.sk_docid) applyAutoFillDoc(editData.sk_docid);
+        if (inqIdToUse) applyAutoFillInq(inqIdToUse);
+        if (docIdToUse) applyAutoFillDoc(docIdToUse);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, sk_inqid: quickInqId }));
         applyAutoFillInq(quickInqId);
@@ -314,7 +316,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-or" onClick={handleSave} disabled={saving}>
-            {saving ? <><i className="fa fa-spinner fa-spin"></i> Saving…</> : <><i className="fa fa-save"></i> Save Stock</>}
+            {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-save"></i> Save Stock</>}
           </button>
         </div>
       </div>

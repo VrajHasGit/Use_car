@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { PayModal } from '../components/modals/PayModal';
@@ -8,6 +9,7 @@ import { DocModal } from '../components/modals/DocModal';
 
 const Payment = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,8 +49,9 @@ const Payment = () => {
   const totalOut = records.filter(r=>r.type==='Sale').reduce((a,r)=>a+(r.amount||0),0);
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('pay', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('pay'); await addRecord('pay', {...fd, payId: genId('PAY', cnt), date: fd.date||today()}); showToast('Payment added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('pay', editRec.id, fd, { title: 'Payment Updated', message: '₹' + (fd.pay_amt || fd.amount || '') + ' — ' + (fd.pay_party || fd.party || ''), link: '/payment', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('pay'); await addRecord('pay', {...fd, payId: genId('PAY', cnt), date: fd.date||today()}, { title: 'Payment Recorded', message: '₹' + (fd.pay_amt || fd.amount || '') + ' — ' + (fd.pay_party || fd.party || ''), link: '/payment', actor }); showToast('Payment added!'); }
       await refresh('pay'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };

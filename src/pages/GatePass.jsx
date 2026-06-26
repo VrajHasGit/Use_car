@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, statusBadge } from '../utils/helpers';
 import { GpModal } from '../components/modals/GpModal';
 
 const GatePass = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -15,12 +17,19 @@ const GatePass = () => {
   const filtered = records.filter(r => !search || (r.regNo||'').toLowerCase().includes(search.toLowerCase()) || (r.driverName||'').toLowerCase().includes(search.toLowerCase()));
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('gp', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('gp'); await addRecord('gp', {...fd, gpId: genId('GP', cnt), date: fd.date||today()}); showToast('Gate pass added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('gp', editRec.id, fd, { title: 'Gate Pass Updated', message: (fd.gp_bname || '') + ' — ' + (fd.gp_regn || fd.regNo || ''), link: '/gate-pass', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('gp'); await addRecord('gp', {...fd, gpId: genId('GP', cnt), date: fd.date||today()}, { title: 'Gate Pass Created', message: (fd.gp_bname || '') + ' — ' + (fd.gp_regn || fd.regNo || ''), link: '/gate-pass', actor }); showToast('Gate pass added!'); }
       await refresh('gp'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
   const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('gp', rec.id); await refresh('gp'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  
+  const handlePrintRecord = (r) => {
+    setEditRec(r);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="page on" id="pg_gate_pass">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
@@ -49,7 +58,7 @@ const GatePass = () => {
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                   <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
-                    <button className="btn-icon bi-print" title="Print" onClick={()=>window.print()}><i className="fa fa-print"></i></button>
+                    <button className="btn-icon bi-print" title="Print" onClick={()=>handlePrintRecord(r)}><i className="fa fa-print"></i></button>
                     <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>
                 </tr>

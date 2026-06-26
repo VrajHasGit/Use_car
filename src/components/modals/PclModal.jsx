@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { useData } from '../../contexts/DataContext';
 import { addRecord, updateRecord, getNextCounter } from '../../services/db';
-import { genId, today } from '../../utils/helpers';
+import { genId, today, printDocument } from '../../utils/helpers';
 
 import { autoFillFromInq } from '../../utils/relations';
 
@@ -18,6 +18,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   
   const [saving, setSaving] = useState(false);
   const [autoFillMsg, setAutoFillMsg] = useState('');
+  const [hidePayments, setHidePayments] = useState(false);
 
   // In-memory lookup first, Firestore fallback
   const lookupInquiry = async (inqId) => {
@@ -60,6 +61,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         pc_regn: inqData.regNo || prev.pc_regn,
         pc_date: prev.pc_date || finalDate || today(),
         pc_price: prev.pc_price || finalDealPrice,
+        pc_loan: inqData.hypothecation || prev.pc_loan,
+        pc_lbank: inqData.loanBank || prev.pc_lbank,
       }));
       setAutoFillMsg(`✅ Auto-filled from: ${inqData.sellerName || inqId}`);
       setTimeout(() => setAutoFillMsg(''), 4000);
@@ -101,14 +104,27 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const addPayment = () => {
     setFormData(prev => ({
       ...prev,
-      payments: [...(prev.payments || []), { mode: 'CASH', amount: '' }]
+      payments: [...(prev.payments || []), { mode: 'CASH', amount: '', status: 'Pending', remarks: '', newCarDetails: '', date: new Date().toISOString().split('T')[0], payTo: prev.pc_sname || '' }]
     }));
   };
 
-  const handlePaymentChange = (index, field, value) => {
-    const updated = [...(formData.payments || [])];
-    updated[index] = { ...updated[index], [field]: value };
-    setFormData(prev => ({ ...prev, payments: updated }));
+  const handlePaymentChange = (idx, field, val) => {
+    setFormData(prev => {
+      const pmts = [...(prev.payments || [])];
+      
+      if (field === 'amount') {
+        const p = Number(prev.pc_price || 0);
+        const t = Number(prev.pc_tok || 0);
+        const others = pmts.reduce((s, pmt, i) => i !== idx ? s + Number(pmt.amount || 0) : s, 0);
+        const max = p - t - others;
+        if (Number(val) > max) {
+          val = max > 0 ? String(max) : '';
+        }
+      }
+
+      pmts[idx] = { ...pmts[idx], [field]: val };
+      return { ...prev, payments: pmts };
+    });
   };
 
   const removePayment = (index) => {
@@ -137,6 +153,171 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     } finally {
       setSaving(false);
     }
+  };
+
+  const handlePreviewVoucher = (idx) => {
+    const pmt = formData.payments[idx] || {};
+    const amt = pmt.amount ? Number(pmt.amount).toLocaleString('en-IN') + '/-' : '';
+    let sname = formData.pc_sname || '';
+    if (pmt.mode === 'NEW CAR') {
+      sname = `Carecay Cars Pvt Ltd C/o, ${formData.pc_sname || ''}, ${pmt.newCarDetails || ''}`.trim().replace(/,\s*$/, "");
+    } else if (formData.pc_loan === 'Yes') {
+      sname = `${formData.pc_sname || ''} - ${formData.pc_lbank || ''}`;
+    }
+    const car = formData.pc_veh || '';
+    const regNo = formData.pc_regn || '';
+    const remarks = pmt.remarks || '';
+    const status = pmt.status || 'Done';
+    const payMode = pmt.mode || 'CASH';
+    const price = Number(formData.pc_price || 0);
+    const token = Number(formData.pc_tok || 0);
+    const totalPaid = (formData.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+    const ledgerBal = (price - token - totalPaid).toLocaleString('en-IN') + '/-';
+
+    const customStyles = `
+  .print-header { display: none !important; }
+  body { background: #e0e0e0; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+  .no-print { width: 800px; margin-bottom: 20px; }
+  .voucher-container {
+    width: 800px;
+    min-height: 520px;
+    background: #fff;
+    padding: 20px 30px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    color: #000;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  @media print {
+    body { background: #fff; padding: 0; display: block; margin: 0; }
+    .no-print { display: none !important; }
+    .voucher-container { 
+      width: 100%; 
+      height: 148mm; 
+      border: none; 
+      box-shadow: none; 
+      padding: 10mm; 
+      box-sizing: border-box;
+    }
+    @page { size: A4 portrait; margin: 0; }
+  }
+  
+  .v-header-grid { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .v-logo img { height: 80px; object-fit: contain; }
+  
+  .v-top-right { text-align: right; }
+  .v-title-box { background: #333; color: #fff; padding: 4px 10px; font-size: 20px; font-weight: bold; display: inline-block; letter-spacing: 1px; border-radius: 2px; margin-bottom: 10px; }
+  
+  .v-row-right { display: flex; justify-content: flex-end; align-items: flex-end; gap: 30px; font-size: 14px; font-weight: 600; }
+  .v-line { border-bottom: 1px solid #000; display: inline-block; padding-left: 10px; font-weight: 600; }
+  
+  .v-row-company { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 15px; }
+  
+  .v-amount-box { display: flex; align-items: center; border: 2px solid #333; height: 34px; }
+  .v-rs { background: #333; color: #fff; padding: 0 10px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 16px; }
+  
+  .v-row { display: flex; align-items: flex-end; margin-bottom: 15px; font-size: 14px; width: 100%; }
+  .v-label { white-space: nowrap; margin-right: 10px; font-weight: 500; }
+  
+  .v-pay-by { border: 1.5px solid #333; display: inline-block; padding: 4px 10px; margin-top: 5px; font-size: 13px; font-weight: 600; }
+  
+  .v-sign-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1.5px solid #333; }
+  .v-sign-table td { border: 1.5px solid #333; height: 60px; vertical-align: top; padding: 4px 6px; font-size: 12px; font-weight: 600; position: relative; }
+  
+  .v-footer { text-align: center; margin-top: 15px; font-size: 12px; font-weight: bold; letter-spacing: 1.5px; }
+`;
+
+    const htmlContent = `
+<div class="no-print" style="background: #fff3cd; color: #856404; padding: 10px 15px; border-radius: 4px; border: 1px solid #ffeeba; margin-bottom: 20px; font-weight: bold; width: 800px; text-align: center; font-size: 13px;">
+  ⚠️ IMPORTANT: Ensure your print settings are set to "Paper Size: A4" and "Layout: Portrait". The voucher will print on the top half of the page.
+</div>
+<div class="voucher-container">
+  <div class="v-header-grid">
+    <div class="v-logo">
+      <img src="/logo.png" alt="Carecay" />
+    </div>
+    <div class="v-top-right">
+      <div class="v-title-box">Cash Voucher</div>
+      <div class="v-row-right">
+        <div>V.No. : <span class="v-line" style="width:120px; margin-bottom:2px;"></span></div>
+        <div>Date : <span class="v-line" style="width:120px; margin-bottom:2px; font-weight: bold; padding-left: 5px;">${pmt.date ? pmt.date.split('-').reverse().join('/') : new Date().toLocaleDateString('en-GB')}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="v-row-company">
+    <div style="font-size: 15px; font-weight: 600; display:flex; align-items: flex-end; white-space: nowrap; margin-left: 5px;">
+      For Company: Carecay <span class="v-line" style="width:150px; margin: 0 10px;"></span> Pvt Ltd
+    </div>
+    <div class="v-amount-box">
+      <div class="v-rs">Rs.</div>
+      <div style="width: 140px; text-align: center; font-weight: bold; font-size: 18px;">${amt}</div>
+    </div>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Pay To :</span> 
+    <span class="v-line" style="flex:1;">${pmt.payTo !== undefined ? pmt.payTo : formData.pc_sname || "______________________"}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Purpose :</span> 
+    <span class="v-line" style="flex:1;">Used Car Purchase</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Client Name:</span> 
+    <span class="v-line" style="flex:1;">Carecay Pvt. Ltd.</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Car :</span> 
+    <span class="v-line" style="flex:1;">${car}</span>
+    <span class="v-label" style="margin-left: 30px;">Reg No :</span> 
+    <span class="v-line" style="flex:1;">${regNo}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Remarks :</span> 
+    <span class="v-line" style="flex:1;">${remarks}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Payment Status :</span> 
+    <span class="v-line" style="flex:1;">${status}</span>
+    <span class="v-label" style="margin-left: 30px;">Ledger Bal :</span> 
+    <span class="v-line" style="width: 250px;">${ledgerBal}</span>
+  </div>
+
+  <div class="v-pay-by">
+    Pay by : ${payMode}
+  </div>
+
+  <table class="v-sign-table">
+    <tr>
+      <td style="width: 25%;">Authorised by :</td>
+      <td style="width: 25%;">Executive :</td>
+      <td style="width: 25%;">Officer :</td>
+      <td style="width: 25%; padding:0;">
+        <div style="position:absolute; bottom:4px; right:4px; font-size:10px; font-weight:normal;">Receiver Signature</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="v-footer">● FOR OFFICE INTERNAL USE ONLY ●</div>
+</div>
+`;
+    
+    const paymentNum = `Payment-${idx + 1}`;
+    const safeInqId = (formData.pc_inqid || 'UNKNOWN').replace(/[^a-zA-Z0-9_-]/g, '-');
+    const safeRegNo = (formData.pc_regn || 'NO-REG').replace(/[^a-zA-Z0-9_-]/g, '-');
+    const safeVeh = (formData.pc_veh || 'NO-VEHICLE').replace(/[^a-zA-Z0-9_ -]/g, '-');
+    const safeSeller = (formData.pc_sname || 'NO-SELLER').replace(/[^a-zA-Z0-9_ -]/g, '-');
+    const docTitle = `${paymentNum}-${safeInqId}-${safeRegNo}-${safeVeh}-${safeSeller}`.replace(/\s+/g, '-');
+
+    const downloadOpts = { jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' } };
+    printDocument(docTitle, htmlContent, customStyles, downloadOpts);
   };
 
   const price = Number(formData.pc_price || 0);
@@ -168,62 +349,81 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           <div className="grid3">
             <div className="fg"><label>Closer Date *</label><input type="date" name="pc_date" value={formData.pc_date} onChange={handleChange} disabled /></div>
           </div>
-          <div className="sect-lbl"><i className="fa fa-indian-rupee-sign"></i> Price & Payment (Auto-Calc)</div>
-          <div className="grid3">
-            <div className="fg"><label>Final Agreed Price ₹</label><input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" style={{ background: 'rgba(16,185,129,.08)', borderColor: 'var(--success)', color: 'var(--success)', fontWeight: 700 }} /></div>
-            <div className="fg"><label>Token Amount ₹</label><input type="number" name="pc_tok" value={formData.pc_tok} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Balance Pending ₹ (Auto)</label><div className="calc-out" style={{ color: balPending > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {balPending.toLocaleString()}</div></div>
+          <div className="sect-lbl" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <i className="fa fa-indian-rupee-sign"></i> Price & Payment (Auto-Calc)
+            {(() => {
+              const pmts = formData.payments || [];
+              const lastPmt = pmts.length > 0 ? pmts[pmts.length - 1] : null;
+              const canAddPayment = !lastPmt || lastPmt.status === 'Done';
+              return (
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={() => setHidePayments(!hidePayments)} className="btn btn-out" style={{ padding: '2px 8px', fontSize: 12, height: 26 }} title={hidePayments ? "Show Payments" : "Hide Payments"}>
+                    <i className={`fa ${hidePayments ? 'fa-eye' : 'fa-eye-slash'}`}></i> {hidePayments ? 'Show' : 'Hide'}
+                  </button>
+                  <button type="button" onClick={addPayment} disabled={!canAddPayment} className="btn btn-out" style={{ padding: '2px 8px', fontSize: 12, height: 26, opacity: canAddPayment ? 1 : 0.5, cursor: canAddPayment ? 'pointer' : 'not-allowed' }} title={canAddPayment ? 'Add Payment' : 'Complete previous payment first'}>
+                    <i className="fa fa-plus"></i> Add New Payment
+                  </button>
+                </div>
+              );
+            })()}
           </div>
-          {(formData.payments || []).map((pmt, idx) => (
+          <div className="grid2">
+            <div className="fg"><label>Final Agreed Price ₹</label><input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" style={{ background: 'rgba(16,185,129,.08)', borderColor: 'var(--success)', color: 'var(--success)', fontWeight: 700 }} /></div>
+            <div className="fg"><label>Remaining Balance ₹ (Auto)</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {remBal.toLocaleString()}</div></div>
+          </div>
+          {!hidePayments && (formData.payments || []).map((pmt, idx) => (
             <div key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: idx < (formData.payments.length - 1) ? '1px dashed var(--border)' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <span style={{ background: 'var(--or1)', color: '#fff', width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{idx + 1}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>Payment {idx + 1}</span>
-                <button type="button" onClick={() => removePayment(idx)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }} title="Remove">✕</button>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>Payment {idx + 1} {pmt.status === 'Done' && <span style={{color:'var(--success)', marginLeft: 8}}><i className="fa fa-lock"></i> Locked</span>}</span>
+                {pmt.status !== 'Done' && <button type="button" onClick={() => removePayment(idx)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }} title="Remove">✕</button>}
               </div>
               <div className="grid3">
                 <div className="fg">
                   <label>Mode</label>
-                  <select value={pmt.mode} onChange={e => handlePaymentChange(idx, 'mode', e.target.value)}>
+                  <select value={pmt.mode} onChange={e => handlePaymentChange(idx, 'mode', e.target.value)} disabled={pmt.status === 'Done'}>
                     <option>CASH</option>
                     <option>CHEQUE</option>
                     <option>ONLINE</option>
+                    <option value="NEW CAR">NEW CAR</option>
                   </select>
                 </div>
                 <div className="fg">
                   <label>Amount ₹</label>
-                  <input type="number" value={pmt.amount} onChange={e => handlePaymentChange(idx, 'amount', e.target.value)} placeholder="0" />
+                  <input type="number" value={pmt.amount} onChange={e => handlePaymentChange(idx, 'amount', e.target.value)} placeholder="0" disabled={pmt.status === 'Done' && (formData.pc_loan !== 'Yes' || (editData?.payments?.[idx]?.amount))} />
                 </div>
-                <div className="fg" style={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <button type="button" className="btn btn-out" style={{ width: '100%', opacity: 0.5, cursor: 'not-allowed' }} disabled title="Voucher PDF — coming soon">
-                    <i className="fa fa-download"></i> Download Voucher
-                  </button>
+                <div className="fg">
+                  <label>Pay To</label>
+                  <input type="text" value={pmt.payTo !== undefined ? pmt.payTo : formData.pc_sname || ''} onChange={e => handlePaymentChange(idx, 'payTo', e.target.value)} placeholder="Payee Name" disabled={pmt.status === 'Done'} />
                 </div>
+              </div>
+              {pmt.mode === 'NEW CAR' && (
+                <div className="fg">
+                  <label>New Car Make & Model</label>
+                  <input type="text" value={pmt.newCarDetails || ''} onChange={e => handlePaymentChange(idx, 'newCarDetails', e.target.value)} placeholder="e.g. Hyundai Creta 2024" disabled={pmt.status === 'Done'} />
+                </div>
+              )}
+              <div className="grid2">
+                <div className="fg">
+                  <label>Remarks</label>
+                  <input type="text" value={pmt.remarks || ''} onChange={e => handlePaymentChange(idx, 'remarks', e.target.value)} placeholder="Remarks" disabled={pmt.status === 'Done'} />
+                </div>
+                <div className="fg">
+                  <label>Status</label>
+                  <select value={pmt.status || 'Done'} onChange={e => handlePaymentChange(idx, 'status', e.target.value)} disabled={pmt.status === 'Done'}>
+                    <option>Done</option>
+                    <option>Pending</option>
+                  </select>
+                </div>
+              </div>
+              <div className="fg" style={{ marginTop: '10px' }}>
+                <button type="button" className="btn btn-out" style={{ width: '100%', color: 'var(--or1)', borderColor: 'var(--or1)', height: '40px', fontWeight: '700' }} onClick={() => handlePreviewVoucher(idx)} title="Preview Voucher">
+                  <i className="fa fa-print"></i> Preview Voucher
+                </button>
               </div>
             </div>
           ))}
-          <button type="button" onClick={addPayment} className="btn btn-out" style={{ width: '100%', padding: 10, borderStyle: 'dashed', marginBottom: 14 }}>
-            <i className="fa fa-plus"></i> Add Payment
-          </button>
-          <div className="grid3">
-            <div className="fg"><label>Remaining Balance (Auto) ₹</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--danger)' : 'var(--success)' }}>₹ {remBal.toLocaleString()}</div></div>
-            <div className="fg"><label>New Car Exchange ₹</label><input type="number" name="pc_newcar" value={formData.pc_newcar} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Loan Outstanding</label><select name="pc_loan" value={formData.pc_loan} onChange={handleChange}><option>No</option><option>Yes</option></select></div>
-            <div className="fg"><label>Loan Bank</label><input name="pc_lbank" value={formData.pc_lbank} onChange={handleChange} placeholder="Bank name" /></div>
-            <div className="fg"><label>Token Date</label><input type="date" name="pc_tokd" value={formData.pc_tokd} onChange={handleChange} /></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Closer Done By</label><select name="pc_dby" value={formData.pc_dby} onChange={handleChange}><option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option></select></div>
-            <div className="fg"><label>Closer Manager</label><input name="pc_mgr" value={formData.pc_mgr} onChange={handleChange} placeholder="Manager name" /></div>
-            <div className="fg"><label>Expected Delivery Date</label><input type="date" name="pc_edd" value={formData.pc_edd} onChange={handleChange} /></div>
-          </div>
-          <div className="grid2">
-            <div className="fg"><label>Cancellation Reason</label><input name="pc_cncl" value={formData.pc_cncl} onChange={handleChange} placeholder="If cancelled..." /></div>
-            <div className="fg"><label>Remarks</label><input name="pc_rem" value={formData.pc_rem} onChange={handleChange} placeholder="Notes" /></div>
-          </div>
+
         </div>
         <div className="m-foot">
           <button className="btn btn-out" onClick={onClose} disabled={saving}>Cancel</button>

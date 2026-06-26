@@ -1,11 +1,13 @@
 ﻿import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { FinModal } from '../components/modals/FinModal';
 
 const Finance = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -15,8 +17,9 @@ const Finance = () => {
   const filtered = records.filter(r => !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase()));
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('fin', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('FIN'); await addRecord('fin', {...fd, finId: genId('FIN', cnt), date: fd.date||today()}); showToast('Finance / Loan record added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('fin', editRec.id, fd, { title: 'Finance Updated', message: (fd.fin_bname || fd.buyerName || '') + ' — ' + (fd.fin_bank || ''), link: '/finance', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('FIN'); await addRecord('fin', {...fd, finId: genId('FIN', cnt), date: fd.date||today()}, { title: 'Finance Applied', message: (fd.fin_bname || fd.buyerName || '') + ' — ' + (fd.fin_bank || ''), link: '/finance', actor }); showToast('Finance / Loan record added!'); }
       await refresh('fin'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };

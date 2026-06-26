@@ -1,11 +1,13 @@
 ﻿import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { GstModal } from '../components/modals/GstModal';
 
 const GstInvoice = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -15,8 +17,9 @@ const GstInvoice = () => {
   const filtered = records.filter(r => !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase()));
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('gst_inv', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('GST'); await addRecord('gst_inv', {...fd, gstId: genId('GST', cnt), date: fd.date||today()}); showToast('GST Invoice record added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('gst_inv', editRec.id, fd, { title: 'GST Invoice Updated', message: (fd.gst_bname || '') + ' — ' + (fd.gst_regn || fd.regNo || ''), link: '/gst-invoice', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('GST'); await addRecord('gst_inv', {...fd, gstId: genId('GST', cnt), date: fd.date||today()}, { title: 'GST Invoice Generated', message: (fd.gst_bname || '') + ' — ' + (fd.gst_regn || fd.regNo || ''), link: '/gst-invoice', actor }); showToast('GST Invoice record added!'); }
       await refresh('gst_inv'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };

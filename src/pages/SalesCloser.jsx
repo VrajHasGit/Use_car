@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SclModal } from '../components/modals/SclModal';
@@ -8,6 +9,7 @@ import { PayModal } from '../components/modals/PayModal';
 
 const SalesCloser = () => {
   const { data, refresh } = useData();
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
@@ -43,8 +45,9 @@ const SalesCloser = () => {
 
   const handleSave = async (fd) => {
     try {
-      if (editRec) { await updateRecord('scl', editRec.id, fd); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('scl'); await addRecord('scl', { ...fd, sclId: genId('SCL', cnt), date: fd.sc_date || today() }); showToast('Sales deal added!'); }
+      const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
+      if (editRec) { await updateRecord('scl', editRec.id, fd, { title: 'Sales Closer Updated', message: (fd.sc_bname || fd.buyerName || '') + ' — ' + (fd.sc_veh || ''), link: '/sales-closer', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('scl'); await addRecord('scl', { ...fd, sclId: genId('SCL', cnt), date: fd.sc_date || today() }, { title: 'Sales Deal', message: (fd.sc_bname || fd.buyerName || '') + ' — ' + (fd.sc_veh || ''), link: '/sales-closer', actor }); showToast('Sales deal added!'); }
       await refresh('scl'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
