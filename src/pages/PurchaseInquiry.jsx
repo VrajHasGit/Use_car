@@ -185,43 +185,6 @@ const PurchaseInquiry = () => {
     }
   };
 
-  const handleShiftToOrderBooking = async (inq) => {
-    if (!window.confirm(`Send ${inq.sellerName}'s inquiry to Order Booking?`)) return;
-    try {
-      const obCnt = await getNextCounter('ob');
-      const obId = genId('OB', obCnt);
-      await addRecord('ob', {
-        obId,
-        ob_inqid: inq.inqId || inq.id,
-        ob_date: today(),
-        ob_cname: inq.sellerName || '',
-        ob_cont: inq.mobile || '',
-        ob_email: inq.email || '',
-        ob_addr: inq.address || '',
-        ob_mm: [inq.make, inq.model, inq.variant].filter(Boolean).join(' '),
-        ob_fuel: inq.fuel || '',
-        ob_regn: inq.regNo || '',
-        ob_year: inq.year || '',
-        ob_km: inq.km || '',
-        ob_color: inq.color || '',
-        ob_insval: inq.insurance || '',
-        ob_rtoname: inq.sellerName || '',
-        ob_branch: 'SG Highway',
-        ob_instype: 'Comprehensive',
-        ob_ownt: '1st Owner',
-        ob_src: 'Walk-in',
-        ob_doc_stat: 'Pending',
-        date: today(),
-        stage: 'OrderBooking'
-      });
-      await updateRecord('pur_inq', inq.id, { stage: 'OrderBooking' });
-      await refresh('ob');
-      await refresh('pur_inq');
-      showToast('Sent to Order Booking!');
-    } catch (e) {
-      showToast('Failed to send to Order Booking.', 'error');
-    }
-  };
 
   const exportToExcel = () => {
     const headers = ['Inquiry ID', 'Date', 'Source', 'Seller Name', 'Mobile', 'Make', 'Model', 'Variant', 'Year', 'Fuel', 'Trans', 'Color', 'KM', 'Owners', 'Reg No', 'Assigned', 'Status', 'Next FU'];
@@ -337,7 +300,6 @@ const PurchaseInquiry = () => {
                           <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>
                         ) : <div />}
                         <button className="btn-icon bi-next" title="Send to Valuation" onClick={() => handleShiftToValuation(inq)}><i className="fa fa-arrow-right"></i></button>
-                        <button className="btn-icon bi-next" title="Send to Order Booking" onClick={() => handleShiftToOrderBooking(inq)} style={{ background: 'rgba(249,115,22,.1)', color: '#f97316' }}><i className="fa fa-file-pen"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>

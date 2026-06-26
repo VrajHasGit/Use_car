@@ -190,12 +190,15 @@ const PurchaseFollowUp = () => {
       
       const exists = data.doc?.find(d => d.dc_obid === rec.pf_inqid || d.inqId === rec.pf_inqid);
       if (!exists && rec.pf_inqid) {
+        const docCnt = await getNextCounter('doc');
+        const docId = genId('DOC', docCnt);
         await addRecord('doc', {
+           docId,
            inqId: rec.pf_inqid,
            dc_obid: rec.pf_inqid,
-           dc_cname: rec.sellerName || rec.pf_sname || '',
-           dc_regn: rec.regNo || '',
-           dc_carinfo: (rec.make || (rec.pf_veh ? rec.pf_veh.split(' ')[0] : '')) + ' ' + (rec.model || (rec.pf_veh ? rec.pf_veh.split(' ').slice(1).join(' ') : '')),
+           dc_cname: rec.sellerName || rec.pf_sname || inqRec?.sellerName || '',
+           dc_regn: rec.regNo || inqRec?.regNo || '',
+           dc_carinfo: (rec.make || inqRec?.make || (rec.pf_veh ? rec.pf_veh.split(' ')[0] : '')) + ' ' + (rec.model || inqRec?.model || (rec.pf_veh ? rec.pf_veh.split(' ').slice(1).join(' ') : '')),
            dc_date: new Date().toISOString().split('T')[0],
            dc_stat: 'Pending'
         });

@@ -157,3 +157,21 @@ export function subscribeCollection(colName, callback) {
     callback(data);
   });
 }
+
+// ── Storage ──
+import { storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+export async function uploadFileToStorage(file, folder = 'documents') {
+  try {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    const storageRef = ref(storage, `${folder}/${fileName}`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    return { url, name: file.name };
+  } catch (e) {
+    console.error('uploadFileToStorage:', e);
+    throw e;
+  }
+}

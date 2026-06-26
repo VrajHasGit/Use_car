@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -16,6 +16,23 @@ const Documents = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data['doc'] || [];
+
+  useEffect(() => {
+    const migrateDocs = async () => {
+      const docsWithoutId = records.filter(r => !r.docId);
+      if (docsWithoutId.length > 0) {
+        console.log('Migrating', docsWithoutId.length, 'docs...');
+        for (const doc of docsWithoutId) {
+          const cnt = await getNextCounter('doc');
+          const newDocId = genId('DOC', cnt);
+          await updateRecord('doc', doc.id, { docId: newDocId });
+        }
+        refresh('doc');
+      }
+    };
+    if (records && records.length) migrateDocs();
+  }, [records]);
+
   const filtered = records.filter(r => {
     if (r.stage && (r.stage === 'Workshop' || r.stage === 'Stock')) return false;
     return !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
@@ -29,7 +46,7 @@ const Documents = () => {
         showToast('Updated!'); 
         savedId = editRec.id || editRec.docId;
       } else { 
-        const cnt = await getNextCounter('DOC'); 
+        const cnt = await getNextCounter('doc'); 
         savedId = genId('DOC', cnt);
         await addRecord('doc', {...fd, docId: savedId, date: fd.date||today()}, { title: 'Documents Added', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/documents', actor }); 
         showToast('Documents record added!'); 
@@ -43,6 +60,12 @@ const Documents = () => {
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
   const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('doc', rec.id); await refresh('doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  
+  const handlePrintRecord = (r) => {
+    setEditRec(r);
+    setIsModalOpen(true);
+    setTimeout(() => { window.print(); }, 500);
+  };
   
   const [quickModal, setQuickModal] = useState({ type: null, docId: null });
   const closeQuickModal = () => setQuickModal({ type: null, docId: null });
@@ -95,7 +118,7 @@ const Documents = () => {
               <thead>
                 <tr>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>DOC ID</th>
-                  <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>BOOKING ID</th>
+                  <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>PURCHASE INQUIRY ID</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>REG NO.</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>DATE</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>RC</th>
@@ -120,15 +143,15 @@ const Documents = () => {
                   <td>{r.dc_obid||'—'}</td>
                   <td style={{fontWeight:600}}>{r.dc_regn||'—'}</td>
                   <td>{r.dc_date||fmtDate(r.date)}</td>
-                  <td style={{color: r.dc_rc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_rc ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_ins ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_ins ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_puc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_puc ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_pan ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_pan ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_adh ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_adh ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_f29 ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_f29 ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_f30 ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_f30 ? '✅' : '❌'}</td>
-                  <td style={{color: r.dc_noc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_noc ? '✅' : '❌ NOC'}</td>
-                  <td style={{color: r.dc_key ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_key ? '✅' : '❌'}</td>
+                  <td style={{color: r.dc_rc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_rc ? (r.dcu_rc ? <a href={r.dcu_rc} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_ins ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_ins ? (r.dcu_ins ? <a href={r.dcu_ins} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_puc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_puc ? (r.dcu_puc ? <a href={r.dcu_puc} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_pan ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_pan ? (r.dcu_pan ? <a href={r.dcu_pan} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_adh ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_adh ? (r.dcu_adh ? <a href={r.dcu_adh} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_f29 ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_f29 ? (r.dcu_f29 ? <a href={r.dcu_f29} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_f30 ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_f30 ? (r.dcu_f30 ? <a href={r.dcu_f30} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
+                  <td style={{color: r.dc_noc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_noc ? (r.dcu_noc ? <a href={r.dcu_noc} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌ NOC'}</td>
+                  <td style={{color: r.dc_key ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_key ? (r.dcu_key ? <a href={r.dcu_key} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
                   <td>
                     <div style={{color: r.dc_stat?.toUpperCase() === 'COMPLETE' ? '#10B981' : '#D97706', fontSize: 10, fontWeight: 700, textTransform: 'uppercase'}}>{r.dc_stat||'INCOMPLETE'}</div>
                     {hasMissing && <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#DC2626', marginTop: 4 }}>⚠️ DOCS MISSING</div>}
@@ -136,7 +159,7 @@ const Documents = () => {
                   <td>{r.dc_verby||'-'}</td>
                   <td><div style={{display: 'flex', flexDirection: 'row', gap: 4, width: 'max-content'}}>
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}} style={{background:'rgba(59,130,246,.1)',color:'#3B82F6',padding:6}}><i className="fa fa-pen" style={{fontSize:10}}></i></button>
-                    <button className="btn-icon bi-next" title="Send to Stock" onClick={()=>setQuickModal({ type: 'stk', docId: r.docId || r.id })} style={{background:'rgba(245,158,11,.1)',color:'#F59E0B',padding:6}}><i className="fa fa-car" style={{fontSize:10}}></i></button>
+                    <button className="btn-icon bi-print" title="Print" onClick={()=>handlePrintRecord(r)} style={{background:'rgba(16,185,129,.1)',color:'#10B981',padding:6}}><i className="fa fa-print" style={{fontSize:10}}></i></button>
                     <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)} style={{background:'rgba(239,68,68,.1)',color:'#EF4444',padding:6}}><i className="fa fa-trash" style={{fontSize:10}}></i></button>
                   </div></td>
                 </tr>

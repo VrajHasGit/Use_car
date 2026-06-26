@@ -259,6 +259,11 @@ const Valuation = () => {
                         <i className="fa fa-image" style={{ opacity: 0.5 }}></i> 0
                       </span>
                     )}
+                    {r.v_vid_link && (
+                      <a href={r.v_vid_link} target="_blank" rel="noreferrer" className="media-badge media-badge-has" style={{ marginLeft: 6, background: 'rgba(239,68,68,.15)', color: '#EF4444', textDecoration: 'none' }} title="Play Video">
+                        <i className="fa fa-play"></i>
+                      </a>
+                    )}
                   </td>
                   <td>{r.remarks || r.v_rem || '—'}</td>
                     <td>

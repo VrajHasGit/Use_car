@@ -1934,3 +1934,6 @@ input:disabled, select:disabled, textarea:disabled { background-color: #FEF2F2; 
 @keyframes car-spin {
   100% { transform: rotate(360deg); }
 }
+
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+

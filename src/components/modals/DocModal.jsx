@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { addRecord, updateRecord, getNextCounter } from '../../services/db';
+import { addRecord, updateRecord, getNextCounter, uploadFileToStorage } from '../../services/db';
 import { genId, today } from '../../utils/helpers';
 
 export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId }) => {
   const { data } = useData();
+  const [filesToUpload, setFilesToUpload] = useState({});
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
   "dc_obid": "",
   "dc_regn": "",
@@ -132,8 +134,15 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   }, [formData.dc_regn, data.ob, data.pur_inq, data.stk]);
 
   const handleChange = (e) => {
-    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: val });
+    if (e.target.type === 'file') {
+      const file = e.target.files[0];
+      if (file) {
+        setFilesToUpload({ ...filesToUpload, [e.target.name]: file });
+      }
+    } else {
+      const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+      setFormData({ ...formData, [e.target.name]: val });
+    }
   };
 
   const handleSave = async () => {
@@ -172,7 +181,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
    </div>
    <div className="grid2">
     <div className="fg"><label>Customer Name <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto</span></label><input id="dc_cname" name="dc_cname" value={formData['dc_cname'] || ''} onChange={handleChange} placeholder="Auto-fills from OB / Stock" readOnly style={{"background":"var(--surface2)","color":"var(--text2)"}} /></div>
-    <div className="fg"><label>Car Details <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto</span></label><input id="dc_carinfo" name="dc_carinfo" value={formData['dc_carinfo'] || ''} onChange={handleChange} placeholder="Make · Model · Year" readOnly style={{"background":"var(--surface2)","color":"var(--text2)"}} /></div>
+    <div className="fg"><label>Car Details <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto</span></label><input id="dc_carinfo" name="dc_carinfo" value={(formData['dc_carinfo'] || '').replace(new RegExp(' ?' + (formData['dc_regn'] || 'MISSING_REG'), 'i'), '')} onChange={handleChange} placeholder="Make · Model · Year" readOnly style={{"background":"var(--surface2)","color":"var(--text2)"}} /></div>
    </div>
 
    
@@ -187,7 +196,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_rc_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_rc_btn">📎 Upload</button>
-     <input type="file" id="dcu_rc" name="dcu_rc" value={formData['dcu_rc'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_rc" name="dcu_rc" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -198,7 +207,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_ins_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_ins_btn">📎 Upload</button>
-     <input type="file" id="dcu_ins" name="dcu_ins" value={formData['dcu_ins'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_ins" name="dcu_ins" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -209,7 +218,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_puc_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_puc_btn">📎 Upload</button>
-     <input type="file" id="dcu_puc" name="dcu_puc" value={formData['dcu_puc'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_puc" name="dcu_puc" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -220,7 +229,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_pan_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_pan_btn">📎 Upload</button>
-     <input type="file" id="dcu_pan" name="dcu_pan" value={formData['dcu_pan'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_pan" name="dcu_pan" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -231,7 +240,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_adh_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_adh_btn">📎 Upload</button>
-     <input type="file" id="dcu_adh" name="dcu_adh" value={formData['dcu_adh'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_adh" name="dcu_adh" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -242,7 +251,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_f29_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_f29_btn">📎 Upload</button>
-     <input type="file" id="dcu_f29" name="dcu_f29" value={formData['dcu_f29'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_f29" name="dcu_f29" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -253,7 +262,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_f30_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_f30_btn">📎 Upload</button>
-     <input type="file" id="dcu_f30" name="dcu_f30" value={formData['dcu_f30'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_f30" name="dcu_f30" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -264,7 +273,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_f28_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_f28_btn">📎 Upload</button>
-     <input type="file" id="dcu_f28" name="dcu_f28" value={formData['dcu_f28'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_f28" name="dcu_f28" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -275,7 +284,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_f35_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_f35_btn">📎 Upload</button>
-     <input type="file" id="dcu_f35" name="dcu_f35" value={formData['dcu_f35'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_f35" name="dcu_f35" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -286,7 +295,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_noc_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_noc_btn">📎 Upload</button>
-     <input type="file" id="dcu_noc" name="dcu_noc" value={formData['dcu_noc'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_noc" name="dcu_noc" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -297,7 +306,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_gst_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_gst_btn">📎 Upload</button>
-     <input type="file" id="dcu_gst" name="dcu_gst" value={formData['dcu_gst'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_gst" name="dcu_gst" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -308,7 +317,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_svc_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_svc_btn">📎 Upload</button>
-     <input type="file" id="dcu_svc" name="dcu_svc" value={formData['dcu_svc'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_svc" name="dcu_svc" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -319,7 +328,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_inv_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_inv_btn">📎 Upload</button>
-     <input type="file" id="dcu_inv" name="dcu_inv" value={formData['dcu_inv'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_inv" name="dcu_inv" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -330,7 +339,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_key_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_key_btn">📎 Upload</button>
-     <input type="file" id="dcu_key" name="dcu_key" value={formData['dcu_key'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_key" name="dcu_key" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
     
@@ -341,7 +350,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
       <div id="dc_book_fname" style={{"fontSize":"10px","color":"var(--text3)","marginTop":"2px","overflow":"hidden","textOverflow":"ellipsis","whiteSpace":"nowrap"}}>No file uploaded</div>
      </div>
      <button  style={{"background":"rgba(59,130,246,.15)","border":"1px solid rgba(59,130,246,.3)","color":"var(--bl5)","borderRadius":"5px","padding":"4px 9px","fontSize":"10px","fontWeight":"600","cursor":"pointer","whiteSpace":"nowrap","flexShrink":"0"}} id="dc_book_btn">📎 Upload</button>
-     <input type="file" id="dcu_book" name="dcu_book" value={formData['dcu_book'] || ''} onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
+     <input type="file" id="dcu_book" name="dcu_book" onChange={handleChange} accept="image/*,application/pdf" style={{"display":"none"}}  />
     </div>
 
    </div>

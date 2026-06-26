@@ -442,6 +442,16 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             />
           </div>
 
+          <div className="fg" style={{ marginBottom: 20 }}>
+            <label>Video Link (Google Drive / YouTube)</label>
+            <input 
+              name="v_vid_link" 
+              value={formData.v_vid_link || ''} 
+              onChange={handleChange} 
+              placeholder="https://drive.google.com/..." 
+            />
+          </div>
+
           <div className="grid3">
             <div className="fg"><label>Status</label><select name="v_stat" value={formData.v_stat} onChange={handleChange}><option>Pending</option><option>Done</option><option>Cancelled</option><option>Follow Up</option></select></div>
             {['Pending', 'Follow Up'].includes(formData.v_stat) && (
