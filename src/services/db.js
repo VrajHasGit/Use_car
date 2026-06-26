@@ -39,6 +39,16 @@ export const COL = {
   counters: 'counters',
 };
 
+// ── Sanitize: strip undefined values so Firebase never crashes ──
+function sanitize(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const clean = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined) clean[key] = obj[key];
+  });
+  return clean;
+}
+
 // ── Generic getAll ──
 export async function getAll(colName) {
   try {
@@ -65,7 +75,7 @@ export async function getById(colName, id) {
 export async function addRecord(colName, data, notificationMeta) {
   try {
     const ref = await addDoc(collection(db, colName), {
-      ...data,
+      ...sanitize(data),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -84,7 +94,7 @@ export async function addRecord(colName, data, notificationMeta) {
 export async function updateRecord(colName, id, data, notificationMeta) {
   try {
     await updateDoc(doc(db, colName, id), {
-      ...data,
+      ...sanitize(data),
       updatedAt: serverTimestamp(),
     });
     // Fire notification if meta provided
