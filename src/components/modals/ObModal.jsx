@@ -39,6 +39,10 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
       (r.inquiryId || r.inqId || r.pi_inqid || '').toLowerCase() === inqId.toLowerCase() ||
       (r.id || '').toLowerCase() === inqId.toLowerCase()
     );
+    const pfu = (data.pfu || []).find(r =>
+      (r.pf_inqid || r.inqId || r.inquiryId || '').toLowerCase() === inqId.toLowerCase()
+    );
+    const pfuPrice = pfu ? (pfu.pf_close || pfu.pf_nego || pfu.pf_offer || '') : '';
     const valRec = (data.val || []).find(r => 
       (r.v_inqid || '').toLowerCase() === inqId.toLowerCase() ||
       (inq && r.v_vnum && r.v_vnum.toLowerCase() === inq.regNo?.toLowerCase())
@@ -62,6 +66,7 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
         ob_exname: inq.assigned || prev.ob_exname,
         ob_pname: inq.nameSource || prev.ob_pname,
         ob_val: valRec ? valRec.v_valname : prev.ob_val,
+        ob_pp: pfuPrice || prev.ob_pp,
       }));
       setAutoFillMsg(`✅ Auto-filled from Inquiry: ${inq.sellerName || inqId}`);
       setTimeout(() => setAutoFillMsg(''), 3000);

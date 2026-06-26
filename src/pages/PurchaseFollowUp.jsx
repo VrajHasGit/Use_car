@@ -181,67 +181,31 @@ const PurchaseFollowUp = () => {
     }
   };
 
-  const pfuToCloser = async (r) => {
-    if (!window.confirm(`Send to Purchase Closer?`)) return;
+  const handleVerifyDocs = async (rec) => {
+    if (!window.confirm('Send this inquiry to verify documents?')) return;
     try {
-      const pclCnt = await getNextCounter('pcl');
-      await addRecord('pcl', {
-        inqId: r.pf_inqid,
-        pclId: genId('PCL', pclCnt),
-        date: today(),
-        stage: 'Closer',
-        sellerName: r.sellerName || r.pf_sname || '',
-        make: r.make || r.pf_veh?.split(' ')[0] || '',
-        model: r.model || r.pf_veh?.substring((r.pf_veh?.indexOf(' ') || -1) + 1) || '',
-        status: 'NEW',
-      });
-      await updateRecord('pfu', r.id, { stage: 'Closer' });
-      await refresh('pcl');
-      await refresh('pfu');
-      showToast('Sent to Purchase Closer!');
-    } catch (e) {
-      showToast('Failed: ' + e.message, 'error');
-    }
-  };
-
-  const pfuToOrderBooking = async (r) => {
-    if (!window.confirm(`Send to Order Booking?`)) return;
-    try {
-      const obCnt = await getNextCounter('ob');
-      const obId = genId('OB', obCnt);
+      await updateRecord('pfu', rec.id, { pf_stat: 'Closed-Won' });
+      const inqRec = data.pur_inq?.find(i => i.inqId === rec.pf_inqid);
+      if (inqRec) await updateRecord('pur_inq', inqRec.id, { status: 'Closed-Won' });
       
-      const inqRec = data.pur_inq?.find(inq => inq.id === r.pf_inqid || inq.inqId === r.pf_inqid) || {};
-      
-      await addRecord('ob', {
-        obId,
-        ob_inqid: r.pf_inqid,
-        ob_date: today(),
-        ob_cname: r.sellerName || r.pf_sname || inqRec.sellerName || '',
-        ob_cont: r.mobile || r.pf_smob || inqRec.mobile || '',
-        ob_email: inqRec.email || '',
-        ob_addr: inqRec.address || '',
-        ob_mm: r.make || r.pf_veh || inqRec.make || '',
-        ob_fuel: inqRec.fuel || '',
-        ob_regn: inqRec.regNo || '',
-        ob_year: inqRec.year || '',
-        ob_km: inqRec.km || '',
-        ob_color: inqRec.color || '',
-        ob_insval: inqRec.insurance || '',
-        ob_rtoname: r.sellerName || r.pf_sname || inqRec.sellerName || '',
-        ob_branch: 'SG Highway',
-        ob_instype: 'Comprehensive',
-        ob_ownt: '1st Owner',
-        ob_src: 'Walk-in',
-        ob_doc_stat: 'Pending',
-        date: today(),
-        stage: 'OrderBooking'
-      });
-      await updateRecord('pfu', r.id, { stage: 'OrderBooking' });
-      await refresh('ob');
+      const exists = data.doc?.find(d => d.dc_obid === rec.pf_inqid || d.inqId === rec.pf_inqid);
+      if (!exists && rec.pf_inqid) {
+        await addRecord('doc', {
+           inqId: rec.pf_inqid,
+           dc_obid: rec.pf_inqid,
+           dc_cname: rec.sellerName || rec.pf_sname || '',
+           dc_regn: rec.regNo || '',
+           dc_carinfo: (rec.make || (rec.pf_veh ? rec.pf_veh.split(' ')[0] : '')) + ' ' + (rec.model || (rec.pf_veh ? rec.pf_veh.split(' ').slice(1).join(' ') : '')),
+           dc_date: new Date().toISOString().split('T')[0],
+           dc_stat: 'Pending'
+        });
+      }
+      showToast('Sent to Documents!');
       await refresh('pfu');
-      showToast('Sent to Order Booking!');
+      await refresh('doc');
+      await refresh('pur_inq');
     } catch (e) {
-      showToast('Failed: ' + e.message, 'error');
+      showToast('Failed to send to documents.', 'error');
     }
   };
 
@@ -300,7 +264,7 @@ const PurchaseFollowUp = () => {
                   <td>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                      <button className="btn-icon bi-next" title="Send to Order Booking" onClick={() => pfuToOrderBooking(r)} disabled={(lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won'} style={{ background: 'rgba(249,115,22,.1)', color: '#f97316', opacity: (lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won' ? 0.3 : 1, cursor: (lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won' ? 'not-allowed' : 'pointer' }}><i className="fa fa-file-pen"></i></button>
+                      <button className="btn-icon bi-next" title="Verify Documents" onClick={() => handleVerifyDocs(r)} disabled={(lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won'} style={{ background: 'rgba(16,185,129,.1)', color: '#10B981', opacity: (lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won' ? 0.3 : 1, cursor: (lastFu.stat || lastFu.status || lastFu.pf_stat) !== 'Closed-Won' ? 'not-allowed' : 'pointer' }}><i className="fa fa-file-contract"></i></button>
                       <button className="btn-icon" style={{ background: 'rgba(124,58,237,.12)', color: '#7C3AED' }} onClick={() => showAIPrice(r)} title="AI Price Suggestion"><i className="fa fa-robot"></i></button>
                       <button className="btn-icon" style={{ background: 'rgba(59,130,246,.12)', color: '#3B82F6' }} onClick={() => showMarketPrice(r)} title="Market Pricing Data"><i className="fa fa-globe"></i></button>
                       {(r.mobile || r.pf_smob) && <button className="btn-icon" title="WhatsApp" onClick={() => handleWhatsApp(r)} style={{ background: '#25D366', color: '#fff' }}><i className="fa-brands fa-whatsapp"></i></button>}
