@@ -8,7 +8,7 @@ import { DocModal } from '../components/modals/DocModal';
 import { WsModal } from '../components/modals/WsModal';
 import { StkModal } from '../components/modals/StkModal';
 
-const Documents = () => {
+const PurchaseDocuments = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
   const location = useLocation();
@@ -58,13 +58,13 @@ const Documents = () => {
       const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
       let savedId;
       if (editRec) { 
-        await updateRecord('doc', editRec.id, fd, { title: 'Documents Updated', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/documents', actor }); 
+        await updateRecord('doc', editRec.id, fd, { title: 'Purchase Documents Updated', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/purchase-documents', actor }); 
         showToast('Updated!'); 
         savedId = editRec.id || editRec.docId;
       } else { 
         const cnt = await getNextCounter('doc'); 
         savedId = genId('DOC', cnt);
-        await addRecord('doc', {...fd, docId: savedId, date: fd.date||today()}, { title: 'Documents Added', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/documents', actor }); 
+        await addRecord('doc', {...fd, docId: savedId, date: fd.date||today()}, { title: 'Purchase Documents Added', message: (fd.dc_regn || fd.regNo || '') + ' — ' + (fd.dc_cname || ''), link: '/purchase-documents', actor }); 
         showToast('Documents record added!'); 
       }
       await refresh('doc'); 
@@ -144,13 +144,13 @@ const Documents = () => {
     }
   };
   return (
-    <div className="page on" id="pg_documents">
+    <div className="page on" id="pg_purchase_documents">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}
       <div className="ph">
         <div className="ph-left">
           <h1>
             <div className="ph-icon" style={{background: '#3B82F6', color: '#fff'}}><i className="fa fa-folder"></i></div>
-            DOCUMENTS
+            PURCHASE DOCUMENTS
           </h1>
           <p style={{textTransform: 'uppercase'}}>RC · INSURANCE · PUC · PAN · AADHAAR · FORM 29/30/28/35 · NOC · GST</p>
         </div>
@@ -162,13 +162,13 @@ const Documents = () => {
       <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} onSuccess={() => markShifted('Workshop', quickModal.docId)} quickDocId={quickModal.docId} />
       <StkModal isOpen={quickModal.type === 'stk'} onClose={closeQuickModal} onSuccess={() => markShifted('Stock', quickModal.docId)} quickDocId={quickModal.docId} />
       <div className="tc">
-        <div className="tc-hdr"><div className="tc-title">Documents <span style={{background:'var(--info)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
+        <div className="tc-hdr"><div className="tc-title">Purchase Documents <span style={{background:'var(--info)',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,marginLeft:8}}>{filtered.length}</span></div></div>
         <div className="tbl-wrap">
           {filtered.length === 0 ? (
             <div className="empty" style={{padding:48}}>
               <i className="fa fa-file-contract" style={{fontSize:36,color:'var(--border2)',display:'block',marginBottom:12}}></i>
               <div style={{fontSize:14,fontWeight:600,color:'var(--text2)',marginBottom:8}}>No records yet</div>
-              <div style={{fontSize:12,color:'var(--text3)'}}>Click "Add Record" to create your first Documents entry.</div>
+              <div style={{fontSize:12,color:'var(--text3)'}}>Click "Add Record" to create your first Purchase Documents entry.</div>
             </div>
           ) : (
             <table>
@@ -197,7 +197,7 @@ const Documents = () => {
                 const hasMissing = !r.dc_rc || !r.dc_ins || !r.dc_noc || !r.dc_f29 || !r.dc_f30;
                 const isComplete = r.dc_stat?.toUpperCase() === 'COMPLETE';
                 return (
-                <tr key={r.id} style={isComplete ? { backgroundColor: '#F0FDF4' } : (hasMissing ? { backgroundColor: '#FEF2F2' } : {})}>
+                <tr key={r.id} style={isComplete ? { backgroundColor: 'rgba(16, 185, 129, 0.05)' } : (hasMissing ? { backgroundColor: 'rgba(239, 68, 68, 0.05)' } : {})}>
                   <td style={{fontWeight:500,color:'var(--text)',fontFamily:"'Inter',sans-serif"}}>{r.docId||r.id?.slice(0,12)}</td>
                   <td>{r.dc_obid||'—'}</td>
                   <td style={{fontWeight:600}}>{r.dc_cname||'—'}</td>
@@ -231,4 +231,4 @@ const Documents = () => {
     </div>
   );
 };
-export default Documents;
+export default PurchaseDocuments;

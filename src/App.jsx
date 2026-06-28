@@ -33,7 +33,8 @@ import Targets from './pages/Targets';
 import EmpPerf from './pages/EmpPerf';
 import UserMgmt from './pages/UserMgmt';
 import TestDrive from './pages/TestDrive';
-import Documents from './pages/Documents';
+import PurchaseDocuments from './pages/PurchaseDocuments';
+import SalesDocuments from './pages/SalesDocuments';
 import PurchaseSearch from './pages/PurchaseSearch';
 import Tasks from './pages/Tasks';
 
@@ -107,7 +108,7 @@ function AppInner() {
           <RoleRoute allowedRoles={ROUTE_ROLES.purchase}><PurchaseSearch /></RoleRoute>
         } />
         <Route path="payment" element={<Payment />} />
-        <Route path="documents" element={<Documents />} />
+        <Route path="purchase-documents" element={<PurchaseDocuments />} />
 
         {/* Stock & Workshop — purchase + sales */}
         <Route path="stock" element={<Stock />} />
@@ -133,6 +134,9 @@ function AppInner() {
         } />
         <Route path="sales-booking" element={
           <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesBooking /></RoleRoute>
+        } />
+        <Route path="sale-documents" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesDocuments /></RoleRoute>
         } />
         <Route path="finance" element={
           <RoleRoute allowedRoles={ROUTE_ROLES.sales}><Finance /></RoleRoute>

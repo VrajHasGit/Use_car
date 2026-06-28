@@ -29,9 +29,9 @@ const PERMS = {
   Admin:    MODULES,
   Partner:  MODULES,
   Manager:  MODULES.filter(m => m !== 'Settings'),
-  Closer:   ['Purchase Inquiry', 'Purchase Closer', 'Stock', 'Workshop', 'Payment', 'Documents'],
-  Executive:['Purchase Inquiry', 'Valuation', 'Follow-Up', 'Stock', 'Payment', 'Documents'],
-  Sales:    ['Sales Inquiry', 'Follow-Up', 'Sales Closer', 'Sales OB', 'Delivery', 'Documents'],
+  Closer:   ['Purchase Inquiry', 'Purchase Closer', 'Stock', 'Workshop', 'Payment', 'Purchase Documents'],
+  Executive:['Purchase Inquiry', 'Valuation', 'Follow-Up', 'Stock', 'Payment', 'Purchase Documents'],
+  Sales:    ['Sales Inquiry', 'Follow-Up', 'Sales Closer', 'Sales OB', 'Delivery', 'Sale Documents'],
   Valuator: ['Purchase Inquiry', 'Valuation', 'Stock'],
   Workshop: ['Workshop', 'Stock'],
 };

@@ -68,7 +68,7 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
           {navItem('/purchase-inquiry', 'fa fa-car-side', 'Purchase Inquiry', null, { paddingLeft: '22px' })}
           {navItem('/valuation', 'fa fa-magnifying-glass-dollar', 'Valuation', null, { paddingLeft: '22px' })}
           {navItem('/purchase-follow', 'fa fa-phone-volume', 'Purchase Follow-Up', null, { paddingLeft: '22px' })}
-          {navItem('/documents', 'fa fa-file-contract', 'Documents', null, { paddingLeft: '22px' })}
+          {navItem('/purchase-documents', 'fa fa-file-contract', 'Documents', null, { paddingLeft: '22px' })}
           {navItem('/purchase-booking', 'fa fa-file-pen', 'Order Booking', null, { paddingLeft: '22px' })}
           {navItem('/purchase-closer', 'fa fa-handshake', 'Purchase Closer', null, { paddingLeft: '22px' })}
           {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
@@ -88,7 +88,7 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
           {navItem('/sales-booking', 'fa fa-clipboard-list', 'Sales Order Booking', null, { paddingLeft: '22px' })}
           {navItem('/finance', 'fa fa-landmark', 'Finance / Loan', null, { paddingLeft: '22px' })}
           {navItem('/payment', 'fa fa-credit-card', 'Sale Payment', null, { paddingLeft: '22px' })}
-          {navItem('/documents', 'fa fa-file-contract', 'Sale Documents', null, { paddingLeft: '22px' })}
+          {navItem('/sale-documents', 'fa fa-file-contract', 'Sale Documents', null, { paddingLeft: '22px' })}
           {navItem('/delivery-note', 'fa fa-file-lines', 'Delivery Note', null, { paddingLeft: '22px' })}
           {navItem('/gate-pass', 'fa fa-door-open', 'Gate Pass', null, { paddingLeft: '22px' })}
           {navItem('/delivery', 'fa fa-truck', 'Delivery', null, { paddingLeft: '22px' })}

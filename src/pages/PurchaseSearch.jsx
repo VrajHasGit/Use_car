@@ -10,6 +10,7 @@ const PIPE = [
   { key: 'val', label: 'VAL', color: '#8b5cf6', icon: 'fa-magnifying-glass-dollar',  title: 'Valuation'         },
   { key: 'pfu', label: 'FU',  color: '#3b82f6', icon: 'fa-phone-volume',             title: 'Follow-Up'         },
   { key: 'doc', label: 'DOC', color: '#f59e0b', icon: 'fa-file-contract',            title: 'Documents'         },
+  { key: 'ob',  label: 'OB',  color: '#7c3aed', icon: 'fa-file-pen',                 title: 'Order Booking'     },
   { key: 'pcl', label: 'PCL', color: '#06b6d4', icon: 'fa-handshake',               title: 'Purchase Closer'   },
   { key: 'stk', label: 'STK', color: '#22c55e', icon: 'fa-warehouse',                title: 'Car Stock'         },
 ];
@@ -19,7 +20,7 @@ function getLastReached({ val, pfu, doc, pcl, ob, stk }) {
   if (stk) return { label: 'Car Stock',          path: '/stock'             };
   if (pcl) return { label: 'Purchase Closer',    path: '/purchase-closer'   };
   if (ob)  return { label: 'Order Booking',      path: '/purchase-booking'  };
-  if (doc) return { label: 'Documents',          path: '/documents'         };
+  if (doc) return { label: 'Documents',          path: '/purchase-documents'         };
   if (pfu) return { label: 'Purchase Follow-Up', path: '/purchase-follow'   };
   if (val) return { label: 'Valuation',          path: '/valuation'         };
   return   { label: 'Purchase Inquiry',          path: '/purchase-inquiry'  };
@@ -586,7 +587,7 @@ function ExpansionPanel({ inq, val, pfu, pcl, ob, doc, stk }) {
 
         {/* 4 — Documents */}
         <StageCard title="Documents" icon="fa-file-contract" color="#f59e0b"
-          active={!!doc} navPath={doc ? '/documents' : null}>
+          active={!!doc} navPath={doc ? '/purchase-documents' : null}>
           {doc ? <>
             <Row label="DOC ID"    val={doc.docId} />
             <Row label="Date"      val={doc.dc_date || fmtDate(doc.date)} />
@@ -797,7 +798,7 @@ const PurchaseSearch = () => {
       '/stock':            row.stk?.id,
       '/purchase-closer':  row.pcl?.id,
       '/purchase-booking': row.ob?.id,
-      '/documents':        row.doc?.id,
+      '/purchase-documents':        row.doc?.id,
       '/purchase-follow':  row.pfu?.id,
       '/valuation':        row.val?.id,
       '/purchase-inquiry': row.inq?.id,
@@ -955,7 +956,8 @@ const PurchaseSearch = () => {
                   val: !!val,
                   pfu: !!pfu,
                   doc: !!doc,
-                  pcl: !!(pcl || ob),
+                  ob: !!ob,
+                  pcl: !!pcl,
                   stk: !!stk,
                 };
                 const days  = inq.date ? ageDays(inq.date) : null;

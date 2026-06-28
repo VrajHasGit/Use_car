@@ -33,7 +33,8 @@ const ROLE_ROUTES = {
   targets:   ['Admin', 'Partner', 'Manager'],
   tasks:     ['Admin', 'Partner', 'Manager'],
   feedback:  ['Admin', 'Partner', 'Manager'],
-  cust:      ['Admin', 'Partner', 'Manager', 'Sales'],
+  targets:   ['Admin', 'Partner', 'Manager', 'Sales'],
+  sale_doc:  ['Admin', 'Partner', 'Manager', 'Sales'],
 };
 
 // Icon + color presets per collection
@@ -73,7 +74,7 @@ const COLLECTION_LABELS = {
   pcl: 'Purchase Closer',
   ob: 'Order Booking',
   pay: 'Payment',
-  doc: 'Documents',
+  doc: 'Purchase Documents',
   stk: 'Car Stock',
   ws: 'Workshop',
   exp_rec: 'Expense',
@@ -92,6 +93,7 @@ const COLLECTION_LABELS = {
   tasks: 'Task',
   feedback: 'Feedback',
   cust: 'Customer',
+  sale_doc: 'Sale Documents',
 };
 
 // Route paths for navigation
@@ -102,7 +104,7 @@ const COLLECTION_LINKS = {
   pcl: '/purchase-closer',
   ob: '/purchase-booking',
   pay: '/payment',
-  doc: '/documents',
+  doc: '/purchase-documents',
   stk: '/stock',
   ws: '/workshop',
   exp_rec: '/expenses',
@@ -240,7 +242,7 @@ export function subscribeNotifications(callback) {
 // ═══════════════════════════════════════════════════════════
 export const NOTIF_CATEGORIES = {
   purchase: ['pur_inq', 'val', 'pfu', 'pcl', 'ob', 'pay', 'doc'],
-  sales:    ['sal_inq', 'sfu', 'td', 'scl', 'sob', 'fin', 'del', 'gst_inv', 'gp', 'dn'],
+  sales:    ['sal_inq', 'sfu', 'td', 'scl', 'sob', 'fin', 'del', 'gst_inv', 'gp', 'dn', 'sale_doc'],
   workshop: ['ws', 'stk', 'exp_rec'],
   admin:    ['users', 'targets', 'tasks', 'feedback', 'cust'],
 };
