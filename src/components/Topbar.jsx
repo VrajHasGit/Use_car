@@ -10,6 +10,7 @@ const PAGE_TITLES = {
   '/purchase-dashboard': 'Purchase Dashboard',
   '/sales-dashboard': 'Sales Dashboard',
   '/purchase-inquiry': 'Purchase Inquiry',
+  '/purchase-search': 'Purchase Pipeline Search',
   '/valuation': 'Valuation',
   '/purchase-follow': 'Purchase Follow-Up',
   '/purchase-closer': 'Purchase Closer',
@@ -90,7 +91,7 @@ const Topbar = ({ isSlim, toggleSidebar, toggleDTM }) => {
   const location = useLocation();
   const { data } = useData();
   const { currentUser } = useAuth();
-  const { notifications, unreadCount, markRead, markAllRead, filterByCategory } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, clearNotif, clearAllNotifs, filterByCategory } = useNotifications();
 
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -308,6 +309,17 @@ const Topbar = ({ isSlim, toggleSidebar, toggleDTM }) => {
                       Read All
                     </button>
                   )}
+                  {notifications.length > 0 && (
+                    <button
+                      className="notif-mark-all-btn"
+                      style={{ background: '#FEF2F2', color: '#DC2626', borderColor: '#FECACA' }}
+                      onClick={() => clearAllNotifs()}
+                      title="Clear all notifications"
+                    >
+                      <i className="fa fa-trash" style={{ marginRight: 4 }}></i>
+                      Clear All
+                    </button>
+                  )}
                   <button
                     className="notif-close-btn"
                     onClick={() => setShowNotif(false)}
@@ -357,7 +369,16 @@ const Topbar = ({ isSlim, toggleSidebar, toggleDTM }) => {
                       <div className="notif-card-body">
                         <div className="notif-card-top">
                           <span className="notif-card-title">{n.title}</span>
-                          <span className="notif-card-time">{timeAgo(n.createdAt)}</span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span className="notif-card-time">{timeAgo(n.createdAt)}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); clearNotif(n.id); }}
+                              style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 0 }}
+                              title="Clear"
+                            >
+                              <i className="fa fa-times"></i>
+                            </button>
+                          </div>
                         </div>
                         <p className="notif-card-msg">{n.message}</p>
                         {n.actor?.name && n.actor.name !== 'System' && (

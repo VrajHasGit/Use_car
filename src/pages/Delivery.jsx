@@ -16,8 +16,14 @@ const Delivery = () => {
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.del || [];
   const filtered = records.filter(r => {
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.delId || '').toLowerCase().includes(q) ||
+        (r.buyerName || '').toLowerCase().includes(q) ||
+        (r.regNo || '').toLowerCase().includes(q);
+    }
     if (r.stage && r.stage !== 'Delivery') return false;
-    return !search || (r.buyerName||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase());
+    return true;
   });
   const handleSave = async (fd) => {
     try {
@@ -59,7 +65,6 @@ const Delivery = () => {
         <div className="ph-left"><h1><div className="ph-icon"><i className="fa fa-truck"></i></div>Delivery</h1><p>Vehicle delivery and handover records</p></div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> Add Delivery</button>
         </div>
       </div>
       {isModalOpen && <DelModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

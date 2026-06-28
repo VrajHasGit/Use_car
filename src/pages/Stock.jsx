@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +54,7 @@ function Paginate({ total, page, setPage }) {
 const Stock = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
+  const location = useLocation();
   const isAdmin = ['admin', 'manager'].includes((currentUser?.role || '').toLowerCase());
 
   const [search, setSearch] = useState('');
@@ -85,29 +87,40 @@ const Stock = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
+  useEffect(() => {
+    const autoId = location.state?.autoOpenId;
+    if (!autoId) return;
+    const rec = (data.stk || []).find(r => r.id === autoId);
+    if (rec) { setEditRec(rec); setIsModalOpen(true); window.history.replaceState({}, document.title, window.location.pathname); }
+  }, [data.stk, location.state?.autoOpenId]);
+
   const rawStock = data.stk || [];
-  // Exclude Sold and Workshop from the main table view
+  // Exclude Sold and Workshop from the main table view (unless searching)
   const stock = rawStock.filter(r => r.status !== 'Sold' && r.status !== 'Workshop');
 
   // Unique makes for filter
   const makes = useMemo(() => [...new Set(stock.map(r => r.make).filter(Boolean))].sort(), [stock]);
 
   // Filtered records
-  const filtered = useMemo(() => stock.filter(r => {
-    const q = search.toLowerCase();
-    const matchSearch = !search ||
-      (r.regNo || '').toLowerCase().includes(q) ||
-      (r.make || '').toLowerCase().includes(q) ||
-      (r.model || '').toLowerCase().includes(q) ||
-      (r.stkId || '').toLowerCase().includes(q) ||
-      (r.color || '').toLowerCase().includes(q);
-    const matchStatus = !statusFilter || r.status === statusFilter;
-    const matchMake = !makeFilter || r.make === makeFilter;
-    const matchFuel = !fuelFilter || r.fuel === fuelFilter;
-    const matchYearFrom = !yearFrom || parseInt(r.year) >= parseInt(yearFrom);
-    const matchYearTo = !yearTo || parseInt(r.year) <= parseInt(yearTo);
-    return matchSearch && matchStatus && matchMake && matchFuel && matchYearFrom && matchYearTo;
-  }), [stock, search, statusFilter, makeFilter, fuelFilter, yearFrom, yearTo]);
+  const filtered = useMemo(() => {
+    const source = search ? rawStock : stock;
+    return source.filter(r => {
+      const q = search.toLowerCase();
+      const matchSearch = !search ||
+        (r.stkId || '').toLowerCase().includes(q) ||
+        (r.inqId || r.sk_inqid || '').toLowerCase().includes(q) ||
+        (r.regNo || r.sk_regn || '').toLowerCase().includes(q) ||
+        (r.make || '').toLowerCase().includes(q) ||
+        (r.model || '').toLowerCase().includes(q) ||
+        (r.color || '').toLowerCase().includes(q);
+      const matchStatus = !statusFilter || r.status === statusFilter;
+      const matchMake = !makeFilter || r.make === makeFilter;
+      const matchFuel = !fuelFilter || r.fuel === fuelFilter;
+      const matchYearFrom = !yearFrom || parseInt(r.year) >= parseInt(yearFrom);
+      const matchYearTo = !yearTo || parseInt(r.year) <= parseInt(yearTo);
+      return matchSearch && matchStatus && matchMake && matchFuel && matchYearFrom && matchYearTo;
+    });
+  }, [rawStock, stock, search, statusFilter, makeFilter, fuelFilter, yearFrom, yearTo]);
 
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
@@ -120,7 +133,8 @@ const Stock = () => {
   const chartData = useMemo(() => {
     const makesCount = {};
     stock.filter(r => r.status === 'In Stock' || r.status === 'Ready for Sale').forEach(r => {
-      const m = r.make || 'Other';
+      let m = (r.make || 'Other').trim();
+      m = m.split(' ')[0].toUpperCase();
       makesCount[m] = (makesCount[m] || 0) + 1;
     });
     return Object.entries(makesCount)
@@ -206,7 +220,6 @@ const Stock = () => {
         </div>
         <div className="ph-actions">
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export CSV</button>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Vehicle</button>
         </div>
       </div>
 
@@ -298,22 +311,39 @@ const Stock = () => {
             <table id="tbl_stk">
               <thead>
                 <tr>
-                  <th>Stock ID</th><th>Doc ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
+                  <th>Stock ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
                   <th>Fuel</th><th>Colour</th><th>KM</th>
                   {isAdmin && <><th>TCP</th><th>Selling Price</th><th>Profit</th></>}
                   <th>Days</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {paginated.length > 0 ? paginated.map(r => (
+                {paginated.length > 0 ? paginated.map(r => {
+                  const linkedInqId = r.inqId || r.sk_inqid || '';
+                  const linkedInq = linkedInqId ? (data.pur_inq || []).find(i => i.inqId === linkedInqId || i.id === linkedInqId) : null;
+                  const rawMake = (r.make || r.sk_make || linkedInq?.make || '').trim();
+                  const rMake = rawMake.split(' ')[0].toUpperCase();
+                  const extraFromMake = rawMake.substring(rMake.length).trim();
+                  const rawModel = (r.model || r.sk_model || linkedInq?.model || '').trim();
+                  // Deduplicate words if make and model overlap
+                  const rModelWords = (extraFromMake + ' ' + rawModel).split(' ').filter(Boolean);
+                  const rModel = [...new Set(rModelWords)].join(' ');
+                  
+                  const rVariant = r.variant || r.sk_var || linkedInq?.variant || '';
+                  const rYear = r.year || r.sk_year || linkedInq?.year || '';
+                  const rFuel = r.fuel || r.sk_fuel || linkedInq?.fuel || '';
+                  const rColor = r.color || r.sk_color || linkedInq?.color || '';
+                  const rKm = r.km || r.sk_km || linkedInq?.km || '';
+                  const rRegNo = r.regNo || r.sk_regn || linkedInq?.regNo || '';
+                  return (
                   <tr key={r.id}>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)', fontSize: 10 }}>{r.stkId || r.id?.slice(0, 12)}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sk_docid || (r.sk_inqid?.startsWith('DOC-') ? r.sk_inqid : '—')}</td>
                     <td style={{ fontWeight: 600, color: 'var(--text2)' }}>
                       {(() => {
                         const explicitInq = r.sk_inqid?.startsWith('INQ-') ? r.sk_inqid : (r.sk_inqid && !r.sk_inqid.startsWith('DOC-') ? r.sk_inqid : null);
                         if (explicitInq) return explicitInq;
-                        const matchReg = r.regNo || r.sk_regn;
+                        if (linkedInqId && !linkedInqId.startsWith('DOC-')) return linkedInqId;
+                        const matchReg = rRegNo;
                         if (matchReg && data.pur_inq) {
                           const rn = matchReg.replace(/\s/g, '').toUpperCase();
                           const inq = data.pur_inq.find(i => (i.regNo || i.inq_regn || '').replace(/\s/g, '').toUpperCase() === rn);
@@ -322,21 +352,21 @@ const Stock = () => {
                         return '—';
                       })()}
                     </td>
-                    <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo || r.sk_regn}</td>
-                    <td><span style={{ fontWeight: 600 }}>{r.make || r.sk_make}</span> {r.model || r.sk_model}<br /><small style={{ color: 'var(--text3)' }}>{r.variant || r.sk_var}</small></td>
-                    <td>{r.year || r.sk_year}</td>
-                    <td>{(r.fuel || r.sk_fuel) ? <span className="badge b-prog">{r.fuel || r.sk_fuel}</span> : '—'}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{rRegNo}</td>
+                    <td><span style={{ fontWeight: 600 }}>{rMake}</span> {rModel}<br /><small style={{ color: 'var(--text3)' }}>{rVariant}</small></td>
+                    <td>{rYear}</td>
+                    <td>{rFuel ? <span className="badge b-prog">{rFuel}</span> : '—'}</td>
                     <td>
-                      {(r.color || r.sk_color) ? (
+                      {rColor ? (
                         <div className="colour-dot">
-                          <div className="colour-dot-swatch" style={{ background: colourHex(r.color || r.sk_color) }}></div>
-                          {r.color || r.sk_color}
+                          <div className="colour-dot-swatch" style={{ background: colourHex(rColor) }}></div>
+                          {rColor}
                         </div>
                       ) : '—'}
                     </td>
-                    <td>{(r.km || r.sk_km) ? `${Number(r.km || r.sk_km).toLocaleString('en-IN')} km` : '—'}</td>
+                    <td>{rKm ? `${Number(rKm).toLocaleString('en-IN')} km` : '—'}</td>
                     {isAdmin && <>
-                      <td className="amt-or">{fmt(r.tcp || (Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))}</td>
+                      <td className="amt-or">{fmt(r.tcp || r.sk_tcp || (Number(r.sk_pp||r.pp||r.purchasePrice||0)+Number(r.sk_refurb||r.refurb||0)+Number(r.sk_rto||r.rto||0)+Number(r.sk_ins||r.ins||0)))}</td>
                       <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.sp || r.sk_sp)}</td>
                       <td className={(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) > 0 ? 'profit-pos' : (r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) < 0 ? 'profit-neg' : ''}>{fmt(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0))))}</td>
                     </>}
@@ -353,7 +383,7 @@ const Stock = () => {
                       </div>
                     </td>
                   </tr>
-                )) : (
+                )}) : (
                   <tr><td colSpan="13" className="empty">
                     <i className="fa fa-warehouse"></i><br />
                     {hasFilter ? 'No vehicles match your filters. Try clearing filters.' : 'No stock records yet. Click "Add Vehicle" to begin.'}

@@ -114,7 +114,13 @@ const Workshop = () => {
   const stock = data.stk || [];
 
   const filtered = useMemo(() => records.filter(r => {
-    const matchSearch = !search || (r.ws_vnum || r.regNo || '').toLowerCase().includes(search.toLowerCase()) || (r.ws_make || r.make || '').toLowerCase().includes(search.toLowerCase()) || (r.wsId || '').toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = !search ||
+      (r.wsId || '').toLowerCase().includes(q) ||
+      (r.ws_inqid || r.inqId || '').toLowerCase().includes(q) ||
+      (r.ws_vnum || r.regNo || '').toLowerCase().includes(q) ||
+      (r.ws_cname || r.customerName || '').toLowerCase().includes(q) ||
+      (r.ws_make || r.make || '').toLowerCase().includes(q);
     const matchStatus = !statusFilter || (r.ws_jstat || r.jStat) === statusFilter;
     return matchSearch && matchStatus;
   }), [records, search, statusFilter]);
@@ -217,7 +223,6 @@ const Workshop = () => {
             <option value="Open">Open</option><option value="In Process">In Process</option><option value="Complete">Complete</option>
           </select>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Job</button>
         </div>
       </div>
 

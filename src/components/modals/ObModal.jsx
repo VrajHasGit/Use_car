@@ -9,6 +9,47 @@ function fmt(n) {
   return '₹' + Number(n).toLocaleString('en-IN');
 }
 
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_NAMES_GUJ = ['રવિવાર','સોમવાર','મંગળવાર','બુધવાર','ગુરૂવાર','શુક્રવાર','શનિવાર'];
+const MON_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function getDayName(iso, guj = false) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return (guj ? DAY_NAMES_GUJ : DAY_NAMES)[d.getDay()];
+}
+
+function fmtDateDN(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2,'0')}-${MON_SHORT[d.getMonth()]}-${d.getFullYear()}`;
+}
+
+function numToWords(n) {
+  const num = Math.round(Number(n));
+  if (!n || isNaN(num) || num === 0) return '';
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
+    'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function conv(x) {
+    if (x < 20) return ones[x];
+    if (x < 100) return tens[Math.floor(x/10)] + (x%10 ? ' '+ones[x%10] : '');
+    return ones[Math.floor(x/100)] + ' Hundred' + (x%100 ? ' '+conv(x%100) : '');
+  }
+  let r = '', x = num;
+  if (x >= 10000000) { r += conv(Math.floor(x/10000000)) + ' Crore '; x %= 10000000; }
+  if (x >= 100000)   { r += conv(Math.floor(x/100000))   + ' Lakh ';  x %= 100000; }
+  if (x >= 1000)     { r += conv(Math.floor(x/1000))     + ' Thousand '; x %= 1000; }
+  if (x > 0)           r += conv(x);
+  return r.trim() + ' Only';
+}
+
+function u(val, minWidth = '80px') {
+  return val
+    ? `<u style="min-width:${minWidth};text-align:center;display:inline-block;font-weight:bold">${val}</u>`
+    : `<u style="min-width:${minWidth};display:inline-block">&nbsp;</u>`;
+}
+
 export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPclId }) => {
   const { data } = useData();
 
@@ -20,12 +61,10 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
     ob_instype: 'Comprehensive', ob_insname: '', ob_insval: '',
     ob_exname: '', ob_val: '',
     ob_pp: '', ob_rc: '', ob_rto: '', ob_cash: '', ob_online: '', ob_oth: '',
-    ob_brkname: '', ob_brkno: '', ob_src: 'Walk-in',
+    ob_brkname: '', ob_brkno: '', ob_brkamt: '', ob_src: 'Walk-in',
+    ob_token: '', ob_clrdate: '',
     ob_noc: '', ob_rem: '',
-    ob_pname: '', ob_spname: '', ob_recv: '',
-    ob_doc_rc: false, ob_doc_ins: false, ob_doc_puc: false, ob_doc_pan: false,
-    ob_doc_adh: false, ob_doc_f29: false, ob_doc_f30: false, ob_doc_f28: false,
-    ob_doc_noc: false, ob_doc_key: false, ob_doc_svc: false, ob_doc_inv: false,
+    ob_pname: '', ob_recv: '',
     ob_doc_miss: '', ob_doc_stat: 'Pending',
   };
 
@@ -39,13 +78,30 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
       (r.inquiryId || r.inqId || r.pi_inqid || '').toLowerCase() === inqId.toLowerCase() ||
       (r.id || '').toLowerCase() === inqId.toLowerCase()
     );
-    const pfu = (data.pfu || []).find(r =>
-      (r.pf_inqid || r.inqId || r.inquiryId || '').toLowerCase() === inqId.toLowerCase()
-    );
-    const pfuPrice = pfu ? (pfu.pf_close || pfu.pf_nego || pfu.pf_offer || '') : '';
+    const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+    const pfu = (data.pfu || []).find(p => {
+      if ((p.pf_inqid || '').toLowerCase() === inqId.toLowerCase()) return true;
+      if (inq && (inq.regNo || inq.pi_regn)) {
+        const pInq = (data.pur_inq || []).find(i => (i.inqId || i.pi_inqid) === p.pf_inqid);
+        if (pInq && cleanRegn(pInq.regNo || pInq.pi_regn) === cleanRegn(inq.regNo || inq.pi_regn)) return true;
+      }
+      return false;
+    });
+    let pfuPrice = '';
+    if (pfu && pfu.followUps && pfu.followUps.length > 0) {
+      for (let i = pfu.followUps.length - 1; i >= 0; i--) {
+        const dp = pfu.followUps[i].dealPrice || pfu.followUps[i].pf_close || pfu.followUps[i].pf_nego || '';
+        if (dp) { pfuPrice = dp; break; }
+        const op = pfu.followUps[i].offer || pfu.followUps[i].pf_offer || '';
+        if (op && !pfuPrice) pfuPrice = op;
+      }
+    } 
+    if (!pfuPrice && pfu) {
+      pfuPrice = pfu.pf_close || pfu.pf_nego || pfu.pf_offer || '';
+    }
     const valRec = (data.val || []).find(r => 
       (r.v_inqid || '').toLowerCase() === inqId.toLowerCase() ||
-      (inq && r.v_vnum && r.v_vnum.toLowerCase() === inq.regNo?.toLowerCase())
+      (inq && cleanRegn(r.v_vnum) === cleanRegn(inq.regNo || inq.pi_regn))
     );
 
     if (inq) {
@@ -135,37 +191,37 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
   const calcTotal = () => {
     const pp = Number(formData.ob_pp) || 0;
     const rto = Number(formData.ob_rto) || 0;
-    return pp + rto;
+    return pp - rto;
   };
 
   const handlePrintOrderBooking = () => {
     const total = calcTotal();
     
     const customStyles = `
-      .pf-wrap { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111; font-size: 11px; line-height: 1.4; }
-      .pf-header { text-align: center; border-bottom: 2px solid #1a2542; padding-bottom: 10px; margin-bottom: 15px; }
-      .pf-title { font-size: 22px; font-weight: 800; color: #1a2542; letter-spacing: 1px; margin: 0; }
-      .pf-subtitle { font-size: 12px; font-weight: 600; color: #555; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; }
-      .pf-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 11px; border-bottom: 1px solid #eaeaea; padding-bottom: 8px; }
+      .pf-wrap { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111; font-size: 11px; line-height: 1.3; }
+      .pf-header { text-align: center; border-bottom: 2px solid #1a2542; padding-bottom: 6px; margin-bottom: 10px; }
+      .pf-title { font-size: 20px; font-weight: 800; color: #1a2542; letter-spacing: 1px; margin: 0; }
+      .pf-subtitle { font-size: 11px; font-weight: 600; color: #555; margin-top: 2px; text-transform: uppercase; letter-spacing: 2px; }
+      .pf-meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11px; border-bottom: 1px solid #eaeaea; padding-bottom: 6px; }
       .pf-meta-item { display: flex; flex-direction: column; }
       .pf-meta-lbl { font-weight: 600; color: #666; text-transform: uppercase; font-size: 9px; }
       .pf-meta-val { font-weight: bold; font-size: 13px; }
-      .pf-section { margin-bottom: 15px; }
-      .pf-section-title { font-size: 12px; font-weight: bold; color: #1a2542; text-transform: uppercase; border-bottom: 1px solid #1a2542; padding-bottom: 4px; margin-bottom: 10px; }
-      .pf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 15px; }
-      .pf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 15px; }
+      .pf-section { margin-bottom: 10px; }
+      .pf-section-title { font-size: 12px; font-weight: bold; color: #1a2542; text-transform: uppercase; border-bottom: 1px solid #1a2542; padding-bottom: 2px; margin-bottom: 6px; }
+      .pf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
+      .pf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 12px; }
       .pf-field { display: flex; flex-direction: column; }
-      .pf-lbl { font-size: 9px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
-      .pf-val { font-size: 12px; font-weight: 500; border-bottom: 1px dashed #ccc; padding-bottom: 2px; min-height: 17px; }
-      .pf-totals { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 10px; }
-      .pf-totals-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+      .pf-lbl { font-size: 9px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 1px; }
+      .pf-val { font-size: 11px; font-weight: 500; border-bottom: 1px dashed #ccc; padding-bottom: 0px; min-height: 15px; }
+      .pf-totals { background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 6px; }
+      .pf-totals-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
       .pf-totals-row.grand { font-size: 14px; font-weight: bold; color: #1a2542; border-top: 2px solid #e2e8f0; padding-top: 6px; margin-top: 6px; }
-      .pf-signs { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eaeaea; }
+      .pf-signs { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eaeaea; }
       .pf-sign-box { text-align: center; width: 40%; }
       .pf-sign-line { border-bottom: 1px solid #000; height: 30px; margin-bottom: 6px; }
       .pf-sign-lbl { font-weight: bold; font-size: 10px; text-transform: uppercase; }
       @media print {
-        @page { size: A4; margin: 12mm; }
+        @page { size: A4; margin: 8mm; }
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .pf-totals { background: #f8fafc !important; }
       }
@@ -288,10 +344,7 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
               <span class="pf-lbl">Broker Name & No.</span>
               <span class="pf-val">${formData.ob_brkname || 'NA'} ${formData.ob_brkno ? '— ' + formData.ob_brkno : ''}</span>
             </div>
-            <div class="pf-field">
-              <span class="pf-lbl">Support Partner</span>
-              <span class="pf-val">${formData.ob_spname || 'NA'}</span>
-            </div>
+
           </div>
         </div>
 
@@ -303,12 +356,12 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
               <span>₹${Number(formData.ob_pp || 0).toLocaleString('en-IN')}</span>
             </div>
             <div class="pf-totals-row">
-              <span>RTO Challan Amount (Additional)</span>
-              <span>₹${Number(formData.ob_rto || 0).toLocaleString('en-IN')}</span>
+              <span>RTO Challan (Deduction)</span>
+              <span style="color: var(--danger)">- ${formData.ob_rto || '0'}</span>
             </div>
             <div class="pf-totals-row grand">
-              <span>GRAND TOTAL</span>
-              <span>₹${Number(total || 0).toLocaleString('en-IN')}</span>
+              <span>TOTAL COST (TCP)</span>
+              <span>₹${total.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
@@ -377,9 +430,9 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
           </div>
           <div style="border: 2px solid #333; display: flex;">
             <div class="dn-lbl">તારીખ :</div>
-            <div class="dn-val">${formData.ob_date || ''}</div>
+            <div class="dn-val">${fmtDateDN(formData.ob_date)}</div>
             <div class="dn-lbl" style="border-left: 2px solid #333">વાર:</div>
-            <div class="dn-val"></div>
+            <div class="dn-val">${getDayName(formData.ob_date, true)}</div>
           </div>
         </div>
 
@@ -412,15 +465,15 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
         </div>
 
         <div class="dn-text">
-          અમોએ અમારી માલિકી અને હક્ક ભોગવટાનું વાહન જેનો આર.ટી.ઓ. રજીસ્ટ્રેશન નંબર <u>${formData.ob_regn || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> છે 
-          અને તેનું મોડલ <u>${formData.ob_mm || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> ગાડીનો પ્રકાર <u>${formData.ob_fuel || '&nbsp;&nbsp;&nbsp;&nbsp;'}</u> એન્જિન નં <u>${formData.ob_eng || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> 
-          તથા ચેસીસ નં <u>${formData.ob_chas || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> છે. 
-          તે વાહન આજરોજ રૂા. <u>${formData.ob_pp || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> દલાલી રૂા. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> 
-          ટેક્સ રૂા. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> તથા ટ્રાન્સફરનો/ડયુના રૂા <u>${formData.ob_rto || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> મળી ટોટલ રૂા <u>${calcTotal() || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> 
-          અંકે રૂા <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> માં ઉપર જણાવેલ પાર્ટીને વેચાણ 
-          આપેલ છે. તેના બાના પેટે રૂા. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> અંકે રૂા. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>
-          રોકડા/ચેક મળેલ છે બાકી નીકળતા રૂા <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> મોડામાં મોડા 
-          તા <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> સુધીમાં ચૂકતે હિસાબે કરવાના રહેશે. 
+          અમોએ અમારી માલિકી અને હક્ક ભોગવટાનું વાહન જેનો આર.ટી.ઓ. રજીસ્ટ્રેશન નંબર ${u(formData.ob_regn,'120px')} છે
+          અને તેનું મોડલ ${u(formData.ob_mm,'140px')} ગાડીનો પ્રકાર ${u(formData.ob_fuel,'60px')} એન્જિન નં ${u(formData.ob_eng,'120px')}
+          તથા ચેસીસ નં ${u(formData.ob_chas,'120px')} છે.
+          તે વાહન આજરોજ રૂા. ${u(formData.ob_pp,'100px')} દલાલી રૂા. ${u(formData.ob_brkamt,'80px')}
+          ટેક્સ રૂા. ${u('','60px')} તથા ટ્રાન્સફરનો/ડ્યુના રૂા ${u(formData.ob_rto,'80px')} મળી ટોટલ રૂા ${u(calcTotal(),'100px')}
+          અંકે રૂા ${u(numToWords(calcTotal()),'220px')} માં ઉપર જણાવેલ પાર્ટીને વેચાણ
+          આપેલ છે. તેના બાના પેટે રૂા. ${u(formData.ob_token,'100px')} અંકે રૂા. ${u(numToWords(formData.ob_token),'200px')}
+          રોકડા/ચેક મળેલ છે બાકી નીકળતા રૂા ${u(calcTotal() && formData.ob_token ? calcTotal() - Number(formData.ob_token) : '','100px')} મોડામાં મોડા
+          તા ${u(fmtDateDN(formData.ob_clrdate),'100px')} સુધીમાં ચૂકતે હિસાબે કરવાના રહેશે.
           ગાડીના ખરીદ-વેચાણ પેટે નીચે લખેલ શરતો અ મને બંને પાર્ટીએ વાંચેલ છે. અને બંધન કર્તા રહેશે તે જાણીને અમે સહી કરેલ છે.
         </div>
 
@@ -433,7 +486,7 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
             <li>સદર વાહનનો આજરોજ પહેલાનું કોઈ પણ પ્રકારનું આર.ટી.ઓ. ટેક્સ મેમો કે કોઇપણ પ્રકારનો બેન્ક કે પેઢીનું દેવું નીકળશે કે કોઈપણ પ્રકારનો પોલીસ કેસ કે સંબંધિત તમામ જવાબદારી તા. ........................................ સુધી તથા તમામ જવાબદારી વાહન વેચનારની રહેશે અને ત્યારબાદ તા........................................ થી તમામ જવાબદારી ખરીદનાની રહેશે.</li>
             <li>સદર વાહન અમોએ અમારી રીતે જોઈ, તપાસી અમારા ફોરમેન, ડ્રાઈવર, દલાલ વિગેરેને બરાબર ચારે તરફથી બતાવી રોડ ટેસ્ટ લઈ ચકાસણી કરી ખરીદ કરેલ છે. તેથી પાછળથી કોઈ પણ પ્રકારની ફરિયાદ સાંભળવામાં આવશે નહીં.</li>
             <li>સરદાર વાહનનો સોદો કોઈપણ સંજોગોમાં કેન્સલ થશે નહીં અને જો સોદો કેન્સલ થશે તો બાનાની આપેલી રકમ પરત મળશે નહીં તેવું બરાબર જાણીએ છીએ.</li>
-            <li>સદર વાહનો કબજો આજ રોજ એટલે કે તા........................................ અને સમય........................................થી લેનાર પાર્ટીએ લીધેલ છે. જેથી અત્યાર પછી આ વાહન ચોરી, આગ, અકસ્માત કે ગુનાહિત કાર્યમાં ફરશે તો તેની જવાબદારી ખરીદ લેનાર પાર્ટીની રહેશે . ખોટો ખરીદ લેખ કરવો કે વેચાણ લેખ કરવો તે ગુનો છે. તમારી અમારી ધ્યાનમાં છે અને તે સમજી વિચારી અને નીચે સહી કરેલ છે. ગાડીનો ઇન્સ્યોરન્સ ટ્રાન્સફરની અથવા નવો લેવાની તમામ જવાબદારી ખરીદનાર પાર્ટીની રહેશે. તથા ગાડીના ટ્રાન્સફર માટેનો થતો ટેક્સ ખરીદનાર પાર્ટીએ અલગથી આપવાનો રહેશે.</li>
+            <li>સદર વાહનો કબજો આજ રોજ એટલે કે તા. <strong>${fmtDateDN(formData.ob_date)}</strong> (${getDayName(formData.ob_date, true)}) અને સમય........................................થી લેનાર પાર્ટીએ લીધેલ છે. જેથી અત્યાર પછી આ વાહન ચોરી, આગ, અકસ્માત કે ગુનાહિત કાર્યમાં ફરશે તો તેની જવાબદારી ખરીદ લેનાર પાર્ટીની રહેશે . ખોટો ખરીદ લેખ કરવો કે વેચાણ લેખ કરવો તે ગુનો છે. તમારી અમારી ધ્યાનમાં છે અને તે સમજી વિચારી અને નીચે સહી કરેલ છે. ગાડીનો ઇન્સ્યોરન્સ ટ્રાન્સફરની અથવા નવો લેવાની તમામ જવાબદારી ખરીદનાર પાર્ટીની રહેશે. તથા ગાડીના ટ્રાન્સફર માટેનો થતો ટેક્સ ખરીદનાર પાર્ટીએ અલગથી આપવાનો રહેશે.</li>
             <li>ગાડીના કિલોમીટરની કોઈ પણ જવાબદારી આપવામાં આવતી નથી કાયદાકીય ક્ષેત્ર અમદાવાદ/........................................ રહેશે.</li>
           </ul>
         </div>
@@ -498,9 +551,9 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
           </div>
           <div style="border: 2px solid #333; display: flex;">
             <div class="dn-lbl">Date :</div>
-            <div class="dn-val">${formData.ob_date || ''}</div>
+            <div class="dn-val">${fmtDateDN(formData.ob_date)}</div>
             <div class="dn-lbl" style="border-left: 2px solid #333">Day:</div>
-            <div class="dn-val"></div>
+            <div class="dn-val">${getDayName(formData.ob_date)}</div>
           </div>
         </div>
 
@@ -533,15 +586,15 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
         </div>
 
         <div class="dn-text">
-          We have sold our fully owned vehicle with RTO Registration No <u>${formData.ob_regn || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> 
-          and Model <u>${formData.ob_mm || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u>, Fuel Type <u>${formData.ob_fuel || '&nbsp;&nbsp;&nbsp;&nbsp;'}</u>, Engine No <u>${formData.ob_eng || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> 
-          and Chassis No <u>${formData.ob_chas || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u>. 
-          The vehicle is sold today for Rs. <u>${formData.ob_pp || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u>, Brokerage Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>, 
-          Tax Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> and Transfer dues Rs. <u>${formData.ob_rto || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> making a total of Rs. <u>${calcTotal() || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</u> 
-          (in words Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>) to the above mentioned party. 
-          As token amount Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> (in words Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>) 
-          has been received in Cash/Cheque. The pending balance of Rs. <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> will be paid and cleared 
-          by Date <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> at the latest. 
+          We have sold our fully owned vehicle with RTO Registration No ${u(formData.ob_regn,'120px')}
+          and Model ${u(formData.ob_mm,'140px')}, Fuel Type ${u(formData.ob_fuel,'60px')}, Engine No ${u(formData.ob_eng,'120px')}
+          and Chassis No ${u(formData.ob_chas,'120px')}.
+          The vehicle is sold today for Rs. ${u(formData.ob_pp,'100px')}, Brokerage Rs. ${u(formData.ob_brkamt,'80px')},
+          Tax Rs. ${u('','60px')} and Transfer dues Rs. ${u(formData.ob_rto,'80px')} making a total of Rs. ${u(calcTotal(),'100px')}
+          (in words Rs. ${u(numToWords(calcTotal()),'220px')}) to the above mentioned party.
+          As token amount Rs. ${u(formData.ob_token,'100px')} (in words Rs. ${u(numToWords(formData.ob_token),'200px')})
+          has been received in Cash/Cheque. The pending balance of Rs. ${u(calcTotal() && formData.ob_token ? calcTotal() - Number(formData.ob_token) : '','100px')} will be paid and cleared
+          by Date ${u(fmtDateDN(formData.ob_clrdate),'100px')} at the latest.
           Both parties have read and agreed to the terms and conditions written below for the purchase/sale of the car and have signed with full understanding.
         </div>
 
@@ -554,7 +607,7 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
             <li>Any R.T.O. tax memo, bank or financial institution loan/dues, or police case related to this vehicle prior to today will remain the total responsibility of the Seller until Date ........................................ and after Date ........................................ the entire responsibility will lie with the Buyer.</li>
             <li>We have personally checked, inspected the said vehicle from all sides through our foreman, driver, broker, etc., taken a road test, verified it, and then purchased it. Therefore, no future complaints will be entertained.</li>
             <li>We clearly understand that the deal for this vehicle will not be canceled under any circumstances, and if canceled, the token amount paid will not be refunded.</li>
-            <li>The possession of the said vehicle has been taken over by the purchasing party today on Date ........................................ at Time ........................................ Therefore, if this vehicle is involved in any theft, fire, accident, or criminal activity hereafter, the purchasing party will be responsible. Creating a false purchase or sale deed is a crime. This is in our and your knowledge, and we have signed below with full understanding. The entire responsibility of transferring or getting new insurance for the car will lie with the purchasing party. The purchasing party must separately pay the tax applicable for the car transfer.</li>
+            <li>The possession of the said vehicle has been taken over by the purchasing party today on Date <strong>${fmtDateDN(formData.ob_date)}</strong> (${getDayName(formData.ob_date)}) at Time ........................................ Therefore, if this vehicle is involved in any theft, fire, accident, or criminal activity hereafter, the purchasing party will be responsible. Creating a false purchase or sale deed is a crime. This is in our and your knowledge, and we have signed below with full understanding. The entire responsibility of transferring or getting new insurance for the car will lie with the purchasing party. The purchasing party must separately pay the tax applicable for the car transfer.</li>
             <li>No guarantee is provided regarding the kilometers of the car. The legal jurisdiction will be Ahmedabad/.........................................</li>
           </ul>
         </div>
@@ -760,11 +813,21 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
               <label>RTO Challan Amount</label>
               <input type="number" id="ob_rto" name="ob_rto" value={formData.ob_rto || ''} onChange={handleChange} placeholder="0" />
             </div>
+            <div className="fg">
+              <label>Token / Advance Received <span style={{color:'var(--or1)',fontSize:10}}>⚡ Appears in DN</span></label>
+              <input type="number" id="ob_token" name="ob_token" value={formData.ob_token || ''} onChange={handleChange} placeholder="0" />
+            </div>
+            <div className="fg">
+              <label>Balance Clear By Date <span style={{color:'var(--or1)',fontSize:10}}>⚡ Appears in DN</span></label>
+              <input type="date" id="ob_clrdate" name="ob_clrdate" value={formData.ob_clrdate || ''} onChange={handleChange} />
+            </div>
           </div>
           <div className="calc-panel">
             <div className="calc-row"><span className="cl">Purchase Price</span><span>{fmt(formData.ob_pp)}</span></div>
-            <div className="calc-row"><span className="cl">RTO Challan</span><span>{fmt(formData.ob_rto)}</span></div>
+            <div className="calc-row"><span className="cl">RTO Challan (Deducted)</span><span style={{color:'var(--danger)'}}>- {fmt(formData.ob_rto)}</span></div>
             <div className="calc-row"><span>TOTAL COST (TCP)</span><span style={{ color: 'var(--or1)', fontSize: 16 }}>{fmt(total)}</span></div>
+            {formData.ob_token && <div className="calc-row"><span className="cl">Token Received</span><span style={{color:'var(--success)'}}>- {fmt(formData.ob_token)}</span></div>}
+            {formData.ob_token && <div className="calc-row"><span>Pending Balance</span><span style={{color:'var(--danger)',fontSize:14}}>{fmt(total - Number(formData.ob_token))}</span></div>}
           </div>
 
           {/* Broker & Source */}
@@ -778,18 +841,14 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
               <input id="ob_brkno" name="ob_brkno" value={formData.ob_brkno || ''} onChange={handleChange} type="tel" placeholder="Mobile" />
             </div>
             <div className="fg">
-              <label>Remark</label>
-              <input id="ob_rem" name="ob_rem" value={formData.ob_rem || ''} onChange={handleChange} placeholder="Notes" />
+              <label>Brokerage Amt</label>
+              <input id="ob_brkamt" name="ob_brkamt" value={formData.ob_brkamt || ''} onChange={handleChange} type="number" placeholder="Amount" />
             </div>
           </div>
-          <div className="grid3">
-
+          <div className="grid2">
             <div className="fg">
-              <label>Support Partner</label>
-              <select id="ob_spname" name="ob_spname" value={formData.ob_spname || ''} onChange={handleChange}>
-                <option value="">-- Select Support Partner --</option>
-                <option>Rajan Desai</option><option>Ritesh Shah</option><option>Rohan Mehta</option><option>Ronak Mehta</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Other</option>
-              </select>
+              <label>Remark</label>
+              <input id="ob_rem" name="ob_rem" value={formData.ob_rem || ''} onChange={handleChange} placeholder="Notes" />
             </div>
             <div className="fg">
               <label>Car Received Date</label>
@@ -800,29 +859,60 @@ export const ObModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickPcl
           {/* Document Checklist */}
           <div className="sect-lbl" style={{ marginTop: 10 }}>
             <i className="fa fa-file-contract"></i> Document Checklist
-            <span style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 400, marginLeft: 6 }}>(Tick available documents)</span>
+            <span style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 400, marginLeft: 6 }}>(Auto-fetched from Documents tab)</span>
           </div>
           <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10 }}>
-            {[
-              ['ob_doc_rc', 'RC Book'], ['ob_doc_ins', 'Insurance'], ['ob_doc_puc', 'PUC'],
-              ['ob_doc_pan', 'PAN Card'], ['ob_doc_adh', 'Aadhaar'], ['ob_doc_f29', 'Form 29'],
-              ['ob_doc_f30', 'Form 30'], ['ob_doc_f28', 'Form 28'], ['ob_doc_noc', 'NOC Bank'],
-              ['ob_doc_key', 'Spare Key'], ['ob_doc_svc', 'Service Book'], ['ob_doc_inv', 'Invoice'],
-            ].map(([key, label]) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, cursor: 'pointer', color: 'var(--text2)' }}>
-                <input type="checkbox" name={key} checked={!!formData[key]} onChange={handleChange} style={{ accentColor: 'var(--or1)', width: 15, height: 15 }} />
-                {label}
-              </label>
-            ))}
+            {(() => {
+              const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+              let docRec = null;
+              const allDocs = data?.doc || [];
+              for (const d of allDocs) {
+                if (formData.obId && d.dc_obid === formData.obId) { docRec = d; break; }
+                if (formData.ob_inqid && d.dc_obid === formData.ob_inqid) {
+                  if (!docRec || docRec.dc_stat !== 'Complete') docRec = d;
+                }
+              }
+              if (!docRec && formData.ob_regn) {
+                const reg = cleanRegn(formData.ob_regn);
+                const regDocs = allDocs.filter(d => cleanRegn(d.dc_regn) === reg);
+                docRec = regDocs.find(d => d.dc_stat === 'Complete') || regDocs[regDocs.length - 1];
+              }
+              return [
+                ['dc_rc', 'RC Book'], ['dc_ins', 'Insurance'], ['dc_puc', 'PUC'],
+                ['dc_pan', 'PAN Card'], ['dc_adh', 'Aadhaar'], ['dc_f29', 'Form 29'],
+                ['dc_f30', 'Form 30'], ['dc_f28', 'Form 28'], ['dc_noc', 'NOC Bank'],
+                ['dc_key', 'Spare Key'], ['dc_svc', 'Service Book'], ['dc_inv', 'Invoice'],
+              ].map(([key, label]) => {
+                const isAvail = docRec ? !!docRec[key] : false;
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--text2)', cursor: 'not-allowed' }}>
+                    <span style={{ color: isAvail ? '#10B981' : '#EF4444', fontWeight: 'bold' }}>{isAvail ? '✅' : '❌'}</span> {label}
+                  </div>
+                );
+              });
+            })()}
           </div>
           <div className="grid2" style={{ marginTop: 10 }}>
             <div className="fg">
               <label>Document Status</label>
-              <select id="ob_doc_stat" name="ob_doc_stat" value={formData.ob_doc_stat || ''} onChange={handleChange}>
-                <option value="Pending">Pending</option>
-                <option value="Partial">Partial</option>
-                <option value="Complete">Complete</option>
-              </select>
+              {(() => {
+                const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+                let docRec = null;
+                const allDocs = data?.doc || [];
+                for (const d of allDocs) {
+                  if (formData.obId && d.dc_obid === formData.obId) { docRec = d; break; }
+                  if (formData.ob_inqid && d.dc_obid === formData.ob_inqid) {
+                    if (!docRec || docRec.dc_stat !== 'Complete') docRec = d;
+                  }
+                }
+                if (!docRec && formData.ob_regn) {
+                  const reg = cleanRegn(formData.ob_regn);
+                  const regDocs = allDocs.filter(d => cleanRegn(d.dc_regn) === reg);
+                  docRec = regDocs.find(d => d.dc_stat === 'Complete') || regDocs[regDocs.length - 1];
+                }
+                const stat = docRec ? (docRec.dc_stat || 'Pending') : (formData.ob_doc_stat || 'Pending');
+                return <input value={stat} disabled style={{ fontWeight: 'bold', color: stat === 'Complete' ? '#10B981' : stat === 'Partial' ? '#F59E0B' : '#D97706', cursor: 'not-allowed' }} />;
+              })()}
             </div>
             <div></div>
           </div>

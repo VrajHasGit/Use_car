@@ -34,13 +34,15 @@ const SalesCloser = () => {
   }, [records]);
 
   const filtered = records.filter(r => {
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.sclId || '').toLowerCase().includes(q) ||
+        (r.sc_stkid || '').toLowerCase().includes(q) ||
+        (r.sc_bname || r.buyerName || '').toLowerCase().includes(q) ||
+        (r.sc_regn || r.regNo || '').toLowerCase().includes(q);
+    }
     if (r.stage && r.stage !== 'Closer') return false;
-    const q = search.toLowerCase();
-    return !search ||
-      (r.sc_bname || r.buyerName || '').toLowerCase().includes(q) ||
-      (r.sc_regn || r.regNo || '').toLowerCase().includes(q) ||
-      (r.sc_stkid || '').toLowerCase().includes(q) ||
-      (r.sclId || '').toLowerCase().includes(q);
+    return true;
   });
 
   const handleSave = async (fd) => {
@@ -93,7 +95,6 @@ const SalesCloser = () => {
         <div className="ph-left"><h1><div className="ph-icon" style={{ background: 'linear-gradient(135deg,#059669,#10B981)' }}><i className="fa fa-trophy"></i></div>Sales Closer</h1><p>Finalize sales deals and record confirmed orders</p></div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search buyer / stock ID / reg…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Deal</button>
         </div>
       </div>
       {isModalOpen && <SclModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

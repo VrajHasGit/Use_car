@@ -57,7 +57,15 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
         {/* PURCHASE PIPELINE */}
         {isPurchase && <>
           <div className="sb-sec" data-role="purchase admin" style={{ color: 'rgba(255,160,80,.7)' }}>⬇ PURCHASE PIPELINE</div>
-          {navItem('/purchase-inquiry', 'fa fa-car-side', 'Purchase Inquiry')}
+          <NavLink
+            to="/purchase-search"
+            className={({ isActive }) => `sb-item${isActive ? ' act' : ''}`}
+            style={{ color: '#c084fc' }}
+          >
+            <i className="fa fa-magnifying-glass sb-ico sb-ico-pulse"></i>
+            <span className="sb-lbl">Purchase Search</span>
+          </NavLink>
+          {navItem('/purchase-inquiry', 'fa fa-car-side', 'Purchase Inquiry', null, { paddingLeft: '22px' })}
           {navItem('/valuation', 'fa fa-magnifying-glass-dollar', 'Valuation', null, { paddingLeft: '22px' })}
           {navItem('/purchase-follow', 'fa fa-phone-volume', 'Purchase Follow-Up', null, { paddingLeft: '22px' })}
           {navItem('/documents', 'fa fa-file-contract', 'Documents', null, { paddingLeft: '22px' })}

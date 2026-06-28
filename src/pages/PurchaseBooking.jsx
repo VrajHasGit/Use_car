@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
@@ -7,22 +7,37 @@ import { ObModal } from '../components/modals/ObModal';
 import { DocModal } from '../components/modals/DocModal';
 import { PayModal } from '../components/modals/PayModal';
 import { DelModal } from '../components/modals/DelModal';
+import { RcDetailsModal } from '../components/modals/RcDetailsModal';
 
 const PurchaseBooking = () => {
   const { data, refresh } = useData();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
+
+  useEffect(() => {
+    const autoId = location.state?.autoOpenId;
+    if (!autoId) return;
+    const rec = (data.ob || []).find(r => r.id === autoId);
+    if (rec) { setEditRec(rec); setIsModalOpen(true); window.history.replaceState({}, document.title, window.location.pathname); }
+  }, [data.ob, location.state?.autoOpenId]);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   const records = data.ob || [];
   const filtered = records.filter(r => {
-    if (r.stage && r.stage !== 'OrderBooking') return false;
-    return !search || (r.sellerName || r.ob_cname || r.ob_bname || '').toLowerCase().includes(search.toLowerCase())
-      || (r.regNo || r.ob_regn || r.ob_vnum || '').toLowerCase().includes(search.toLowerCase())
-      || (r.obId || '').toLowerCase().includes(search.toLowerCase())
-      || (r.ob_inqid || '').toLowerCase().includes(search.toLowerCase());
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.obId || '').toLowerCase().includes(q) ||
+        (r.ob_inqid || r.inqId || '').toLowerCase().includes(q) ||
+        (r.sellerName || r.ob_cname || r.ob_bname || '').toLowerCase().includes(q) ||
+        (r.regNo || r.ob_regn || r.ob_vnum || '').toLowerCase().includes(q);
+    }
+    if (r.stage && r.stage.toLowerCase() !== 'orderbooking') return false;
+    const inqId = r.ob_inqid || r.inqId || '';
+    if (inqId && data.pcl?.some(p => p.pc_inqid === inqId || p.inqId === inqId)) return false;
+    return true;
   });
 
   // Auto-fix missing IDs
@@ -75,20 +90,30 @@ const PurchaseBooking = () => {
       const cnt = await getNextCounter('pcl');
       const pclId = genId('PCL', cnt);
       
+      // Resolve full details from linked inquiry
+      const linkedInqId = rec.ob_inqid || rec.inqId || '';
+      const linkedInq = linkedInqId ? (data.pur_inq || []).find(i => i.inqId === linkedInqId || i.id === linkedInqId) : null;
+      
       const pclData = {
         pclId,
         pc_date: today(),
         status: 'Pending',
         stage: 'Closer',
-        pc_inqid: rec.ob_inqid || '',
-        pc_sname: rec.ob_cname || '',
-        pc_veh: rec.ob_mm || '',
-        pc_regn: rec.ob_regn || '',
-        pc_price: rec.ob_pp || ''
+        pc_inqid: linkedInqId,
+        pc_sname: rec.ob_cname || linkedInq?.sellerName || rec.sellerName || rec.ob_bname || '',
+        pc_veh: rec.ob_mm || (linkedInq ? `${linkedInq.make || ''} ${linkedInq.model || ''}`.trim() : '') || (rec.make ? `${rec.make} ${rec.model || ''}` : '') || '',
+        pc_regn: rec.ob_regn || linkedInq?.regNo || rec.regNo || rec.ob_vnum || '',
+        pc_price: rec.ob_pp || rec.pp || rec.tcp || ''
       };
       
       await addRecord('pcl', pclData);
       await updateRecord('ob', rec.id, { stage: 'Closer' });
+      
+      if (linkedInqId && linkedInq) {
+        await updateRecord('pur_inq', linkedInq.id, { stage: 'Closer' });
+        await refresh('pur_inq');
+      }
+      
       await refresh('pcl');
       await refresh('ob');
       showToast('Sent to Purchase Closer!');
@@ -146,9 +171,6 @@ const PurchaseBooking = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search by name / reg / ID…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}>
-            <i className="fa fa-plus"></i> Add Booking
-          </button>
         </div>
       </div>
 
@@ -179,6 +201,7 @@ const PurchaseBooking = () => {
         onSuccess={() => markShifted('Delivery', quickModal.obId)}
         quickId={quickModal.obId}
       />
+      <RcDetailsModal isOpen={quickModal.type === 'rc'} onClose={closeQuickModal} inqId={quickModal.inqId} />
 
       {/* KPI Strip */}
       <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
@@ -233,30 +256,103 @@ const PurchaseBooking = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(r => (
+              {filtered.length > 0 ? filtered.map(r => {
+                const linkedInqId = r.ob_inqid || r.inqId || '';
+                const linkedInq = linkedInqId ? (data.pur_inq || []).find(i => i.inqId === linkedInqId || i.id === linkedInqId) : null;
+                const dispName = r.ob_cname || linkedInq?.sellerName || r.sellerName || r.ob_bname || '—';
+                const dispRegn = r.ob_regn || linkedInq?.regNo || r.regNo || r.ob_vnum || '—';
+                return (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>
                     {r.obId || r.id?.slice(0, 12)}
                   </td>
                   <td style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    {r.ob_inqid || r.inqId || '—'}
+                    {linkedInqId || '—'}
                   </td>
                   <td>{fmtDate(r.date || r.ob_date)}</td>
-                  <td style={{ fontWeight: 600 }}>{r.ob_cname || r.sellerName || r.ob_bname}</td>
+                  <td style={{ fontWeight: 600 }}>{dispName}</td>
                   <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700 }}>
-                    {r.ob_regn || r.regNo || r.ob_vnum || '—'}
+                    {dispRegn}
                   </td>
-                  <td>{r.ob_mm || r.make || '—'} {r.model || ''}</td>
-                  <td className="amt-or">{fmt(r.ob_pp || r.pp)}</td>
+                  <td>
+                    {(() => {
+                      let mm = (r.ob_mm || '').trim() || (r.make ? `${r.make} ${r.model || ''}`.trim() : '');
+                      if (!mm) {
+                        const inqId = r.ob_inqid || r.inqId || '';
+                        const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+                        const reg = cleanRegn(r.ob_regn || r.regNo);
+                        const inq = (data.pur_inq || []).find(i => 
+                          (inqId && (i.inqId || i.pi_inqid) === inqId) ||
+                          (reg && cleanRegn(i.regNo || i.pi_regn) === reg)
+                        );
+                        if (inq) mm = `${inq.make || ''} ${inq.model || ''}`.trim();
+                      }
+                      return mm || '—';
+                    })()}
+                  </td>
+                  <td className="amt-or">
+                    {(() => {
+                      let dispPrice = r.ob_pp || r.pp || '';
+                      if (!dispPrice) {
+                        const inqId = r.ob_inqid || r.inqId || '';
+                        const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+                        const reg = cleanRegn(r.ob_regn || r.regNo);
+                        const pfu = (data.pfu || []).find(p => {
+                          if (inqId && (p.pf_inqid || '').toLowerCase() === inqId.toLowerCase()) return true;
+                          if (reg) {
+                            const pInq = (data.pur_inq || []).find(i => (i.inqId || i.pi_inqid) === p.pf_inqid);
+                            if (pInq && cleanRegn(pInq.regNo || pInq.pi_regn) === reg) return true;
+                          }
+                          return false;
+                        });
+                        if (pfu && pfu.followUps && pfu.followUps.length > 0) {
+                          for (let i = pfu.followUps.length - 1; i >= 0; i--) {
+                            if (pfu.followUps[i].dealPrice) { dispPrice = pfu.followUps[i].dealPrice; break; }
+                            else if (pfu.followUps[i].offer && !dispPrice) dispPrice = pfu.followUps[i].offer;
+                          }
+                        } 
+                        if (!dispPrice && pfu) {
+                          dispPrice = pfu.pf_close || pfu.pf_nego || pfu.pf_offer || '';
+                        }
+                      }
+                      return fmt(dispPrice);
+                    })()}
+                  </td>
                   <td className="amt-or">{fmt(r.tcp || r.ob_tcp)}</td>
                   <td>
-                    <span className={`badge ${(r.ob_doc_stat || 'Pending') === 'Complete' ? 'b-won' : (r.ob_doc_stat || 'Pending') === 'Partial' ? 'b-prog' : 'b-pend'}`}>
-                      {r.ob_doc_stat || 'Pending'}
-                    </span>
+                    {(() => {
+                      const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+                      let docRec = null;
+                      const allDocs = data.doc || [];
+                      for (const d of allDocs) {
+                        if (r.obId && d.dc_obid === r.obId) { docRec = d; break; }
+                        if (r.ob_inqid && d.dc_obid === r.ob_inqid) {
+                          if (!docRec || docRec.dc_stat !== 'Complete') docRec = d;
+                        }
+                      }
+                      if (!docRec && r.ob_regn) {
+                        const reg = cleanRegn(r.ob_regn);
+                        const regDocs = allDocs.filter(d => cleanRegn(d.dc_regn) === reg);
+                        docRec = regDocs.find(d => d.dc_stat === 'Complete') || regDocs[regDocs.length - 1];
+                      }
+                      const stat = docRec ? (docRec.dc_stat || 'Pending') : (r.ob_doc_stat || 'Pending');
+                      return (
+                        <span className={`badge ${stat === 'Complete' ? 'b-won' : stat === 'Partial' ? 'b-prog' : 'b-pend'}`}>
+                          {stat}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td>{r.ob_branch || r.branch || 'SG Highway'}</td>
                   <td>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, width: 'fit-content' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, width: 'fit-content' }}>
+                      {(() => {
+                        const inqRec = data.pur_inq?.find(p => p.inqId === (r.ob_inqid || r.inqId) || p.id === (r.ob_inqid || r.inqId));
+                        const isRcEdited = inqRec?.rcEdited === true;
+                        return (
+                          <button className="btn-icon bi-edit" style={{ background: isRcEdited ? 'var(--border)' : 'var(--or1)', color: isRcEdited ? 'var(--text3)' : '#fff', cursor: isRcEdited ? 'not-allowed' : 'pointer' }} title={isRcEdited ? "RC Details Already Edited" : "Edit Customer Details (As per RC)"} onClick={() => { if (!isRcEdited) setQuickModal({ type: 'rc', inqId: r.ob_inqid || r.inqId }); }} disabled={isRcEdited}><i className="fa fa-id-card"></i></button>
+                        );
+                      })()}
                       <button className="btn-icon bi-print" title="Print Booking" onClick={() => handlePrintRecord(r)}>
                         <i className="fa fa-print"></i>
                       </button>
@@ -269,7 +365,7 @@ const PurchaseBooking = () => {
                     </div>
                   </td>
                 </tr>
-              )) : (
+              )}) : (
                 <tr>
                   <td colSpan="11" className="empty">
                     <i className="fa fa-file-pen"></i><br />

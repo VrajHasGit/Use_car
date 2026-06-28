@@ -187,6 +187,38 @@ export async function markAllNotificationsRead(notifIds, userId) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// CLEAR NOTIFICATION (Per User)
+// ═══════════════════════════════════════════════════════════
+export async function clearNotification(notifId, userId) {
+  if (!notifId || !userId) return;
+  try {
+    await updateDoc(doc(db, 'notifications', notifId), {
+      [`cleared.${userId}`]: true,
+    });
+  } catch (e) {
+    console.warn('clearNotification failed:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLEAR ALL NOTIFICATIONS (Per User)
+// ═══════════════════════════════════════════════════════════
+export async function clearAllNotifications(notifIds, userId) {
+  if (!notifIds?.length || !userId) return;
+  try {
+    const batch = writeBatch(db);
+    notifIds.forEach(id => {
+      batch.update(doc(db, 'notifications', id), {
+        [`cleared.${userId}`]: true,
+      });
+    });
+    await batch.commit();
+  } catch (e) {
+    console.warn('clearAllNotifications failed:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // SUBSCRIBE TO NOTIFICATIONS (real-time)
 // ═══════════════════════════════════════════════════════════
 export function subscribeNotifications(callback) {

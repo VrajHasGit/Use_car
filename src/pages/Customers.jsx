@@ -93,9 +93,6 @@ const Customers = () => {
             <option value="Buyer">Buyer</option>
             <option value="Seller">Seller</option>
           </select>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}>
-            <i className="fa fa-plus"></i> Add Customer
-          </button>
         </div>
       </div>
 

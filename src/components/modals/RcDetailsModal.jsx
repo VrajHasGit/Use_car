@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { updateRecord } from '../../services/db';
 import { useData } from '../../contexts/DataContext';
 import { CITIES, MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
@@ -43,7 +44,32 @@ export const RcDetailsModal = ({ isOpen, onClose, inqId }) => {
     setSaving(true);
     try {
       await updateDoc(doc(db, 'pur_inq', inqDocId), { ...formData, rcEdited: true });
+      
+      const valRecs = data.val?.filter(v => v.v_inqid === inqId || v.inqId === inqId) || [];
+      for (const v of valRecs) {
+        await updateRecord('val', v.id, { v_cname: formData.sellerName, sellerName: formData.sellerName, v_vnum: formData.regNo, regNo: formData.regNo, v_make: formData.make, make: formData.make, v_model: formData.model, model: formData.model });
+      }
+
+      const obRecs = data.ob?.filter(o => o.ob_inqid === inqId || o.inqId === inqId) || [];
+      for (const o of obRecs) {
+        await updateRecord('ob', o.id, { ob_cname: formData.sellerName, sellerName: formData.sellerName, ob_regn: formData.regNo, regNo: formData.regNo, ob_mm: `${formData.make} ${formData.model}`.trim() });
+      }
+
+      const pclRecs = data.pcl?.filter(p => p.pc_inqid === inqId || p.inqId === inqId) || [];
+      for (const p of pclRecs) {
+        await updateRecord('pcl', p.id, { pc_sname: formData.sellerName, sellerName: formData.sellerName, pc_regn: formData.regNo, regNo: formData.regNo, pc_veh: `${formData.make} ${formData.model}`.trim() });
+      }
+
+      const docRecs = data.doc?.filter(d => d.d_inqid === inqId || d.inqId === inqId) || [];
+      for (const d of docRecs) {
+        await updateRecord('doc', d.id, { d_sname: formData.sellerName, sellerName: formData.sellerName, d_regn: formData.regNo, regNo: formData.regNo, d_veh: `${formData.make} ${formData.model}`.trim() });
+      }
+
       await refresh('pur_inq');
+      await refresh('val');
+      await refresh('ob');
+      await refresh('pcl');
+      await refresh('doc');
       onClose();
     } catch (e) {
       console.error(e);

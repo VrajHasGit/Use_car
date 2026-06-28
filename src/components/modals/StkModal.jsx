@@ -27,7 +27,14 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_model: inqData.model || prev.sk_model,
         sk_var: inqData.variant || prev.sk_var,
         sk_year: inqData.year || prev.sk_year,
-        sk_fuel: inqData.fuel || prev.sk_fuel
+        sk_fuel: inqData.fuel || prev.sk_fuel,
+        sk_trans: inqData.trans || inqData.transmission || prev.sk_trans,
+        sk_color: inqData.color || prev.sk_color,
+        sk_km: inqData.km || inqData.kmDriven || prev.sk_km,
+        sk_own: inqData.own || inqData.owner || inqData.owners || prev.sk_own,
+        sk_ryear: inqData.ryear || inqData.regYear || prev.sk_ryear,
+        sk_chas: inqData.chas || inqData.chassis || prev.sk_chas,
+        sk_eng: inqData.eng || inqData.engine || prev.sk_eng
       }));
       setModelOptions(MODELS[inqData.make] || []);
     }
@@ -204,47 +211,47 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             </div>
           </div>
           <div className="grid3">
-            <div className="fg"><label>Registration No. * <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill by RegNo</span></label><input name="sk_regn" value={formData.sk_regn} onChange={handleChange} placeholder="GJ-01-AB-1234" /></div>
-            <div className="fg"><label>Chassis Number</label><input name="sk_chas" value={formData.sk_chas} onChange={handleChange} placeholder="17-char VIN" /></div>
-            <div className="fg"><label>Engine Number</label><input name="sk_eng" value={formData.sk_eng} onChange={handleChange} placeholder="Engine No." /></div>
+            <div className="fg"><label>Registration No. * <span style={{color:"var(--or1)",fontSize:"10px"}}>⚡ Auto-Fill by RegNo</span></label><input name="sk_regn" value={formData.sk_regn} onChange={handleChange} placeholder="GJ-01-AB-1234" disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
+            <div className="fg"><label>Chassis Number</label><input name="sk_chas" value={formData.sk_chas} onChange={handleChange} placeholder="17-char VIN" disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
+            <div className="fg"><label>Engine Number</label><input name="sk_eng" value={formData.sk_eng} onChange={handleChange} placeholder="Engine No." disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
           </div>
           <div className="grid3">
             <div className="fg">
               <label>Make *</label>
-              <select name="sk_make" value={formData.sk_make} onChange={handleChange}>
+              <select name="sk_make" value={formData.sk_make} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 <option value="">Select Brand</option>
                 {MAKES.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
             <div className="fg">
               <label>Model</label>
-              <select name="sk_model" value={formData.sk_model} onChange={handleChange}>
+              <select name="sk_model" value={formData.sk_model} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 <option value="">Select Model</option>
                 {modelOptions.map(m => <option key={m}>{m}</option>)}
                 {!MODELS[formData.sk_make] && formData.sk_make && <option value={formData.sk_model}>{formData.sk_model}</option>}
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div className="fg"><label>Variant</label><input name="sk_var" value={formData.sk_var} onChange={handleChange} placeholder="Variant" /></div>
+            <div className="fg"><label>Variant</label><input name="sk_var" value={formData.sk_var} onChange={handleChange} placeholder="Variant" disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
           </div>
           <div className="grid3">
             <div className="fg">
               <label>Mfg Year</label>
-              <select name="sk_year" value={formData.sk_year} onChange={handleChange}>
+              <select name="sk_year" value={formData.sk_year} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 <option value="">Year</option>
                 {YEARS.map(y => <option key={y}>{y}</option>)}
               </select>
             </div>
             <div className="fg">
               <label>Registration Year</label>
-              <select name="sk_ryear" value={formData.sk_ryear} onChange={handleChange}>
+              <select name="sk_ryear" value={formData.sk_ryear} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 <option value="">Year</option>
                 {YEARS.map(y => <option key={y}>{y}</option>)}
               </select>
             </div>
             <div className="fg">
               <label>Fuel Type</label>
-              <select name="sk_fuel" value={formData.sk_fuel} onChange={handleChange}>
+              <select name="sk_fuel" value={formData.sk_fuel} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 {FUELS.map(f => <option key={f}>{f}</option>)}
               </select>
             </div>
@@ -252,22 +259,22 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           <div className="grid3">
             <div className="fg">
               <label>Transmission</label>
-              <select name="sk_trans" value={formData.sk_trans} onChange={handleChange}>
+              <select name="sk_trans" value={formData.sk_trans} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 {TRANS.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div className="fg">
               <label>Color</label>
-              <select name="sk_color" value={formData.sk_color} onChange={handleChange}>
+              <select name="sk_color" value={formData.sk_color} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 {COLORS.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
-            <div className="fg"><label>KM Driven</label><input type="number" name="sk_km" value={formData.sk_km} onChange={handleChange} placeholder="KM" /></div>
+            <div className="fg"><label>KM Driven</label><input type="number" name="sk_km" value={formData.sk_km} onChange={handleChange} placeholder="KM" disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
           </div>
           <div className="grid3">
             <div className="fg">
               <label>Number of Owners</label>
-              <select name="sk_own" value={formData.sk_own} onChange={handleChange}>
+              <select name="sk_own" value={formData.sk_own} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}>
                 {OWNERS.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
@@ -275,12 +282,12 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             <div className="fg"><label>Stock Location</label><input name="sk_loc" value={formData.sk_loc} onChange={handleChange} placeholder="Parking location" /></div>
           </div>
           <div className="grid2">
-            <div className="fg"><label>Purchase Date</label><input type="date" name="sk_pdate" value={formData.sk_pdate} onChange={handleChange} /></div>
-            <div className="fg"><label>Insurance Validity</label><input type="date" name="sk_insval" value={formData.sk_insval} onChange={handleChange} /></div>
+            <div className="fg"><label>Purchase Date</label><input type="date" name="sk_pdate" value={formData.sk_pdate} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
+            <div className="fg"><label>Insurance Validity</label><input type="date" name="sk_insval" value={formData.sk_insval} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}} /></div>
           </div>
           <div className="grid2">
-            <div className="fg"><label>RC Available</label><select name="sk_rc" value={formData.sk_rc} onChange={handleChange}><option>Yes</option><option>No</option><option>Applied</option></select></div>
-            <div className="fg"><label>Photos Uploaded</label><select name="sk_photos" value={formData.sk_photos} onChange={handleChange}><option>Yes</option><option>No</option></select></div>
+            <div className="fg"><label>RC Available</label><select name="sk_rc" value={formData.sk_rc} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}><option>Yes</option><option>No</option><option>Applied</option></select></div>
+            <div className="fg"><label>Photos Uploaded</label><select name="sk_photos" value={formData.sk_photos} onChange={handleChange} disabled={true} style={{background: 'var(--bg2)', cursor: 'not-allowed'}}><option>Yes</option><option>No</option></select></div>
           </div>
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost & Pricing — AUTO CALCULATION</div>
           <div className="grid3">

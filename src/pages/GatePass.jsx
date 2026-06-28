@@ -14,7 +14,14 @@ const GatePass = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.gp || [];
-  const filtered = records.filter(r => !search || (r.regNo||'').toLowerCase().includes(search.toLowerCase()) || (r.driverName||'').toLowerCase().includes(search.toLowerCase()));
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (r.gpId || '').toLowerCase().includes(q) ||
+      (r.regNo || r.gp_regn || '').toLowerCase().includes(q) ||
+      (r.driverName || r.gp_driver || '').toLowerCase().includes(q) ||
+      (r.gp_bname || '').toLowerCase().includes(q);
+  });
   const handleSave = async (fd) => {
     try {
       const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
@@ -37,7 +44,6 @@ const GatePass = () => {
         <div className="ph-left"><h1><div className="ph-icon"><i className="fa fa-door-open"></i></div>Gate Pass</h1><p>Vehicle gate pass generation and tracking</p></div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search reg / driver…" value={search} onChange={e=>setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> New Gate Pass</button>
         </div>
       </div>
       {isModalOpen && <GpModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

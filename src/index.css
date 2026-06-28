@@ -1,5 +1,13 @@
 /* ══ STEP 10 FEATURES CSS ══ */
 
+/* GLOBAL UPPERCASE REQUEST */
+body * {
+  text-transform: uppercase !important;
+}
+::placeholder {
+  text-transform: uppercase !important;
+}
+
 /* Aging badges */
 .age-0{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
 .age-31{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
@@ -684,6 +692,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .sb-item.act{background:rgba(232,93,4,.2);color:#FFD4A8;border-left:3px solid var(--or1)}
 .sb-item.act .sb-ico{color:var(--or3)}
 .sb-ico{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+@keyframes pipelineIconPulse{
+  0%,100%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 0px rgba(192,132,252,0));color:#c084fc}
+  15%{transform:scale(1.45) rotate(-22deg);filter:drop-shadow(0 0 7px rgba(249,115,22,1)) drop-shadow(0 0 14px rgba(249,115,22,.45));color:#f97316}
+  30%{transform:scale(1.4) rotate(16deg);filter:drop-shadow(0 0 9px rgba(192,132,252,1)) drop-shadow(0 0 18px rgba(232,121,249,.5));color:#e879f9}
+  45%{transform:scale(1.2) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(192,132,252,.7));color:#c084fc}
+  60%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 0px rgba(192,132,252,0));color:#c084fc}
+}
+.sb-ico-pulse{animation:pipelineIconPulse 2.8s ease-in-out infinite!important;display:inline-block}
 .sb-lbl{font-size:12px;font-weight:500;overflow:hidden}
 .sb-badge{margin-left:auto;background:var(--or1);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;flex-shrink:0}
 .sb-foot{padding:12px 8px;border-top:1px solid rgba(255,255,255,.08)}

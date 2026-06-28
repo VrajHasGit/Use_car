@@ -4,6 +4,8 @@ import {
   subscribeNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  clearNotification,
+  clearAllNotifications,
   getNotifCategory,
 } from '../services/notificationService';
 
@@ -62,11 +64,15 @@ export function NotificationProvider({ children }) {
     initialLoadRef.current = true;
 
     const unsub = subscribeNotifications((rawNotifs) => {
-      // Filter by user's role
-      const role = currentUser.role || 'Admin';
-      const filtered = rawNotifs.filter(n =>
-        n.targetRoles && n.targetRoles.includes(role)
-      );
+      // Filter and route notifications
+      const filtered = rawNotifs.filter(n => {
+        if (!currentUser) return false;
+        if (n.cleared?.[currentUser.id]) return false;
+        
+        // Admin gets everything not cleared
+        if (currentUser.role === 'Admin') return true;
+        return n.targetRoles && n.targetRoles.includes(currentUser.role);
+      });
 
       // Detect truly new notifications (not on initial load)
       if (!initialLoadRef.current && mountedRef.current) {
@@ -125,6 +131,19 @@ export function NotificationProvider({ children }) {
     }
   }, [currentUser?.id, allNotifications]);
 
+  const clearNotif = useCallback(async (notifId) => {
+    if (!currentUser?.id) return;
+    await clearNotification(notifId, currentUser.id);
+  }, [currentUser?.id]);
+
+  const clearAllNotifs = useCallback(async () => {
+    if (!currentUser?.id) return;
+    const ids = allNotifications.map(n => n.id);
+    if (ids.length > 0) {
+      await clearAllNotifications(ids, currentUser.id);
+    }
+  }, [currentUser?.id, allNotifications]);
+
   const dismissToast = useCallback((toastId) => {
     setToasts(prev => prev.filter(t => t.toastId !== toastId));
   }, []);
@@ -143,6 +162,8 @@ export function NotificationProvider({ children }) {
     toasts,
     markRead,
     markAllRead,
+    clearNotif,
+    clearAllNotifs,
     dismissToast,
     filterByCategory,
   };

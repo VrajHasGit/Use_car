@@ -49,6 +49,32 @@ function sanitize(obj) {
   return clean;
 }
 
+const EXEMPT_KEYS = ['password', 'pw', 'appr_pw', 'email', 'loginId', 'lid', 'image', 'stage', 'status', 'stat', 'pf_stat', 'pStatus'];
+
+function capitalizeData(obj) {
+  if (typeof obj === 'string') {
+    return obj.toUpperCase();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => capitalizeData(item));
+  }
+  if (obj && typeof obj === 'object') {
+    if (Object.prototype.toString.call(obj) !== '[object Object]') {
+      return obj;
+    }
+    const clean = {};
+    for (const key in obj) {
+      if (EXEMPT_KEYS.includes(key) || key.toLowerCase().endsWith('url') || key.toLowerCase().endsWith('id') || key === 'id' || key.toLowerCase().endsWith('date')) {
+        clean[key] = obj[key];
+      } else {
+        clean[key] = capitalizeData(obj[key]);
+      }
+    }
+    return clean;
+  }
+  return obj;
+}
+
 // ── Generic getAll ──
 export async function getAll(colName) {
   try {
@@ -75,7 +101,7 @@ export async function getById(colName, id) {
 export async function addRecord(colName, data, notificationMeta) {
   try {
     const ref = await addDoc(collection(db, colName), {
-      ...sanitize(data),
+      ...capitalizeData(sanitize(data)),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -93,10 +119,10 @@ export async function addRecord(colName, data, notificationMeta) {
 // ── Generic update (with optional notification) ──
 export async function updateRecord(colName, id, data, notificationMeta) {
   try {
-    await updateDoc(doc(db, colName, id), {
-      ...sanitize(data),
+    await setDoc(doc(db, colName, id), {
+      ...capitalizeData(sanitize(data)),
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
     // Fire notification if meta provided
     if (notificationMeta) {
       createNotification({ collection: colName, action: 'updated', ...notificationMeta });

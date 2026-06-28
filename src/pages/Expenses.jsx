@@ -185,7 +185,6 @@ const Expenses = () => {
             <option>Pending</option><option>Approved</option><option>Rejected</option><option>Reimbursed</option>
           </select>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Expense</button>
         </div>
       </div>
 

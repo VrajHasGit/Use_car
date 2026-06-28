@@ -222,17 +222,26 @@ const PurchaseDashboard = () => {
               <tr><th>Reg No.</th><th>Vehicle</th><th>Year</th><th>KM</th><th>TCP</th><th>Status</th><th>Days In Stock</th></tr>
             </thead>
             <tbody>
-              {stockList.length > 0 ? stockList.map(r => (
+              {stockList.length > 0 ? stockList.map(r => {
+                const rawMake = (r.make || '').trim();
+                const rMake = rawMake.split(' ')[0].toUpperCase();
+                const extraFromMake = rawMake.substring(rMake.length).trim();
+                const rawModel = (r.model || '').trim();
+                const rModelWords = (extraFromMake + ' ' + rawModel).split(' ').filter(Boolean);
+                const rModel = [...new Set(rModelWords)].join(' ');
+                
+                return (
                 <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/stock')}>
                   <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.regNo || '—'}</td>
-                  <td style={{ fontWeight: 600 }}>{r.make} {r.model}</td>
+                  <td style={{ fontWeight: 600 }}>{rMake} {rModel}</td>
                   <td>{r.year || '—'}</td>
                   <td>{r.km ? `${parseInt(r.km).toLocaleString('en-IN')} km` : '—'}</td>
-                  <td className="amt-or">{fmt(r.tcp || r.purchasePrice)}</td>
+                  <td className="amt-or">{fmt(r.tcp || r.sk_tcp || (Number(r.sk_pp||r.pp||r.purchasePrice||0)+Number(r.sk_refurb||r.refurb||0)+Number(r.sk_rto||r.rto||0)+Number(r.sk_ins||r.ins||0)))}</td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
                   <td>{ageBadge(ageDays(r.stockDate || r.createdAt))}</td>
                 </tr>
-              )) : <tr><td colSpan="7" className="empty"><i className="fa fa-warehouse"></i><br />No stock yet</td></tr>}
+                );
+              }) : <tr><td colSpan="7" className="empty"><i className="fa fa-warehouse"></i><br />No stock yet</td></tr>}
             </tbody>
           </table>
         </div>

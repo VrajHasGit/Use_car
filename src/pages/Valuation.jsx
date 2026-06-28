@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -12,6 +13,7 @@ import { loadMediaFromFirestore } from '../utils/uploadMedia';
 const Valuation = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
@@ -20,11 +22,23 @@ const Valuation = () => {
   const [viewer, setViewer] = useState(null); // { media: [], index: 0 }
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
+  useEffect(() => {
+    const autoId = location.state?.autoOpenId;
+    if (!autoId) return;
+    const rec = (data.val || []).find(r => r.id === autoId);
+    if (rec) { setEditRec(rec); setIsModalOpen(true); window.history.replaceState({}, document.title, window.location.pathname); }
+  }, [data.val, location.state?.autoOpenId]);
+
   const records = data.val || [];
   const filtered = records.filter(r => {
-    if (r.stage && r.stage !== 'Valuation') return false;
+    if (!search && r.stage && r.stage !== 'Valuation') return false;
     const q = search.toLowerCase();
-    return !search || (r.sellerName || r.v_cname || '').toLowerCase().includes(q) || (r.make || r.v_make || '').toLowerCase().includes(q) || (r.regNo || r.v_vnum || '').toLowerCase().includes(q);
+    return !search ||
+      (r.valId || '').toLowerCase().includes(q) ||
+      (r.v_inqid || '').toLowerCase().includes(q) ||
+      (r.sellerName || r.v_cname || '').toLowerCase().includes(q) ||
+      (r.regNo || r.v_vnum || '').toLowerCase().includes(q) ||
+      (r.make || r.v_make || '').toLowerCase().includes(q);
   });
 
   // Auto-fix missing IDs
@@ -208,7 +222,6 @@ const Valuation = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Valuation</button>
         </div>
       </div>
       

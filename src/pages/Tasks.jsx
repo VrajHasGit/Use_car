@@ -162,7 +162,6 @@ const Tasks = () => {
               ))}
             </div>
           )}
-          <button className="btn btn-or" onClick={() => { setEditTask(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Task</button>
         </div>
       </div>
 

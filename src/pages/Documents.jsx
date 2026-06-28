@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -10,9 +11,17 @@ import { StkModal } from '../components/modals/StkModal';
 const Documents = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
+
+  useEffect(() => {
+    const autoId = location.state?.autoOpenId;
+    if (!autoId) return;
+    const rec = (data.doc || []).find(r => r.id === autoId);
+    if (rec) { setEditRec(rec); setIsModalOpen(true); window.history.replaceState({}, document.title, window.location.pathname); }
+  }, [data.doc, location.state?.autoOpenId]);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data['doc'] || [];
@@ -34,8 +43,15 @@ const Documents = () => {
   }, [records]);
 
   const filtered = records.filter(r => {
-    if (r.stage && (r.stage === 'Workshop' || r.stage === 'Stock')) return false;
-    return !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.docId || '').toLowerCase().includes(q) ||
+        (r.dc_obid || r.inqId || '').toLowerCase().includes(q) ||
+        (r.dc_cname || '').toLowerCase().includes(q) ||
+        (r.dc_regn || '').toLowerCase().includes(q);
+    }
+    if (r.stage && (r.stage === 'Workshop' || r.stage === 'Stock' || r.stage === 'OrderBooking')) return false;
+    return true;
   });
   const handleSave = async (fd) => {
     try {
@@ -61,10 +77,54 @@ const Documents = () => {
   };
   const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('doc', rec.id); await refresh('doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   
-  const handlePrintRecord = (r) => {
-    setEditRec(r);
-    setIsModalOpen(true);
-    setTimeout(() => { window.print(); }, 500);
+  const handleSendToBooking = async (rec) => {
+    if (!window.confirm(`Create Order Booking for ${rec.dc_regn || 'this vehicle'}?`)) return;
+    try {
+      const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+      const pfu = (data.pfu || []).find(p => {
+        if (rec.dc_obid && (p.pf_inqid || '').toLowerCase() === rec.dc_obid.toLowerCase()) return true;
+        if (rec.dc_regn) {
+          const pInq = (data.pur_inq || []).find(i => (i.inqId || i.pi_inqid) === p.pf_inqid);
+          if (pInq && cleanRegn(pInq.regNo || pInq.pi_regn) === cleanRegn(rec.dc_regn)) return true;
+        }
+        return false;
+      });
+      let pfuPrice = pfu ? (pfu.pf_close || pfu.pf_nego || pfu.pf_offer) : '';
+      if (pfu && pfu.followUps && pfu.followUps.length > 0) {
+        for (let i = pfu.followUps.length - 1; i >= 0; i--) {
+          if (pfu.followUps[i].dealPrice) { pfuPrice = pfu.followUps[i].dealPrice; break; }
+          else if (pfu.followUps[i].offer && !pfuPrice) pfuPrice = pfu.followUps[i].offer;
+        }
+      }
+      const pcl = (data.pcl || []).find(p => p.pc_inqid === rec.dc_obid || p.pc_regn === rec.dc_regn);
+      const purchasePrice = pcl ? (pcl.pc_price || pcl.amount) : (pfuPrice || rec.dc_pp || rec.dc_price || '');
+
+      const cnt = await getNextCounter('ob');
+      const obId = genId('OB', cnt);
+      
+      const inq = (data.pur_inq || []).find(i => (i.inqId || i.pi_inqid) === rec.dc_obid || cleanRegn(i.regNo || i.pi_regn) === cleanRegn(rec.dc_regn));
+      const mm = inq ? `${inq.make || ''} ${inq.model || ''}`.trim() : (rec.dc_carinfo || '').split('·')[0].trim();
+
+      const obData = {
+        obId,
+        date: today(),
+        stage: 'OrderBooking',
+        ob_inqid: rec.dc_obid || '',
+        ob_regn: rec.dc_regn || '',
+        ob_cname: rec.dc_cname || '',
+        ob_pp: purchasePrice,
+        ob_doc_stat: rec.dc_stat || 'Pending',
+        ob_mm: mm
+      };
+      
+      await addRecord('ob', obData);
+      await updateRecord('doc', rec.id, { stage: 'OrderBooking' });
+      await refresh('ob');
+      await refresh('doc');
+      showToast('Order booking created!');
+    } catch (e) {
+      showToast('Failed to create booking', 'error');
+    }
   };
   
   const [quickModal, setQuickModal] = useState({ type: null, docId: null });
@@ -96,9 +156,6 @@ const Documents = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)} />
-          <button className="btn" style={{background: '#3B82F6', color: '#fff'}} onClick={()=>{setEditRec(null);setIsModalOpen(true);}}>
-            <i className="fa fa-plus"></i> Add Document
-          </button>
         </div>
       </div>
       {isModalOpen && <DocModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
@@ -119,6 +176,7 @@ const Documents = () => {
                 <tr>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>DOC ID</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>PURCHASE INQUIRY ID</th>
+                  <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>SELLER NAME</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>REG NO.</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>DATE</th>
                   <th style={{textTransform:'uppercase',fontSize:10,color:'var(--text3)'}}>RC</th>
@@ -137,10 +195,12 @@ const Documents = () => {
               </thead>
               <tbody>{filtered.map(r => {
                 const hasMissing = !r.dc_rc || !r.dc_ins || !r.dc_noc || !r.dc_f29 || !r.dc_f30;
+                const isComplete = r.dc_stat?.toUpperCase() === 'COMPLETE';
                 return (
-                <tr key={r.id} style={hasMissing ? { backgroundColor: '#FEF2F2' } : {}}>
+                <tr key={r.id} style={isComplete ? { backgroundColor: '#F0FDF4' } : (hasMissing ? { backgroundColor: '#FEF2F2' } : {})}>
                   <td style={{fontWeight:500,color:'var(--text)',fontFamily:"'Inter',sans-serif"}}>{r.docId||r.id?.slice(0,12)}</td>
                   <td>{r.dc_obid||'—'}</td>
+                  <td style={{fontWeight:600}}>{r.dc_cname||'—'}</td>
                   <td style={{fontWeight:600}}>{r.dc_regn||'—'}</td>
                   <td>{r.dc_date||fmtDate(r.date)}</td>
                   <td style={{color: r.dc_rc ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_rc ? (r.dcu_rc ? <a href={r.dcu_rc} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
@@ -154,12 +214,11 @@ const Documents = () => {
                   <td style={{color: r.dc_key ? '#10B981' : '#EF4444', fontWeight: 600}}>{r.dc_key ? (r.dcu_key ? <a href={r.dcu_key} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>✅ <i className="fa fa-external-link" style={{fontSize: 9, color:'#3B82F6'}}></i></a> : '✅') : '❌'}</td>
                   <td>
                     <div style={{color: r.dc_stat?.toUpperCase() === 'COMPLETE' ? '#10B981' : '#D97706', fontSize: 10, fontWeight: 700, textTransform: 'uppercase'}}>{r.dc_stat||'INCOMPLETE'}</div>
-                    {hasMissing && <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#DC2626', marginTop: 4 }}>⚠️ DOCS MISSING</div>}
                   </td>
                   <td>{r.dc_verby||'-'}</td>
                   <td><div style={{display: 'flex', flexDirection: 'row', gap: 4, width: 'max-content'}}>
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}} style={{background:'rgba(59,130,246,.1)',color:'#3B82F6',padding:6}}><i className="fa fa-pen" style={{fontSize:10}}></i></button>
-                    <button className="btn-icon bi-print" title="Print" onClick={()=>handlePrintRecord(r)} style={{background:'rgba(16,185,129,.1)',color:'#10B981',padding:6}}><i className="fa fa-print" style={{fontSize:10}}></i></button>
+                    <button className="btn-icon bi-next" title="Send to Order Booking" onClick={()=>handleSendToBooking(r)} style={{background:'rgba(16,185,129,.1)',color:'#10B981',padding:6}}><i className="fa fa-clipboard-list" style={{fontSize:10}}></i></button>
                     <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)} style={{background:'rgba(239,68,68,.1)',color:'#EF4444',padding:6}}><i className="fa fa-trash" style={{fontSize:10}}></i></button>
                   </div></td>
                 </tr>

@@ -40,10 +40,17 @@ const Payment = () => {
   }, [records, refresh]);
 
   const filtered = records.filter(r => {
-    if (r.stage && r.stage !== 'Payment') return false;
-    const matchSearch = !search || (r.name||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase());
     const matchType = !typeFilter || r.type === typeFilter;
-    return matchSearch && matchType;
+    if (!matchType) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.payId || '').toLowerCase().includes(q) ||
+        (r.py_inqid || r.inqId || '').toLowerCase().includes(q) ||
+        (r.name || r.pay_party || r.party || '').toLowerCase().includes(q) ||
+        (r.regNo || '').toLowerCase().includes(q);
+    }
+    if (r.stage && r.stage !== 'Payment') return false;
+    return true;
   });
   const totalIn = records.filter(r=>r.type==='Purchase').reduce((a,r)=>a+(r.amount||0),0);
   const totalOut = records.filter(r=>r.type==='Sale').reduce((a,r)=>a+(r.amount||0),0);
@@ -84,7 +91,6 @@ const Payment = () => {
           <select className="flt" value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
             <option value="">All Types</option><option value="Purchase">Purchase</option><option value="Sale">Sale</option>
           </select>
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> Add Payment</button>
         </div>
       </div>
       {isModalOpen && <PayModal isOpen={isModalOpen} onClose={()=>{setIsModalOpen(false);setEditRec(null);}} onSave={handleSave} editRecord={editRec} />}

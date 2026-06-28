@@ -17,7 +17,14 @@ const TestDrive = () => {
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data['td'] || [];
   
-  const filtered = records.filter(r => !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase()));
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (r.tdId || '').toLowerCase().includes(q) ||
+      (r.td_bname || r.buyerName || '').toLowerCase().includes(q) ||
+      (r.td_regn || r.regNo || '').toLowerCase().includes(q) ||
+      (r.td_mob || r.mobile || '').includes(q);
+  });
   
   const gridRecords = records.filter(r => r.td_date === gridDate);
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
@@ -42,7 +49,6 @@ const TestDrive = () => {
           </div>
           {viewMode === 'list' && <input className="srch" placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)} />}
           {viewMode === 'grid' && <input type="date" className="srch" value={gridDate} onChange={e=>setGridDate(e.target.value)} />}
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> Add Record</button>
         </div>
       </div>
       {isModalOpen && <TestdriveModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

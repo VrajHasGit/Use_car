@@ -157,15 +157,22 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
         }
       }
       
-      const dataToSave = { ...formData, followUps: newFollowUps };
+      // Sync pf_stat from the last follow-up so filter & table display work correctly
+      const lastFu = newFollowUps.length > 0 ? newFollowUps[newFollowUps.length - 1] : null;
+      const latestStat = lastFu?.stat || formData.pf_stat || 'Interested';
+      const dataToSave = { ...formData, followUps: newFollowUps, pf_stat: latestStat };
 
-      if (onSave && editData) {
-        // If we want to directly update within this component or rely on parent
-        await updateDoc(doc(db, 'pfu', editData.id), dataToSave);
+      // Always delegate DB write to parent via onSave — avoid double-write + capitalization corruption
+      if (onSave) {
         await onSave(dataToSave);
       } else {
-        const docRef = await addDoc(collection(db, 'pfu'), { ...dataToSave, createdAt: new Date().toISOString() });
-        if (onSave) { await onSave({ ...dataToSave, id: docRef.id }); } else { onClose(); }
+        // Fallback: write directly only when no parent handler
+        if (editData) {
+          await updateDoc(doc(db, 'pfu', editData.id), dataToSave);
+        } else {
+          await addDoc(collection(db, 'pfu'), { ...dataToSave, createdAt: new Date().toISOString() });
+        }
+        onClose();
       }
     } catch (error) {
       console.error("Error saving record: ", error);
@@ -187,15 +194,18 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
           newFollowUps[i].audioName = audioFiles[i].name;
         }
       }
-      const dataToSave = { ...formData, followUps: newFollowUps };
+      // Sync pf_stat from the last follow-up
+      const lastFu2 = newFollowUps.length > 0 ? newFollowUps[newFollowUps.length - 1] : null;
+      const latestStat2 = lastFu2?.stat || formData.pf_stat || 'Closed-Won';
+      const dataToSave = { ...formData, followUps: newFollowUps, pf_stat: latestStat2 };
 
+      // Delegate write to onSendToCloser (parent handles DB) to avoid double-write
       let savedRec = { ...dataToSave };
-      if (editData) {
-        await updateDoc(doc(db, 'pfu', editData.id), dataToSave);
-        savedRec.id = editData.id;
-      } else {
+      if (!editData) {
         const docRef = await addDoc(collection(db, 'pfu'), { ...dataToSave, createdAt: new Date().toISOString() });
         savedRec.id = docRef.id;
+      } else {
+        savedRec.id = editData.id;
       }
 
       if (onSendToCloser) {

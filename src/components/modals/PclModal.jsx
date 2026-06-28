@@ -3,14 +3,13 @@ import { db } from '../../firebase';
 import { useData } from '../../contexts/DataContext';
 import { addRecord, updateRecord, getNextCounter } from '../../services/db';
 import { genId, today, printDocument } from '../../utils/helpers';
-
 import { autoFillFromInq } from '../../utils/relations';
 
 export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId }) => {
   const { data: ctxData } = useData();
   const [formData, setFormData] = useState({
     pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: "", pc_type: "Direct Purchase",
-    pc_stat: "Confirmed", pc_price: "", pc_tok: "", payments: [],
+    pc_stat: "Confirmed", pc_pp: "", pc_rto: "", pc_price: "", pc_tok: "", payments: [],
     pc_newcar: "",
     pc_loan: "No", pc_lbank: "", pc_tokd: "", pc_dby: "Ritesh Shah", pc_mgr: "",
     pc_edd: "", pc_cncl: "", pc_rem: ""
@@ -18,7 +17,10 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   
   const [saving, setSaving] = useState(false);
   const [autoFillMsg, setAutoFillMsg] = useState('');
-  const [hidePayments, setHidePayments] = useState(false);
+  const [hiddenPayments, setHiddenPayments] = useState({});
+  const toggleHidePayment = (idx) => {
+    setHiddenPayments(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   // In-memory lookup first, Firestore fallback
   const lookupInquiry = async (inqId) => {
@@ -46,6 +48,20 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         }
       }
     }
+    
+    let obRto = "";
+    if (ctxData?.ob) {
+      const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
+      const inqRegn = cleanRegn(inqData?.regNo || inqData?.pi_regn);
+      const obRec = ctxData.ob.find(r => {
+        if (inqId && (r.ob_inqid || '').toLowerCase() === (inqId || '').toLowerCase()) return true;
+        if (inqRegn && cleanRegn(r.ob_regn) === inqRegn) return true;
+        return false;
+      });
+      if (obRec && obRec.ob_rto) {
+        obRto = obRec.ob_rto;
+      }
+    }
 
     if (inqData) {
       setFormData(prev => ({
@@ -60,7 +76,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         pc_km: inqData.km || prev.pc_km,
         pc_regn: inqData.regNo || prev.pc_regn,
         pc_date: prev.pc_date || finalDate || today(),
-        pc_price: prev.pc_price || finalDealPrice,
+        pc_pp: prev.pc_pp || finalDealPrice,
+        pc_rto: obRto || prev.pc_rto || '',
         pc_loan: inqData.hypothecation || prev.pc_loan,
         pc_lbank: inqData.loanBank || prev.pc_lbank,
       }));
@@ -74,7 +91,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       setAutoFillMsg('');
       if (editData) {
         const inqIdToUse = editData.pc_inqid || editData.inqId || '';
-        setFormData({ ...editData, pc_inqid: inqIdToUse });
+        const ppToUse = editData.pc_pp !== undefined ? editData.pc_pp : editData.pc_price;
+        setFormData({ ...editData, pc_inqid: inqIdToUse, pc_pp: ppToUse, pc_rto: editData.pc_rto || '' });
         if (inqIdToUse) applyAutoFill(inqIdToUse);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, pc_inqid: quickInqId }));
@@ -82,7 +100,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       } else {
         setFormData({
           pc_inqid: "", pc_sname: "", pc_veh: "", pc_date: new Date().toISOString().split('T')[0], pc_type: "Direct Purchase",
-          pc_stat: "Confirmed", pc_price: "", pc_tok: "", payments: [],
+          pc_stat: "Confirmed", pc_pp: "", pc_rto: "", pc_price: "", pc_tok: "", payments: [],
           pc_newcar: "",
           pc_loan: "No", pc_lbank: "", pc_tokd: "", pc_dby: "Ritesh Shah", pc_mgr: "",
           pc_edd: "", pc_cncl: "", pc_rem: ""
@@ -100,6 +118,22 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       applyAutoFill(value);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(prev => {
+        const pp = Number(prev.pc_pp) || 0;
+        const rto = Number(prev.pc_rto) || 0;
+        if (pp > 0) {
+          const expected = String(pp - rto);
+          if (prev.pc_price !== expected) {
+            return { ...prev, pc_price: expected };
+          }
+        }
+        return prev;
+      });
+    }
+  }, [formData.pc_pp, formData.pc_rto, isOpen]);
 
   const addPayment = () => {
     setFormData(prev => ({
@@ -248,7 +282,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
   <div class="v-row-company">
     <div style="font-size: 15px; font-weight: 600; display:flex; align-items: flex-end; white-space: nowrap; margin-left: 5px;">
-      For Company: Carecay <span class="v-line" style="width:150px; margin: 0 10px;"></span> Pvt Ltd
+      For Company Carecay Pvt Ltd
     </div>
     <div class="v-amount-box">
       <div class="v-rs">Rs.</div>
@@ -357,9 +391,6 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
               const canAddPayment = !lastPmt || lastPmt.status === 'Done';
               return (
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                  <button type="button" onClick={() => setHidePayments(!hidePayments)} className="btn btn-out" style={{ padding: '2px 8px', fontSize: 12, height: 26 }} title={hidePayments ? "Show Payments" : "Hide Payments"}>
-                    <i className={`fa ${hidePayments ? 'fa-eye' : 'fa-eye-slash'}`}></i> {hidePayments ? 'Show' : 'Hide'}
-                  </button>
                   <button type="button" onClick={addPayment} disabled={!canAddPayment} className="btn btn-out" style={{ padding: '2px 8px', fontSize: 12, height: 26, opacity: canAddPayment ? 1 : 0.5, cursor: canAddPayment ? 'pointer' : 'not-allowed' }} title={canAddPayment ? 'Add Payment' : 'Complete previous payment first'}>
                     <i className="fa fa-plus"></i> Add New Payment
                   </button>
@@ -367,18 +398,31 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
               );
             })()}
           </div>
-          <div className="grid2">
-            <div className="fg"><label>Final Agreed Price ₹</label><input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" style={{ background: 'rgba(16,185,129,.08)', borderColor: 'var(--success)', color: 'var(--success)', fontWeight: 700 }} /></div>
+          <div className="grid3">
+            <div className="fg"><label>Purchase Price ₹</label><input type="number" name="pc_pp" value={formData.pc_pp} onChange={handleChange} placeholder="0" /></div>
+            <div className="fg"><label>RTO Challan (Deduct) ₹</label><input type="number" name="pc_rto" value={formData.pc_rto} onChange={handleChange} placeholder="0" readOnly style={{ background: 'rgba(16,185,129,.08)' }} /></div>
+            <div className="fg">
+              <label>Final Agreed Price ₹</label>
+              <input type="number" name="pc_price" value={formData.pc_price} onChange={handleChange} placeholder="0" readOnly style={{ background: 'rgba(16,185,129,.08)', borderColor: 'var(--success)', color: 'var(--success)', fontWeight: 700 }} />
+            </div>
+          </div>
+          <div className="grid2" style={{ marginTop: 14 }}>
+            <div className="fg"><label>Token Paid ₹</label><input type="number" name="pc_tok" value={formData.pc_tok} onChange={handleChange} placeholder="0" /></div>
             <div className="fg"><label>Remaining Balance ₹ (Auto)</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {remBal.toLocaleString()}</div></div>
           </div>
-          {!hidePayments && (formData.payments || []).map((pmt, idx) => (
+          {(formData.payments || []).map((pmt, idx) => (
             <div key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: idx < (formData.payments.length - 1) ? '1px dashed var(--border)' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <span style={{ background: 'var(--or1)', color: '#fff', width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{idx + 1}</span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>Payment {idx + 1} {pmt.status === 'Done' && <span style={{color:'var(--success)', marginLeft: 8}}><i className="fa fa-lock"></i> Locked</span>}</span>
+                <button type="button" onClick={() => toggleHidePayment(idx)} style={{ marginLeft: 8, background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 12, padding: '0 4px', display: 'flex', alignItems: 'center', gap: 4 }} title={hiddenPayments[idx] ? "Show" : "Hide"}>
+                  <i className={`fa ${hiddenPayments[idx] ? 'fa-eye' : 'fa-eye-slash'}`}></i> {hiddenPayments[idx] ? 'Show' : 'Hide'}
+                </button>
                 {pmt.status !== 'Done' && <button type="button" onClick={() => removePayment(idx)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }} title="Remove">✕</button>}
               </div>
-              <div className="grid3">
+              {!hiddenPayments[idx] && (
+                <>
+                  <div className="grid3">
                 <div className="fg">
                   <label>Mode</label>
                   <select value={pmt.mode} onChange={e => handlePaymentChange(idx, 'mode', e.target.value)} disabled={pmt.status === 'Done'}>
@@ -416,11 +460,13 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
                   </select>
                 </div>
               </div>
-              <div className="fg" style={{ marginTop: '10px' }}>
-                <button type="button" className="btn btn-out" style={{ width: '100%', color: 'var(--or1)', borderColor: 'var(--or1)', height: '40px', fontWeight: '700' }} onClick={() => handlePreviewVoucher(idx)} title="Preview Voucher">
-                  <i className="fa fa-print"></i> Preview Voucher
-                </button>
-              </div>
+                  <div className="fg" style={{ marginTop: '10px' }}>
+                    <button type="button" className="btn btn-out" style={{ width: '100%', color: 'var(--or1)', borderColor: 'var(--or1)', height: '40px', fontWeight: '700' }} onClick={() => handlePreviewVoucher(idx)} title="Preview Voucher">
+                      <i className="fa fa-print"></i> Preview Voucher
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
 

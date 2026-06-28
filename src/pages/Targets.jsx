@@ -115,9 +115,6 @@ const Targets = () => {
           <select className="flt" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
             {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}>
-            <i className="fa fa-plus"></i> Set Target
-          </button>
         </div>
       </div>
 

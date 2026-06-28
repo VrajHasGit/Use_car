@@ -88,7 +88,6 @@ const SalesBooking = () => {
             <option value="">All Status</option>
             <option>Pending</option><option>Confirmed</option><option>Delivered</option><option>Cancelled</option>
           </select>
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Booking</button>
         </div>
       </div>
       {isModalOpen && <SobModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

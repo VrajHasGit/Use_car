@@ -14,7 +14,13 @@ const DeliveryNote = () => {
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.dn || [];
-  const filtered = records.filter(r => !search || (r.buyerName||r.customer||'').toLowerCase().includes(search.toLowerCase()) || (r.regNo||'').toLowerCase().includes(search.toLowerCase()));
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (r.dnId || '').toLowerCase().includes(q) ||
+      (r.buyerName || r.customer || '').toLowerCase().includes(q) ||
+      (r.regNo || r.dn_regn || '').toLowerCase().includes(q);
+  });
   const handleSave = async (fd) => {
     try {
       const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
@@ -37,7 +43,6 @@ const DeliveryNote = () => {
         <div className="ph-left"><h1><div className="ph-icon" style={{background:'linear-gradient(135deg,#0891B2,#06B6D4)'}}><i className="fa fa-file-lines"></i></div>Delivery Note</h1><p>Vehicle handover note — Customer · Vehicle · Accessories · Signature</p></div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={()=>{setEditRec(null);setIsModalOpen(true);}}><i className="fa fa-plus"></i> New Delivery Note</button>
         </div>
       </div>
       {isModalOpen && <DnModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

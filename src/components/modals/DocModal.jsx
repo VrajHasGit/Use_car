@@ -56,8 +56,6 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   "dc_bphoto": "",
   "dcu_bphoto": "",
   "dc_stat": "",
-  "dc_pucval": "",
-  "dc_miss": "",
   "dc_verby": "",
   "dc_verdate": "",
   "dc_rem": ""
@@ -108,11 +106,14 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
 
   useEffect(() => {
     if (formData.dc_regn && formData.dc_regn.length >= 6) {
+      // If Inquiry ID is already set, it's the authoritative source — don't override via reg no lookup
+      if (formData.dc_obid) return;
+
       const rn = formData.dc_regn.replace(/\s/g, '').toUpperCase();
       const inq = data.pur_inq?.find(r => (r.regNo || r.pi_regn) && (r.regNo || r.pi_regn).replace(/\s/g, '').toUpperCase() === rn);
       const ob = data.ob?.find(r => (r.ob_regn || r.regNo) && (r.ob_regn || r.regNo).replace(/\s/g, '').toUpperCase() === rn);
       const match = inq || ob;
-      
+
       if (match) {
         setFormData(prev => ({
           ...prev,
@@ -131,7 +132,7 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
         }
       }
     }
-  }, [formData.dc_regn, data.ob, data.pur_inq, data.stk]);
+  }, [formData.dc_regn, formData.dc_obid, data.ob, data.pur_inq, data.stk]);
 
   const handleChange = (e) => {
     if (e.target.type === 'file') {
@@ -369,12 +370,8 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
    </div>
 
    
-   <div className="grid2">
-    <div className="fg"><label>Document Status</label><select id="dc_stat" name="dc_stat" value={formData['dc_stat'] || ''} onChange={handleChange}><option>Complete</option><option>Incomplete</option><option>Pending</option></select></div>
-    <div className="fg"><label>PUC Valid Till</label><input type="date" id="dc_pucval" name="dc_pucval" value={formData['dc_pucval'] || ''} onChange={handleChange} /></div>
-   </div>
    <div className="grid3">
-    <div className="fg"><label>Missing Documents</label><input id="dc_miss" name="dc_miss" value={formData['dc_miss'] || ''} onChange={handleChange} placeholder="List missing docs" /></div>
+    <div className="fg"><label>Document Status</label><select id="dc_stat" name="dc_stat" value={formData['dc_stat'] || ''} onChange={handleChange}><option>Complete</option><option>Incomplete</option><option>Pending</option></select></div>
     <div className="fg"><label>Verified By</label><input id="dc_verby" name="dc_verby" value={formData['dc_verby'] || ''} onChange={handleChange} placeholder="Verifier name" /></div>
     <div className="fg"><label>Verification Date</label><input type="date" id="dc_verdate" name="dc_verdate" value={formData['dc_verdate'] || ''} onChange={handleChange} /></div>
    </div>

@@ -194,9 +194,6 @@ const UserMgmt = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search users…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setModalMode('create'); setIsModalOpen(true); }}>
-            <i className="fa fa-plus"></i> Add User
-          </button>
         </div>
       </div>
 

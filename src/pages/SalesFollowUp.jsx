@@ -32,14 +32,17 @@ const SalesFollowUp = () => {
   }, [records]);
 
   const filtered = records.filter(r => {
+    if (search) {
+      const q = search.toLowerCase();
+      return (r.sfuId || '').toLowerCase().includes(q) ||
+        (r.sf_stkid || '').toLowerCase().includes(q) ||
+        (r.sf_cname || r.buyerName || '').toLowerCase().includes(q) ||
+        (r.sf_mob || r.mobile || '').includes(q) ||
+        (r.sf_regn || r.regNo || '').toLowerCase().includes(q) ||
+        (r.sf_make || '').toLowerCase().includes(q);
+    }
     if (r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won') return false;
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (r.sf_cname || r.buyerName || '').toLowerCase().includes(q) ||
-      (r.sf_mob || r.mobile || '').includes(q) ||
-      (r.sf_stkid || '').toLowerCase().includes(q) ||
-      (r.sf_make || '').toLowerCase().includes(q) ||
-      (r.sfuId || '').toLowerCase().includes(q);
+    return true;
   });
 
   const handleSave = async (fd) => {
@@ -121,7 +124,6 @@ const SalesFollowUp = () => {
         <div className="ph-left"><h1><div className="ph-icon" style={{ background: 'linear-gradient(135deg,#F59E0B,#D97706)' }}><i className="fa fa-comments"></i></div>Sales Follow-Up</h1><p>Follow-up on sales inquiries and buyer contacts</p></div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search buyer / stock ID…" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn btn-or" onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Follow-Up</button>
         </div>
       </div>
       {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}

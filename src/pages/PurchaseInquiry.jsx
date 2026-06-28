@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -18,27 +18,36 @@ const PurchaseInquiry = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [toast, setToast] = useState(null);
 
+  useEffect(() => {
+    const autoId = location.state?.autoOpenId;
+    if (!autoId) return;
+    const rec = (data.pur_inq || []).find(r => r.id === autoId);
+    if (rec) { setEditRecord(rec); setIsModalOpen(true); window.history.replaceState({}, document.title, window.location.pathname); }
+  }, [data.pur_inq, location.state?.autoOpenId]);
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  const inquiries = (data.pur_inq || []).filter(r => !r.stage || r.stage === 'Inquiry');
+  const allInquiries = data.pur_inq || [];
+  const inquiries = allInquiries.filter(r => !search && (!r.stage || r.stage === 'Inquiry') || search);
 
   const filtered = inquiries.filter(inq => {
     const q = search.toLowerCase();
     const matchSearch = !search ||
-      (inq.sellerName || '').toLowerCase().includes(q) ||
-      (inq.mobile || '').includes(q) ||
-      (inq.make || '').toLowerCase().includes(q) ||
       (inq.inqId || '').toLowerCase().includes(q) ||
-      (inq.regNo || '').toLowerCase().includes(q);
+      (inq.sellerName || '').toLowerCase().includes(q) ||
+      (inq.regNo || '').toLowerCase().includes(q) ||
+      (inq.mobile || '').includes(q) ||
+      (inq.make || '').toLowerCase().includes(q);
     const matchStatus = !statusFilter || inq.status === statusFilter;
     return matchSearch && matchStatus;
   });

@@ -225,7 +225,6 @@ const SalesInquiry = () => {
             {SOURCES.map(s => <option key={s}>{s}</option>)}
           </select>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
-          <button className="btn btn-or" onClick={() => { setEditRecord(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Inquiry</button>
         </div>
       </div>
 

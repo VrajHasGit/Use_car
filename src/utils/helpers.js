@@ -69,7 +69,7 @@ export function printDocument(title, contentHTML, customStyles = '', downloadOpt
 <title>${title}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Space Grotesk','Noto Sans Gujarati',Arial,sans-serif;font-size:12px;color:#000;padding:20px;max-width:800px;margin:0 auto}
+  body{font-family:'Space Grotesk','Noto Sans Gujarati',Arial,sans-serif;font-size:12px;color:#000;padding:20px;max-width:800px;margin:0 auto;text-transform:uppercase}
   .print-header { display: flex; align-items: center; justify-content: center; margin-bottom: 24px; border-bottom: 2px solid #000; padding-bottom: 12px; position: relative; }
   .print-logo-icon { background: #000; color: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; margin-right: 12px; font-family: monospace; }
   .print-header-text { text-align: center; }
