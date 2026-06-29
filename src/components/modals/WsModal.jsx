@@ -10,9 +10,8 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
   const [formData, setFormData] = useState({
     ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
-    ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
-    ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_val_refurb: ""
+    ws_tech: "", ws_manager: "", ws_parts: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
+    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
   });
 
   const [modelOptions, setModelOptions] = useState([]);
@@ -24,11 +23,13 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
       if (editData) {
         const properMake = MAKES.find(m => m.toLowerCase() === (editData.ws_make || '').toLowerCase()) || editData.ws_make || '';
         const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (editData.ws_model || '').toLowerCase()) || editData.ws_model || '';
-        setFormData({ 
-          ...editData, 
+        setFormData({
+          ...editData,
           ws_make: properMake,
           ws_model: properModel,
           ws_dp: editData.ws_dp || [],
+          ws_mw: editData.ws_mw || [],
+          ws_manager: editData.ws_manager || "",
           ws_val_refurb: editData.ws_val_refurb || ""
         });
         setModelOptions(MODELS[properMake] || []);
@@ -123,9 +124,8 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setFormData({
           ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
           ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
-          ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
-          ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_val_refurb: ""
+          ws_tech: "", ws_manager: "", ws_parts: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
+          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
         });
         setModelOptions([]);
         setPrefilled(new Set());
@@ -266,6 +266,9 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         await addDoc(collection(db, 'ws'), {
           ...formData,
           wsId,
+          ws_lc: dpTotal,
+          ws_pc: mechTotal,
+          ws_est: dpTotal + mechTotal,
           date: formData.ws_indate || new Date().toISOString().split('T')[0],
           tasks: formData.tasks || [],
           createdAt: new Date().toISOString()
@@ -283,16 +286,21 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     }
   };
 
-  const pc = Number(formData.ws_pc || 0);
-  const lc = Number(formData.ws_lc || 0);
-  const totalCost = pc + lc;
-
   const pf = (field) => prefilled.has(field);
 
-  const addDpRow = () => setFormData(prev => ({ ...prev, ws_dp: [...(prev.ws_dp || []), { name: '', cost: '' }] }));
+  const addDpRow = () => setFormData(prev => ({ ...prev, ws_dp: [...(prev.ws_dp || []), { name: '', qty: '', cost: '' }] }));
   const updateDpRow = (i, field, val) => setFormData(prev => ({ ...prev, ws_dp: prev.ws_dp.map((r, idx) => idx === i ? { ...r, [field]: val } : r) }));
   const removeDpRow = (i) => setFormData(prev => ({ ...prev, ws_dp: prev.ws_dp.filter((_, idx) => idx !== i) }));
-  const dpTotal = (formData.ws_dp || []).reduce((sum, r) => sum + Number(r.cost || 0), 0);
+  const dpRows = formData.ws_dp || [];
+  const dpTotal = dpRows.reduce((sum, r) => sum + (Number(r.qty || 0) * Number(r.cost || 0)), 0);
+
+  const addMwRow = () => setFormData(prev => ({ ...prev, ws_mw: [...(prev.ws_mw || []), { name: '', qty: '', cost: '' }] }));
+  const updateMwRow = (i, field, val) => setFormData(prev => ({ ...prev, ws_mw: prev.ws_mw.map((r, idx) => idx === i ? { ...r, [field]: val } : r) }));
+  const removeMwRow = (i) => setFormData(prev => ({ ...prev, ws_mw: prev.ws_mw.filter((_, idx) => idx !== i) }));
+  const mwRows = formData.ws_mw || [];
+  const mechTotal = mwRows.reduce((sum, r) => sum + (Number(r.qty || 0) * Number(r.cost || 0)), 0);
+
+  const grandTotal = dpTotal + mechTotal;
 
   return (
     <div className="overlay on" id="m_ws">
@@ -325,7 +333,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             <div className="fg"><label>In Date *</label><input type="date" name="ws_indate" value={formData.ws_indate} onChange={handleChange} /></div>
             <div className="fg"><label>KM Reading {pf('ws_km') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label><input type="number" name="ws_km" value={formData.ws_km} onChange={handleChange} placeholder="Current KM" disabled={pf('ws_km')} style={pf('ws_km') ? DISABLED_STYLE : {}} /></div>
           </div>
-          <div className="grid4">
+          <div className="grid3">
             <div className="fg">
               <label>Make {pf('ws_make') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label>
               <select name="ws_make" value={formData.ws_make} onChange={handleChange}
@@ -344,63 +352,133 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div className="fg"><label>Work Type *</label><select name="ws_wtype" value={formData.ws_wtype} onChange={handleChange}><option>General Service</option><option>Engine Work</option><option>Denting</option><option>Painting</option><option>AC Repair</option><option>Tyre Work</option><option>Electrical</option><option>Washing</option><option>Accessories</option><option>Body Work</option><option>Full Refurb</option><option>Other</option></select></div>
             <div className="fg"><label>Technician Name</label><input name="ws_tech" value={formData.ws_tech} onChange={handleChange} placeholder="Mechanic name" /></div>
-          </div>
-          <div className="sect-lbl"><i className="fa fa-paint-brush"></i> Denting / Painting</div>
-          <div style={{marginBottom:'12px'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)'}}>
-              <thead>
-                <tr style={{background:'var(--surface2)'}}>
-                  <th style={{padding:'9px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',border:'1px solid var(--border)'}}>Part Name</th>
-                  <th style={{padding:'9px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',border:'1px solid var(--border)',width:'150px'}}>Cost ₹</th>
-                  <th style={{width:'40px',border:'1px solid var(--border)',textAlign:'center',fontSize:'11px',color:'var(--text3)'}}>#</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(formData.ws_dp || []).length === 0 && (
-                  <tr>
-                    <td colSpan={3} style={{border:'1px solid var(--border)',padding:'12px',textAlign:'center',fontSize:'12px',color:'var(--text3)',fontStyle:'italic'}}>No items added — click + Add Part below</td>
-                  </tr>
-                )}
-                {(formData.ws_dp || []).map((row, i) => (
-                  <tr key={i}>
-                    <td style={{border:'1px solid var(--border)',padding:'0'}}>
-                      <input value={row.name} onChange={e => updateDpRow(i, 'name', e.target.value)} placeholder="e.g. Front bumper, Hood paint…" style={{width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'8px 12px',boxSizing:'border-box'}} />
-                    </td>
-                    <td style={{border:'1px solid var(--border)',padding:'0'}}>
-                      <input type="number" value={row.cost} onChange={e => updateDpRow(i, 'cost', e.target.value)} placeholder="0" style={{width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'8px 12px',boxSizing:'border-box'}} />
-                    </td>
-                    <td style={{border:'1px solid var(--border)',textAlign:'center',padding:'4px'}}>
-                      <button type="button" onClick={() => removeDpRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'15px',padding:'2px 6px',lineHeight:1}}>✕</button>
-                    </td>
-                  </tr>
-                ))}
-                {(formData.ws_dp||[]).length > 0 && (
-                  <tr style={{background:'var(--surface2)'}}>
-                    <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'12px',fontWeight:700,color:'var(--text3)'}}>Total</td>
-                    <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {dpTotal.toLocaleString()}</td>
-                    <td style={{border:'1px solid var(--border)'}}></td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div style={{marginTop:'6px'}}>
-              <button type="button" onClick={addDpRow} style={{background:'none',border:'1px dashed var(--border2)',borderRadius:'var(--radius-sm)',color:'var(--or3)',cursor:'pointer',padding:'5px 14px',fontSize:'12px',fontWeight:600,display:'inline-flex',alignItems:'center',gap:'6px'}}>
-                <span style={{fontSize:'16px',lineHeight:1,fontWeight:400}}>+</span> Add Part
-              </button>
+            <div className="fg"><label>Manager</label>
+              <select name="ws_manager" value={formData.ws_manager} onChange={handleChange}>
+                <option value="">Select Manager</option>
+                <option>Jaimin Shah</option>
+                <option>Ronak Mehta</option>
+              </select>
             </div>
           </div>
-          <div className="grid1"><div className="fg"><label>Parts Required</label><textarea name="ws_parts" value={formData.ws_parts} onChange={handleChange} placeholder="List all parts needed…"></textarea></div></div>
-          <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Calculation — AUTO</div>
+          <div className="sect-lbl"><i className="fa fa-paint-brush"></i> Denting / Painting</div>
+          {(() => {
+            const TH = {padding:'9px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',border:'1px solid var(--border)'};
+            const TD0 = {border:'1px solid var(--border)',padding:'0'};
+            const INPUT = {width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'8px 10px',boxSizing:'border-box'};
+            return (
+            <div style={{marginBottom:'12px'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid var(--border)'}}>
+                <thead>
+                  <tr style={{background:'var(--surface2)'}}>
+                    <th style={TH}>Part Name</th>
+                    <th style={{...TH,width:'90px'}}>Qty</th>
+                    <th style={{...TH,width:'120px'}}>Cost ₹</th>
+                    <th style={{...TH,width:'120px'}}>Total ₹</th>
+                    <th style={{width:'36px',border:'1px solid var(--border)'}}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dpRows.length === 0 && (
+                    <tr><td colSpan={5} style={{border:'1px solid var(--border)',padding:'12px',textAlign:'center',fontSize:'12px',color:'var(--text3)',fontStyle:'italic'}}>No items — click + Add Part</td></tr>
+                  )}
+                  {dpRows.map((row, i) => {
+                    const rowTotal = Number(row.qty||0) * Number(row.cost||0);
+                    return (
+                    <tr key={i}>
+                      <td style={TD0}><input value={row.name} onChange={e => updateDpRow(i,'name',e.target.value)} placeholder="e.g. Hood paint, Bumper…" style={INPUT} /></td>
+                      <td style={TD0}><input type="number" value={row.qty} onChange={e => updateDpRow(i,'qty',e.target.value)} placeholder="0" style={INPUT} /></td>
+                      <td style={TD0}><input type="number" value={row.cost} onChange={e => updateDpRow(i,'cost',e.target.value)} placeholder="0" style={INPUT} /></td>
+                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)',textAlign:'center',padding:'4px'}}>
+                        <button type="button" onClick={() => removeDpRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'14px',padding:'2px 5px',lineHeight:1}}>✕</button>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                  {dpRows.length > 0 && (
+                    <tr style={{background:'var(--surface2)'}}>
+                      <td colSpan={3} style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'12px',fontWeight:700,color:'var(--text3)'}}>Labour Cost (D&P Total)</td>
+                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {dpTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)'}}></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <div style={{marginTop:'6px'}}>
+                <button type="button" onClick={addDpRow} style={{background:'none',border:'1px dashed var(--border2)',borderRadius:'var(--radius-sm)',color:'var(--or3)',cursor:'pointer',padding:'5px 14px',fontSize:'12px',fontWeight:600,display:'inline-flex',alignItems:'center',gap:'6px'}}>
+                  <span style={{fontSize:'16px',lineHeight:1,fontWeight:400}}>+</span> Add Part
+                </button>
+              </div>
+            </div>
+            );
+          })()}
+
+          <div className="sect-lbl"><i className="fa fa-wrench"></i> Mechanical Work</div>
+          {(() => {
+            const TH = {padding:'9px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',border:'1px solid var(--border)'};
+            const TD0 = {border:'1px solid var(--border)',padding:'0'};
+            const INPUT = {width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'8px 10px',boxSizing:'border-box'};
+            return (
+            <div style={{marginBottom:'12px'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid var(--border)'}}>
+                <thead>
+                  <tr style={{background:'var(--surface2)'}}>
+                    <th style={TH}>Part Name</th>
+                    <th style={{...TH,width:'90px'}}>Qty</th>
+                    <th style={{...TH,width:'120px'}}>Cost ₹</th>
+                    <th style={{...TH,width:'120px'}}>Total ₹</th>
+                    <th style={{width:'36px',border:'1px solid var(--border)'}}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mwRows.length === 0 && (
+                    <tr><td colSpan={5} style={{border:'1px solid var(--border)',padding:'12px',textAlign:'center',fontSize:'12px',color:'var(--text3)',fontStyle:'italic'}}>No items — click + Add Part</td></tr>
+                  )}
+                  {mwRows.map((row, i) => {
+                    const rowTotal = Number(row.qty||0) * Number(row.cost||0);
+                    return (
+                    <tr key={i}>
+                      <td style={TD0}><input value={row.name} onChange={e => updateMwRow(i,'name',e.target.value)} placeholder="e.g. Engine oil, Brake pads…" style={INPUT} /></td>
+                      <td style={TD0}><input type="number" value={row.qty} onChange={e => updateMwRow(i,'qty',e.target.value)} placeholder="0" style={INPUT} /></td>
+                      <td style={TD0}><input type="number" value={row.cost} onChange={e => updateMwRow(i,'cost',e.target.value)} placeholder="0" style={INPUT} /></td>
+                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)',textAlign:'center',padding:'4px'}}>
+                        <button type="button" onClick={() => removeMwRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'14px',padding:'2px 5px',lineHeight:1}}>✕</button>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                  {mwRows.length > 0 && (
+                    <tr style={{background:'var(--surface2)'}}>
+                      <td colSpan={3} style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'12px',fontWeight:700,color:'var(--text3)'}}>Estimated Cost (Mech Total)</td>
+                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {mechTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)'}}></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <div style={{marginTop:'6px'}}>
+                <button type="button" onClick={addMwRow} style={{background:'none',border:'1px dashed var(--border2)',borderRadius:'var(--radius-sm)',color:'var(--or3)',cursor:'pointer',padding:'5px 14px',fontSize:'12px',fontWeight:600,display:'inline-flex',alignItems:'center',gap:'6px'}}>
+                  <span style={{fontSize:'16px',lineHeight:1,fontWeight:400}}>+</span> Add Part
+                </button>
+              </div>
+            </div>
+            );
+          })()}
+
+          <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Summary — AUTO</div>
           <div className="grid3">
-            <div className="fg"><label>Tentative Refurb Cost (By Valuator)</label><div className="calc-out" style={{background:'rgba(255,107,0,.08)',color:'var(--or1)',border:'1px dashed var(--or1)'}}>{formData.ws_val_refurb ? `₹ ${Number(formData.ws_val_refurb).toLocaleString()}` : '—'}</div></div>
-            <div className="fg"><label>Estimated Cost ₹</label><input type="number" name="ws_est" value={formData.ws_est} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out">₹ {totalCost.toLocaleString()}</div></div>
+            <div className="fg"><label>Labour Cost ₹ (D&P — AUTO)</label><div className="calc-out">₹ {dpTotal.toLocaleString()}</div></div>
+            <div className="fg"><label>Estimated Cost ₹ (Mech — AUTO)</label><div className="calc-out">₹ {mechTotal.toLocaleString()}</div></div>
+            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out" style={{fontWeight:800,color:'var(--or1)'}}>₹ {grandTotal.toLocaleString()}</div></div>
           </div>
-          <div className="grid4">
-            <div className="fg"><label>Parts Cost ₹ *</label><input type="number" name="ws_pc" value={formData.ws_pc} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Labour Cost ₹ *</label><input type="number" name="ws_lc" value={formData.ws_lc} onChange={handleChange} placeholder="0" /></div>
+          {formData.ws_val_refurb && (
+            <div style={{marginBottom:'12px'}}>
+              <div className="fg"><label>Tentative Refurb Cost (By Valuator)</label><div className="calc-out" style={{background:'rgba(255,107,0,.08)',color:'var(--or1)',border:'1px dashed var(--or1)'}}>{`₹ ${Number(formData.ws_val_refurb).toLocaleString()}`}</div></div>
+            </div>
+          )}
+          <div className="grid2">
             <div className="fg"><label>Payment Status</label><select name="ws_pstat" value={formData.ws_pstat} onChange={handleChange}><option>Pending</option><option>Paid</option></select></div>
             <div className="fg"><label>Job Status</label><select name="ws_jstat" value={formData.ws_jstat} onChange={handleChange}><option>Open</option><option>In Process</option><option>Complete</option></select></div>
           </div>
