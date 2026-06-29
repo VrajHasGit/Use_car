@@ -6,6 +6,7 @@ import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../servic
 import { today, genId, fmtDate, fmt, ageDays } from '../utils/helpers';
 import { WsModal } from '../components/modals/WsModal';
 import { exportToExcel } from '../utils/exportData';
+import CustomSelect from '../components/CustomSelect';
 
 const PAGE_SIZE = 20;
 
@@ -38,6 +39,8 @@ const Workshop = () => {
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
   const [page, setPage] = useState(1);
+  const [certifyRec, setCertifyRec] = useState(null);
+  const [certifyStatus, setCertifyStatus] = useState('Pending');
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   const records = data.ws || [];
@@ -95,30 +98,43 @@ const Workshop = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete job ${rec.wsId} for ${rec.regNo}?`)) return;
+    if (!await window.confirm(`Delete job ${rec.wsId} for ${rec.regNo}?`)) return;
     try { await deleteRecord('ws', rec.id); await refresh('ws'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
-  const handleReadyToList = async (rec) => {
-    // Cross-update matching stock record
-    const stkRec = stock.find(s => s.regNo === (rec.ws_vnum || rec.regNo) || s.stkId === (rec.ws_stkid || rec.linkedStk));
-    if (stkRec) {
+  const handleReadyToList = (rec) => {
+    setCertifyRec(rec);
+    setCertifyStatus('Pending');
+  };
+
+  const handleCertifySubmit = async () => {
+    const rec = certifyRec;
+    if (certifyStatus === 'Yes') {
+      // Send to Car Stock as Ready for Sale
+      const stkRec = stock.find(s => s.regNo === (rec.ws_vnum || rec.regNo) || s.stkId === (rec.ws_stkid || rec.linkedStk));
+      if (stkRec) {
+        try {
+          await updateRecord('stk', stkRec.id, { status: 'Ready for Sale', certified: 'Yes', refurbDone: today() });
+          await refresh('stk');
+          showToast(`${rec.ws_vnum || rec.regNo} is now listed as "Ready for Sale" in Stock! ✨`);
+        } catch (e) { showToast('Failed to update stock.', 'error'); setCertifyRec(null); return; }
+      } else {
+        showToast(`No matching stock record found for ${rec.ws_vnum || rec.regNo}.`, 'info');
+      }
       try {
-        await updateRecord('stk', stkRec.id, { status: 'Ready for Sale', refurbDone: today() });
-        await refresh('stk');
-        showToast(`${rec.ws_vnum || rec.regNo} is now listed as "Ready for Sale" in the Stock register! ✨`);
-      } catch (e) { showToast('Failed to update stock.', 'error'); return; }
+        await deleteRecord('ws', rec.id);
+        await refresh('ws');
+      } catch (e) { showToast('Failed to finalize workshop record.', 'error'); }
     } else {
-      showToast(`No matching stock record found for ${rec.ws_vnum || rec.regNo}.`, 'info');
+      // Stay in Workshop — just save certification status
+      try {
+        await updateRecord('ws', rec.id, { certified: certifyStatus });
+        await refresh('ws');
+        showToast(`Certification set to "${certifyStatus}" — car remains in Workshop.`, 'info');
+      } catch (e) { showToast('Failed to save certification.', 'error'); }
     }
-    
-    // Discard the workshop record
-    try {
-      await deleteRecord('ws', rec.id);
-      await refresh('ws');
-      showToast('Workshop job finalized and discarded!', 'success');
-    } catch (e) { showToast('Failed to discard workshop record.', 'error'); }
+    setCertifyRec(null);
   };
 
   const handleExport = () => {
@@ -142,15 +158,62 @@ const Workshop = () => {
         </div>
         <div className="ph-actions">
           <input className="srch" placeholder="🔍 Search reg / make…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
-          <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
+          <CustomSelect className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ minWidth: 130 }}>
             <option value="">All Status</option>
             <option value="Open">Open</option><option value="In Process">In Process</option><option value="Complete">Complete</option>
-          </select>
+          </CustomSelect>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
         </div>
       </div>
 
       {isModalOpen && <WsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+
+      {/* ── Certification Modal ── */}
+      {certifyRec && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--surface)', width: '100%', maxWidth: '400px', borderRadius: '18px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden', animation: 'certSlideIn .2s cubic-bezier(.34,1.56,.64,1)' }}>
+            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Space Grotesk',sans-serif" }}>
+                <i className="fa fa-certificate" style={{ color: 'var(--or1)' }}></i> Certify Vehicle
+              </h3>
+              <button onClick={() => setCertifyRec(null)} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}>✕</button>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              <div style={{ background: 'rgba(232,93,4,0.07)', border: '1px solid rgba(232,93,4,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 18, fontSize: 12, color: 'var(--text2)', display: 'flex', gap: 8 }}>
+                <i className="fa fa-car" style={{ color: 'var(--or1)', marginTop: 2 }}></i>
+                <span><strong style={{ color: 'var(--text)' }}>{certifyRec.ws_vnum || certifyRec.regNo}</strong> — {certifyRec.ws_make || certifyRec.make} {certifyRec.ws_model || certifyRec.model}</span>
+              </div>
+              <div className="fg">
+                <label>Certified Status</label>
+                <CustomSelect value={certifyStatus} onChange={e => setCertifyStatus(e.target.value)} style={{ fontSize: 13 }}>
+                  <option value="Pending">⏳ Pending</option>
+                  <option value="Yes">✅ Yes — Send to Car Stock</option>
+                  <option value="No">❌ No — Keep in Workshop</option>
+                </CustomSelect>
+              </div>
+              {certifyStatus === 'Yes' && (
+                <div style={{ marginTop: 12, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '10px 12px', fontSize: 11, color: '#059669', display: 'flex', gap: 6 }}>
+                  <i className="fa fa-circle-check"></i>
+                  <span>Car will be moved to <strong>Car Stock</strong> as <strong>Ready for Sale</strong> and removed from Workshop.</span>
+                </div>
+              )}
+              {certifyStatus !== 'Yes' && (
+                <div style={{ marginTop: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 12px', fontSize: 11, color: '#B45309', display: 'flex', gap: 6 }}>
+                  <i className="fa fa-clock"></i>
+                  <span>Car will <strong>remain in Workshop</strong>. Certification status will be saved.</span>
+                </div>
+              )}
+            </div>
+            <div style={{ padding: '0 24px 20px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setCertifyRec(null)} style={{ padding: '9px 20px', borderRadius: 9, background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text2)', fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={handleCertifySubmit} style={{ padding: '9px 20px', borderRadius: 9, background: certifyStatus === 'Yes' ? 'linear-gradient(135deg,#10B981,#059669)' : 'linear-gradient(135deg,var(--or1),var(--or2))', border: 'none', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                {certifyStatus === 'Yes' ? '🚀 Send to Stock' : '💾 Save Status'}
+              </button>
+            </div>
+          </div>
+          <style>{`@keyframes certSlideIn { from { opacity:0; transform:scale(.92) translateY(-10px); } to { opacity:1; transform:scale(1) translateY(0); } }`}</style>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>

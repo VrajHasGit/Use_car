@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -55,7 +55,7 @@ const SalesCloser = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete this deal?')) return;
+    if (!await window.confirm('Delete this deal?')) return;
     try { await deleteRecord('scl', rec.id); await refresh('scl'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
@@ -78,7 +78,7 @@ const SalesCloser = () => {
   };
 
   const handleSendToBooking = async (rec) => {
-    if (!window.confirm(`Create Order Booking for ${rec.sc_bname || rec.buyerName}?`)) return;
+    if (!await window.confirm(`Create Order Booking for ${rec.sc_bname || rec.buyerName}?`)) return;
     setQuickModal({ type: 'sob', sclId: rec.id, rec });
   };
 

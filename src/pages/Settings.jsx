@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSettings, saveSettings, addRecord, updateRecord, deleteRecord } from '../services/db';
@@ -119,7 +119,7 @@ const Settings = () => {
     finally { setSaving(false); }
   };
   const handleSeed = async () => {
-    if (!window.confirm('Re-seed all users and settings to Firestore?')) return;
+    if (!await window.confirm('Re-seed all users and settings to Firestore?')) return;
     setSeeding(true);
     try { const ok = await seedFirestore(); showToast(ok ? 'Firestore seeded!' : 'Seeding failed.', ok ? 'success' : 'error'); }
     catch (e) { showToast('Error: ' + e.message, 'error'); }

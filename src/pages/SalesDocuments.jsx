@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -55,7 +55,7 @@ const SalesDocuments = () => {
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
   
-  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('sale_doc', rec.id); await refresh('sale_doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  const handleDelete = async (rec) => { if (!await window.confirm('Delete?')) return; try { await deleteRecord('sale_doc', rec.id); await refresh('sale_doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   
   return (
     <div className="page on" id="pg_sale_documents">

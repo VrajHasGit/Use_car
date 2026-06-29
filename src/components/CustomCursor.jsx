@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const INTERACTIVE = 'a, button, input, select, textarea, label, [role="button"], [tabindex="0"], .btn, .sb-item, .kpi, .stk-card, .task-card, .pg-btn, .picker-card, .qr-card, .chk-item, .date-pill, .stage-tab, .view-toggle button, .tb-btn, .tb-menu';
+const INTERACTIVE = 'a, button, input, select, textarea, label, [role="button"], [role="combobox"], [role="option"], [tabindex="0"], .btn, .sb-item, .kpi, .stk-card, .task-card, .pg-btn, .picker-card, .qr-card, .chk-item, .date-pill, .stage-tab, .view-toggle button, .tb-btn, .tb-menu';
 const DANGER_SEL = '.bi-del, [data-danger]';
 
 export default function CustomCursor() {

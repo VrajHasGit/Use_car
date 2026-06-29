@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+﻿import { useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { deleteRecord, updateRecord } from '../services/db';
@@ -28,7 +28,7 @@ function getLastReached({ val, pfu, doc, pcl, ob, stk }) {
 
 /* ── Print helpers ──────────────────────────────── */
 const DAY_NAMES    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const DAY_NAMES_GUJ = ['રવિવાર','સોમવાર','મંગળવાર','બુધવાર','ગુરૂવાર','શુક્રવાર','શનિવાર'];
+const DAY_NAMES_GUJ = ['àª°àªµàª¿àªµàª¾àª°','àª¸à«‹àª®àªµàª¾àª°','àª®àª‚àª—àª³àªµàª¾àª°','àª¬à«àª§àªµàª¾àª°','àª—à«àª°à«‚àªµàª¾àª°','àª¶à«àª•à«àª°àªµàª¾àª°','àª¶àª¨àª¿àªµàª¾àª°'];
 const MON_SHORT    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function getDayName(iso, guj = false) {
   if (!iso) return '';
@@ -165,48 +165,48 @@ function printDnGuj(ob) {
   if (!ob) return;
   const total = Number(ob.ob_pp || 0) - Number(ob.ob_rto || 0);
   const html = `<div class="dn-wrap">
-    <div class="dn-head"><img src="/logo.png" class="dn-logo" alt="Carecay Logo"/><div class="dn-head-title">વેચાણ ખત અને ડીલીવરી નોટ</div></div>
+    <div class="dn-head"><img src="/logo.png" class="dn-logo" alt="Carecay Logo"/><div class="dn-head-title">àªµà«‡àªšàª¾àª£ àª–àª¤ àª…àª¨à«‡ àª¡à«€àª²à«€àªµàª°à«€ àª¨à«‹àªŸ</div></div>
     <div class="dn-grid">
-      <div style="border:2px solid #333;display:flex"><div class="dn-lbl">ગાડી નંબર:</div><div class="dn-val">${ob.ob_regn||''}</div></div>
+      <div style="border:2px solid #333;display:flex"><div class="dn-lbl">àª—àª¾àª¡à«€ àª¨àª‚àª¬àª°:</div><div class="dn-val">${ob.ob_regn||''}</div></div>
       <div style="border:2px solid #333;display:flex">
-        <div class="dn-lbl">તારીખ :</div><div class="dn-val">${fmtDateDN(ob.ob_date)}</div>
-        <div class="dn-lbl" style="border-left:2px solid #333">વાર:</div><div class="dn-val">${getDayName(ob.ob_date,true)}</div>
+        <div class="dn-lbl">àª¤àª¾àª°à«€àª– :</div><div class="dn-val">${fmtDateDN(ob.ob_date)}</div>
+        <div class="dn-lbl" style="border-left:2px solid #333">àªµàª¾àª°:</div><div class="dn-val">${getDayName(ob.ob_date,true)}</div>
       </div>
     </div>
     <div class="dn-grid">
-      <div class="dn-box"><div class="dn-box-title">વાહન વેચાણ આપનાર</div>
+      <div class="dn-box"><div class="dn-box-title">àªµàª¾àª¹àª¨ àªµà«‡àªšàª¾àª£ àª†àªªàª¨àª¾àª°</div>
         <div class="dn-box-content" style="text-align:left;font-size:14px">${ob.ob_cname||''}<br/>${ob.ob_addr||''}</div>
-        <div class="dn-field"><div class="dn-lbl">મો. નંબર :</div><div class="dn-val" style="border-left:2px solid #333">${ob.ob_cont||''}</div></div>
+        <div class="dn-field"><div class="dn-lbl">àª®à«‹. àª¨àª‚àª¬àª° :</div><div class="dn-val" style="border-left:2px solid #333">${ob.ob_cont||''}</div></div>
       </div>
-      <div class="dn-box"><div class="dn-box-title">વાહન ખરીદ લેનાર</div>
+      <div class="dn-box"><div class="dn-box-title">àªµàª¾àª¹àª¨ àª–àª°à«€àª¦ àª²à«‡àª¨àª¾àª°</div>
         <div class="dn-box-content">CARECAY PVT. LTD<br/>Mumatpura Road, Off. S. G. Highway,<br/>Nr. Cafe De Italiano,<br/>Ahmedabad-(380058)</div>
-        <div class="dn-field"><div class="dn-lbl">મો. નંબર :</div><div class="dn-val" style="border-left:2px solid #333">94 84 88 22 22</div></div>
+        <div class="dn-field"><div class="dn-lbl">àª®à«‹. àª¨àª‚àª¬àª° :</div><div class="dn-val" style="border-left:2px solid #333">94 84 88 22 22</div></div>
       </div>
     </div>
     <div class="dn-text">
-      અમોએ અમારી માલિકી અને હક્ક ભોગવટાનું વાહન જેનો આર.ટી.ઓ. રજીસ્ટ્રેશન નંબર ${u(ob.ob_regn,'120px')} છે
-      અને તેનું મોડલ ${u(ob.ob_mm,'140px')} ગાડીનો પ્રકાર ${u(ob.ob_fuel,'60px')} એન્જિન નં ${u(ob.ob_eng,'120px')}
-      તથા ચેસીસ નં ${u(ob.ob_chas,'120px')} છે.
-      તે વાહન આજરોજ રૂા. ${u(ob.ob_pp,'100px')} દલાલી રૂા. ${u(ob.ob_brkamt,'80px')}
-      ટેક્સ રૂા. ${u('','60px')} તથા ટ્રાન્સફરનો/ડ્યુના રૂા ${u(ob.ob_rto,'80px')} મળી ટોટલ રૂા ${u(total,'100px')}
-      અંકે રૂા ${u(numToWords(total),'220px')} માં ઉપર જણાવેલ પાર્ટીને વેચાણ
-      આપેલ છે. તેના બાના પેટે રૂા. ${u(ob.ob_token,'100px')} અંકે રૂા. ${u(numToWords(ob.ob_token),'200px')}
-      રોકડા/ચેક મળેલ છે બાકી નીકળતા રૂા ${u(total&&ob.ob_token?total-Number(ob.ob_token):'','100px')} મોડામાં મોડા
-      તા ${u(fmtDateDN(ob.ob_clrdate),'100px')} સુધીમાં ચૂકતે હિસાબે કરવાના રહેશે.
-      ગાડીના ખરીદ-વેચાણ પેટે નીચે લખેલ શરતો અ મને બંને પાર્ટીએ વાંચેલ છે. અને બંધન કર્તા રહેશે તે જાણીને અમે સહી કરેલ છે.
+      àª…àª®à«‹àª àª…àª®àª¾àª°à«€ àª®àª¾àª²àª¿àª•à«€ àª…àª¨à«‡ àª¹àª•à«àª• àª­à«‹àª—àªµàªŸàª¾àª¨à«àª‚ àªµàª¾àª¹àª¨ àªœà«‡àª¨à«‹ àª†àª°.àªŸà«€.àª“. àª°àªœà«€àª¸à«àªŸà«àª°à«‡àª¶àª¨ àª¨àª‚àª¬àª° ${u(ob.ob_regn,'120px')} àª›à«‡
+      àª…àª¨à«‡ àª¤à«‡àª¨à«àª‚ àª®à«‹àª¡àª² ${u(ob.ob_mm,'140px')} àª—àª¾àª¡à«€àª¨à«‹ àªªà«àª°àª•àª¾àª° ${u(ob.ob_fuel,'60px')} àªàª¨à«àªœàª¿àª¨ àª¨àª‚ ${u(ob.ob_eng,'120px')}
+      àª¤àª¥àª¾ àªšà«‡àª¸à«€àª¸ àª¨àª‚ ${u(ob.ob_chas,'120px')} àª›à«‡.
+      àª¤à«‡ àªµàª¾àª¹àª¨ àª†àªœàª°à«‹àªœ àª°à«‚àª¾. ${u(ob.ob_pp,'100px')} àª¦àª²àª¾àª²à«€ àª°à«‚àª¾. ${u(ob.ob_brkamt,'80px')}
+      àªŸà«‡àª•à«àª¸ àª°à«‚àª¾. ${u('','60px')} àª¤àª¥àª¾ àªŸà«àª°àª¾àª¨à«àª¸àª«àª°àª¨à«‹/àª¡à«àª¯à«àª¨àª¾ àª°à«‚àª¾ ${u(ob.ob_rto,'80px')} àª®àª³à«€ àªŸà«‹àªŸàª² àª°à«‚àª¾ ${u(total,'100px')}
+      àª…àª‚àª•à«‡ àª°à«‚àª¾ ${u(numToWords(total),'220px')} àª®àª¾àª‚ àª‰àªªàª° àªœàª£àª¾àªµà«‡àª² àªªàª¾àª°à«àªŸà«€àª¨à«‡ àªµà«‡àªšàª¾àª£
+      àª†àªªà«‡àª² àª›à«‡. àª¤à«‡àª¨àª¾ àª¬àª¾àª¨àª¾ àªªà«‡àªŸà«‡ àª°à«‚àª¾. ${u(ob.ob_token,'100px')} àª…àª‚àª•à«‡ àª°à«‚àª¾. ${u(numToWords(ob.ob_token),'200px')}
+      àª°à«‹àª•àª¡àª¾/àªšà«‡àª• àª®àª³à«‡àª² àª›à«‡ àª¬àª¾àª•à«€ àª¨à«€àª•àª³àª¤àª¾ àª°à«‚àª¾ ${u(total&&ob.ob_token?total-Number(ob.ob_token):'','100px')} àª®à«‹àª¡àª¾àª®àª¾àª‚ àª®à«‹àª¡àª¾
+      àª¤àª¾ ${u(fmtDateDN(ob.ob_clrdate),'100px')} àª¸à«àª§à«€àª®àª¾àª‚ àªšà«‚àª•àª¤à«‡ àª¹àª¿àª¸àª¾àª¬à«‡ àª•àª°àªµàª¾àª¨àª¾ àª°àª¹à«‡àª¶à«‡.
+      àª—àª¾àª¡à«€àª¨àª¾ àª–àª°à«€àª¦-àªµà«‡àªšàª¾àª£ àªªà«‡àªŸà«‡ àª¨à«€àªšà«‡ àª²àª–à«‡àª² àª¶àª°àª¤à«‹ àª… àª®àª¨à«‡ àª¬àª‚àª¨à«‡ àªªàª¾àª°à«àªŸà«€àª àªµàª¾àª‚àªšà«‡àª² àª›à«‡. àª…àª¨à«‡ àª¬àª‚àª§àª¨ àª•àª°à«àª¤àª¾ àª°àª¹à«‡àª¶à«‡ àª¤à«‡ àªœàª¾àª£à«€àª¨à«‡ àª…àª®à«‡ àª¸àª¹à«€ àª•àª°à«‡àª² àª›à«‡.
     </div>
-    <div class="dn-head" style="margin-top:30px"><div class="dn-head-title" style="padding:4px 20px;font-size:16px;">શરતો - નિયમો</div></div>
+    <div class="dn-head" style="margin-top:30px"><div class="dn-head-title" style="padding:4px 20px;font-size:16px;">àª¶àª°àª¤à«‹ - àª¨àª¿àª¯àª®à«‹</div></div>
     <div class="dn-terms"><ul>
-      <li>સદર સોદો અમો બંને પાર્ટીએ રાજીખુશીથી સમજી વિચારી અક્કલ, હોશિયારીથી, બીનકેફીપણામાંથી કોઈનના ધાક ધમકી કે દબાણ વગર કર્યો છે.</li>
-      <li>સદર વાહનનો આજરોજ પહેલાનું કોઈ પણ પ્રકારનું આર.ટી.ઓ. ટેક્સ મેમો કે કોઇપણ પ્રકારનો બેન્ક કે પેઢીનું દેવું નીકળશે કે કોઈપણ પ્રકારનો પોલીસ કેસ કે સંબંધિત તમામ જવાબદારી તા. ........................................ સુધી તથા તમામ જવાબદારી વાહન વેચનારની રહેશે.</li>
-      <li>સદર વાહન અમોએ અમારી રીતે જોઈ, તપાસી અમારા ફોરમેન, ડ્રાઈવર, દલાલ વિગેરેને બરાબર ચારે તરફથી બતાવી રોડ ટેસ્ટ લઈ ચકાસણી કરી ખરીદ કરેલ છે.</li>
-      <li>સદર વાહનનો સોદો કોઈપણ સંજોગોમાં કેન્સલ થશે નહીં અને જો સોદો કેન્સલ થશે તો બાનાની આપેલી રકમ પરત મળશે નહીં.</li>
-      <li>સદર વાહનો કબજો આજ રોજ એટલે કે તા. <strong>${fmtDateDN(ob.ob_date)}</strong> (${getDayName(ob.ob_date,true)}) અને સમય........................................થી લેનાર પાર્ટીએ લીધેલ છે.</li>
-      <li>ગાડીના કિલોમીટરની કોઈ પણ જવાબદારી આપવામાં આવતી નથી. કાયદાકીય ક્ષેત્ર અમદાવાદ/........................................ રહેશે.</li>
+      <li>àª¸àª¦àª° àª¸à«‹àª¦à«‹ àª…àª®à«‹ àª¬àª‚àª¨à«‡ àªªàª¾àª°à«àªŸà«€àª àª°àª¾àªœà«€àª–à«àª¶à«€àª¥à«€ àª¸àª®àªœà«€ àªµàª¿àªšàª¾àª°à«€ àª…àª•à«àª•àª², àª¹à«‹àª¶àª¿àª¯àª¾àª°à«€àª¥à«€, àª¬à«€àª¨àª•à«‡àª«à«€àªªàª£àª¾àª®àª¾àª‚àª¥à«€ àª•à«‹àªˆàª¨àª¨àª¾ àª§àª¾àª• àª§àª®àª•à«€ àª•à«‡ àª¦àª¬àª¾àª£ àªµàª—àª° àª•àª°à«àª¯à«‹ àª›à«‡.</li>
+      <li>àª¸àª¦àª° àªµàª¾àª¹àª¨àª¨à«‹ àª†àªœàª°à«‹àªœ àªªàª¹à«‡àª²àª¾àª¨à«àª‚ àª•à«‹àªˆ àªªàª£ àªªà«àª°àª•àª¾àª°àª¨à«àª‚ àª†àª°.àªŸà«€.àª“. àªŸà«‡àª•à«àª¸ àª®à«‡àª®à«‹ àª•à«‡ àª•à«‹àª‡àªªàª£ àªªà«àª°àª•àª¾àª°àª¨à«‹ àª¬à«‡àª¨à«àª• àª•à«‡ àªªà«‡àª¢à«€àª¨à«àª‚ àª¦à«‡àªµà«àª‚ àª¨à«€àª•àª³àª¶à«‡ àª•à«‡ àª•à«‹àªˆàªªàª£ àªªà«àª°àª•àª¾àª°àª¨à«‹ àªªà«‹àª²à«€àª¸ àª•à«‡àª¸ àª•à«‡ àª¸àª‚àª¬àª‚àª§àª¿àª¤ àª¤àª®àª¾àª® àªœàªµàª¾àª¬àª¦àª¾àª°à«€ àª¤àª¾. ........................................ àª¸à«àª§à«€ àª¤àª¥àª¾ àª¤àª®àª¾àª® àªœàªµàª¾àª¬àª¦àª¾àª°à«€ àªµàª¾àª¹àª¨ àªµà«‡àªšàª¨àª¾àª°àª¨à«€ àª°àª¹à«‡àª¶à«‡.</li>
+      <li>àª¸àª¦àª° àªµàª¾àª¹àª¨ àª…àª®à«‹àª àª…àª®àª¾àª°à«€ àª°à«€àª¤à«‡ àªœà«‹àªˆ, àª¤àªªàª¾àª¸à«€ àª…àª®àª¾àª°àª¾ àª«à«‹àª°àª®à«‡àª¨, àª¡à«àª°àª¾àªˆàªµàª°, àª¦àª²àª¾àª² àªµàª¿àª—à«‡àª°à«‡àª¨à«‡ àª¬àª°àª¾àª¬àª° àªšàª¾àª°à«‡ àª¤àª°àª«àª¥à«€ àª¬àª¤àª¾àªµà«€ àª°à«‹àª¡ àªŸà«‡àª¸à«àªŸ àª²àªˆ àªšàª•àª¾àª¸àª£à«€ àª•àª°à«€ àª–àª°à«€àª¦ àª•àª°à«‡àª² àª›à«‡.</li>
+      <li>àª¸àª¦àª° àªµàª¾àª¹àª¨àª¨à«‹ àª¸à«‹àª¦à«‹ àª•à«‹àªˆàªªàª£ àª¸àª‚àªœà«‹àª—à«‹àª®àª¾àª‚ àª•à«‡àª¨à«àª¸àª² àª¥àª¶à«‡ àª¨àª¹à«€àª‚ àª…àª¨à«‡ àªœà«‹ àª¸à«‹àª¦à«‹ àª•à«‡àª¨à«àª¸àª² àª¥àª¶à«‡ àª¤à«‹ àª¬àª¾àª¨àª¾àª¨à«€ àª†àªªà«‡àª²à«€ àª°àª•àª® àªªàª°àª¤ àª®àª³àª¶à«‡ àª¨àª¹à«€àª‚.</li>
+      <li>àª¸àª¦àª° àªµàª¾àª¹àª¨à«‹ àª•àª¬àªœà«‹ àª†àªœ àª°à«‹àªœ àªàªŸàª²à«‡ àª•à«‡ àª¤àª¾. <strong>${fmtDateDN(ob.ob_date)}</strong> (${getDayName(ob.ob_date,true)}) àª…àª¨à«‡ àª¸àª®àª¯........................................àª¥à«€ àª²à«‡àª¨àª¾àª° àªªàª¾àª°à«àªŸà«€àª àª²à«€àª§à«‡àª² àª›à«‡.</li>
+      <li>àª—àª¾àª¡à«€àª¨àª¾ àª•àª¿àª²à«‹àª®à«€àªŸàª°àª¨à«€ àª•à«‹àªˆ àªªàª£ àªœàªµàª¾àª¬àª¦àª¾àª°à«€ àª†àªªàªµàª¾àª®àª¾àª‚ àª†àªµàª¤à«€ àª¨àª¥à«€. àª•àª¾àª¯àª¦àª¾àª•à«€àª¯ àª•à«àª·à«‡àª¤à«àª° àª…àª®àª¦àª¾àªµàª¾àª¦/........................................ àª°àª¹à«‡àª¶à«‡.</li>
     </ul></div>
     <div class="dn-signs">
-      <div class="dn-sign-block"><div style="margin-bottom:30px">વાહન વેચનારની સહી <span class="dn-sign-line"></span></div><div>સાક્ષીની સહી <span class="dn-sign-line"></span></div></div>
-      <div class="dn-sign-block"><div style="margin-bottom:30px">વાહન લેનારની સહી <span class="dn-sign-line"></span></div><div>સાક્ષીની સહી <span class="dn-sign-line"></span></div></div>
+      <div class="dn-sign-block"><div style="margin-bottom:30px">àªµàª¾àª¹àª¨ àªµà«‡àªšàª¨àª¾àª°àª¨à«€ àª¸àª¹à«€ <span class="dn-sign-line"></span></div><div>àª¸àª¾àª•à«àª·à«€àª¨à«€ àª¸àª¹à«€ <span class="dn-sign-line"></span></div></div>
+      <div class="dn-sign-block"><div style="margin-bottom:30px">àªµàª¾àª¹àª¨ àª²à«‡àª¨àª¾àª°àª¨à«€ àª¸àª¹à«€ <span class="dn-sign-line"></span></div><div>àª¸àª¾àª•à«àª·à«€àª¨à«€ àª¸àª¹à«€ <span class="dn-sign-line"></span></div></div>
     </div>
   </div>`;
   printDocument('DN-' + (ob.obId || ob.ob_clid || ob.ob_inqid || 'Draft'), html, DN_CSS, null, true);
@@ -624,7 +624,7 @@ function ExpansionPanel({ inq, val, pfu, pcl, ob, doc, stk }) {
             <div style={{ display: 'flex', gap: 5, marginTop: 10, flexWrap: 'wrap' }}>
               {[
                 { label: 'OB Form',  fn: () => printObBooking(ob) },
-                { label: 'DN (ગુજ)', fn: () => printDnGuj(ob)     },
+                { label: 'DN (àª—à«àªœ)', fn: () => printDnGuj(ob)     },
                 { label: 'DN (Eng)', fn: () => printDnEng(ob)     },
               ].map(({ label, fn }) => (
                 <button key={label} onClick={fn} style={{
@@ -769,7 +769,7 @@ const PurchaseSearch = () => {
     const msg = `Permanently delete ALL data for:\n\n${inq.inqId} — ${inq.sellerName}\n${inq.make} ${inq.model}`
       + (linked.length ? `\n\nAlso deletes: ${linked.join(', ')}` : '')
       + '\n\nThis CANNOT be undone.';
-    if (!window.confirm(msg)) return;
+    if (!await window.confirm(msg)) return;
     try {
       await Promise.all([
         deleteRecord('pur_inq', inq.id),
@@ -818,7 +818,7 @@ const PurchaseSearch = () => {
   const handleStartOver = async () => {
     if (!resumeTarget) return;
     const { inq } = resumeTarget;
-    if (!window.confirm(
+    if (!await window.confirm(
       `Reset ${inq.inqId} back to Inquiry stage?\n\nLinked stage records (Valuation, Follow-Up, etc.) are kept but the inquiry stage resets to 'Inquiry'.`
     )) return;
     try {

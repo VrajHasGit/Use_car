@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -65,7 +65,7 @@ const PurchaseCloser = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete?')) return;
+    if (!await window.confirm('Delete?')) return;
     try { await deleteRecord('pcl', rec.id); await refresh('pcl'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); }
   };
 
@@ -88,7 +88,7 @@ const PurchaseCloser = () => {
   };
 
   const handleSendToStock = async (rec) => {
-    if (!window.confirm(`Send ${rec.pc_regn || rec.regNo || 'this vehicle'} to Car Stock?`)) return;
+    if (!await window.confirm(`Send ${rec.pc_regn || rec.regNo || 'this vehicle'} to Car Stock?`)) return;
     try {
       const cnt = await getNextCounter('stk');
       const stkId = genId('STK', cnt);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { useData } from '../../contexts/DataContext';
@@ -182,7 +182,7 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   };
 
   const handleSaveAndSendToCloser = async () => {
-    if (!window.confirm('Save changes and send this inquiry to closer?')) return;
+    if (!await window.confirm('Save changes and send this inquiry to closer?')) return;
     setSaving(true);
     try {
       const newFollowUps = [...formData.followUps];

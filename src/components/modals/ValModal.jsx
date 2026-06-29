@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { addRecord, updateRecord, getNextCounter } from '../../services/db';
 import { genId, today } from '../../utils/helpers';
@@ -153,7 +153,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     const media = formData.v_media || [];
     const item = media[index];
     if (!item) return;
-    if (!window.confirm(`Delete ${item.name}?`)) return;
+    if (!await window.confirm(`Delete ${item.name}?`)) return;
 
     // If it has a docId, it's saved in Firestore — delete it
     if (item.docId && editData?.id) {

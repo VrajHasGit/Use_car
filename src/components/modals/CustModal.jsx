@@ -33,7 +33,7 @@ export const CustModal = ({ isOpen, onClose, onSave, editData }) => {
 
   return (
     <div className="overlay" id="m_cust">
- <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">ðŸ‘¥</div><h3>Customer</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
+ <div className="mbox"><div className="m-hdr"><div className="m-hdr-icon">👥</div><h3>Customer</h3><button className="m-close" onClick={onClose} >✕</button></div>
  <div className="m-body">
   <div className="grid2"><div className="fg"><label>Customer Type</label><select id="cu_type" name="cu_type" value={formData['cu_type'] || ''} onChange={handleChange}><option>Buyer</option><option>Seller</option></select></div><div className="fg"><label>Full Name *</label><input id="cu_name" name="cu_name" value={formData['cu_name'] || ''} onChange={handleChange} placeholder="Full name" /></div></div>
   <div className="grid3"><div className="fg"><label>Mobile *</label><input id="cu_mob" name="cu_mob" value={formData['cu_mob'] || ''} onChange={handleChange} type="tel" placeholder="Primary" /></div><div className="fg"><label>Alt Mobile</label><input id="cu_amob" name="cu_amob" value={formData['cu_amob'] || ''} onChange={handleChange} type="tel" placeholder="10 digit (optional)" maxLength="10"  pattern="[0-9]{10}" /></div><div className="fg"><label>Email</label><input id="cu_email" name="cu_email" value={formData['cu_email'] || ''} onChange={handleChange} type="email" placeholder="Email" /></div></div>
@@ -97,7 +97,7 @@ export const CustModal = ({ isOpen, onClose, onSave, editData }) => {
 <option>Kamrej</option>
 <option>Other</option>
 </select></div><div className="fg"><label>State</label><input id="cu_state" name="cu_state" value={formData['cu_state'] || ''} onChange={handleChange} placeholder="State" value="Gujarat" readOnly style={{"background":"rgba(16,185,129,.08)","borderColor":"var(--success)","color":"var(--success)","fontWeight":"600"}} /></div><div className="fg"><label>Pincode</label><input id="cu_pin" name="cu_pin" value={formData['cu_pin'] || ''} onChange={handleChange} placeholder="Pincode" /></div></div>
-  <div className="grid1"><div className="fg"><label>Address</label><textarea id="cu_addr" name="cu_addr" value={formData['cu_addr'] || ''} onChange={handleChange} placeholder="Full addressâ€¦"></textarea></div></div>
+  <div className="grid1"><div className="fg"><label>Address</label><textarea id="cu_addr" name="cu_addr" value={formData['cu_addr'] || ''} onChange={handleChange} placeholder="Full address…"></textarea></div></div>
  </div>
  <div className="m-foot"><button className="btn btn-out"  onClick={onClose}>Cancel</button><button className="btn btn-or" onClick={handleSave} ><i className="fa fa-save"></i> Save</button></div></div>
 </div>

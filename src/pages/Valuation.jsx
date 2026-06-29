@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -127,13 +127,13 @@ const Valuation = () => {
 
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete valuation?`)) return;
+    if (!await window.confirm(`Delete valuation?`)) return;
     try { await deleteRecord('val', rec.id); await refresh('val'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
   const valToFU = async (r) => {
-    if (!window.confirm(`Send ${r.sellerName || r.v_cname || 'this'}'s valuation to Purchase Follow-up?`)) return;
+    if (!await window.confirm(`Send ${r.sellerName || r.v_cname || 'this'}'s valuation to Purchase Follow-up?`)) return;
     try {
       const pfCnt = await getNextCounter('pfu');
       await addRecord('pfu', {

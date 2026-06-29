@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -75,10 +75,10 @@ const PurchaseDocuments = () => {
       }
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
-  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('doc', rec.id); await refresh('doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  const handleDelete = async (rec) => { if (!await window.confirm('Delete?')) return; try { await deleteRecord('doc', rec.id); await refresh('doc'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   
   const handleSendToBooking = async (rec) => {
-    if (!window.confirm(`Create Order Booking for ${rec.dc_regn || 'this vehicle'}?`)) return;
+    if (!await window.confirm(`Create Order Booking for ${rec.dc_regn || 'this vehicle'}?`)) return;
     try {
       const cleanRegn = (s) => (s || '').replace(/[\s-]/g, '').toLowerCase();
       const pfu = (data.pfu || []).find(p => {

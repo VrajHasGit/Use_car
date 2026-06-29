@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -55,7 +55,7 @@ const SalesFollowUp = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete this follow-up record?')) return;
+    if (!await window.confirm('Delete this follow-up record?')) return;
     try { await deleteRecord('sfu', rec.id); await refresh('sfu'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
@@ -67,7 +67,7 @@ const SalesFollowUp = () => {
   };
 
   const handleSendToCloser = async (rec) => {
-    if (!window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Closer?`)) return;
+    if (!await window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Closer?`)) return;
     try {
       // Update follow-up status
       await updateRecord('sfu', rec.id, { sf_stat: 'Closed-Won' });

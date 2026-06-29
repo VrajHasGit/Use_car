@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -123,7 +123,7 @@ const Expenses = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete expense "${rec.description}"?\n\nThis cannot be undone.`)) return;
+    if (!await window.confirm(`Delete expense "${rec.description}"?\n\nThis cannot be undone.`)) return;
     try { await deleteRecord('exp_rec', rec.id); await refresh('exp_rec'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
@@ -145,7 +145,7 @@ const Expenses = () => {
 
   const handleReimburse = async (rec) => {
     if (rec.status !== 'Approved') return showToast('Expense must be Approved before marking as Reimbursed.', 'error');
-    if (!window.confirm(`Mark expense "${rec.description}" as Reimbursed?`)) return;
+    if (!await window.confirm(`Mark expense "${rec.description}" as Reimbursed?`)) return;
     try {
       await updateRecord('exp_rec', rec.id, { status: 'Reimbursed', reimbursedAt: new Date().toISOString(), reimbursedBy: currentUser?.name });
       await refresh('exp_rec'); showToast('Marked as Reimbursed! 💰');

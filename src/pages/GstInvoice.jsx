@@ -30,7 +30,7 @@ const GstInvoice = () => {
       await refresh('gst_inv'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
-  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('gst_inv', rec.id); await refresh('gst_inv'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  const handleDelete = async (rec) => { if (!await window.confirm('Delete?')) return; try { await deleteRecord('gst_inv', rec.id); await refresh('gst_inv'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   return (
     <div className="page on" id="pg_gstinvoice">
       {toast && <div className="toast-wrap"><div className={`toast ${toast.type==='success'?'suc':'err'}`} style={{display:'flex'}}><span style={{flex:1}}>{toast.msg}</span><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'inherit',cursor:'pointer'}}>✕</button></div></div>}

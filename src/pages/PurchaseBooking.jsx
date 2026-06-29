@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -74,7 +74,7 @@ const PurchaseBooking = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete this order booking?')) return;
+    if (!await window.confirm('Delete this order booking?')) return;
     try {
       await deleteRecord('ob', rec.id);
       await refresh('ob');
@@ -85,7 +85,7 @@ const PurchaseBooking = () => {
   };
 
   const handleSendToCloser = async (rec) => {
-    if (!window.confirm(`Send Order Booking for ${rec.ob_cname || 'this vehicle'} to Purchase Closer?`)) return;
+    if (!await window.confirm(`Send Order Booking for ${rec.ob_cname || 'this vehicle'} to Purchase Closer?`)) return;
     try {
       const cnt = await getNextCounter('pcl');
       const pclId = genId('PCL', cnt);

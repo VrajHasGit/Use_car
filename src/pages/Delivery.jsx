@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -33,7 +33,7 @@ const Delivery = () => {
       await refresh('del'); setIsModalOpen(false);
     } catch(e) { showToast('Failed: '+e.message, 'error'); }
   };
-  const handleDelete = async (rec) => { if (!window.confirm('Delete?')) return; try { await deleteRecord('del', rec.id); await refresh('del'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
+  const handleDelete = async (rec) => { if (!await window.confirm('Delete?')) return; try { await deleteRecord('del', rec.id); await refresh('del'); showToast('Deleted.', 'info'); } catch(e) { showToast('Delete failed.', 'error'); } };
   
   const handlePrintRecord = (r) => {
     setEditRec(r);

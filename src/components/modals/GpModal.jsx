@@ -44,7 +44,7 @@ export const GpModal = ({ isOpen, onClose, onSave, editData }) => {
   return (
     <div className="overlay" id="m_gp">
  <div className="mbox" style={{"maxWidth":"780px"}}>
-  <div className="m-hdr"><div className="m-hdr-icon">ðŸšª</div><h3>Gate Pass</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
+  <div className="m-hdr"><div className="m-hdr-icon">🚪</div><h3>Gate Pass</h3><button className="m-close" onClick={onClose} >✕</button></div>
   <div className="m-body">
    <div className="grid3">
     <div className="fg"><label>Gate Pass No.</label><input id="gp_id" name="gp_id" value={formData['gp_id'] || ''} onChange={handleChange} placeholder="GP-2025-0001" readOnly /></div>
@@ -52,7 +52,7 @@ export const GpModal = ({ isOpen, onClose, onSave, editData }) => {
     <div className="fg"><label>Purpose *</label><select id="gp_purpose" name="gp_purpose" value={formData['gp_purpose'] || ''} onChange={handleChange} ><option>Sale Delivery</option><option>Test Drive</option><option>Workshop</option><option>RTO</option><option>Insurance</option><option>Other</option></select></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>Booking/Ref ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>âš¡ Auto-Fill</span></label><input id="gp_refid" name="gp_refid" value={formData['gp_refid'] || ''} onChange={handleChange} placeholder="SOB-2025-0001"  /></div>
+    <div className="fg"><label>Booking/Ref ID <span style={{"color":"var(--or1)","fontSize":"10px"}}>⚡ Auto-Fill</span></label><input id="gp_refid" name="gp_refid" value={formData['gp_refid'] || ''} onChange={handleChange} placeholder="SOB-2025-0001"  /></div>
     <div className="fg"><label>Registration No. *</label><input id="gp_regn" name="gp_regn" value={formData['gp_regn'] || ''} onChange={handleChange} placeholder="GJ-01-AB-1234" style={{"fontWeight":"700","color":"var(--or2)"}} /></div>
     <div className="fg"><label>Make / Model</label><input id="gp_mm" name="gp_mm" value={formData['gp_mm'] || ''} onChange={handleChange} placeholder="Maruti Swift VXI" /></div>
    </div>

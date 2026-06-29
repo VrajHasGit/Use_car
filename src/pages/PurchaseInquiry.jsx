@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -131,7 +131,7 @@ const PurchaseInquiry = () => {
 
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete inquiry for ${rec.sellerName}?`)) return;
+    if (!await window.confirm(`Delete inquiry for ${rec.sellerName}?`)) return;
     try {
       await deleteRecord('pur_inq', rec.id);
       await refresh('pur_inq');
@@ -162,7 +162,7 @@ const PurchaseInquiry = () => {
   };
 
   const handleShiftToValuation = async (inq) => {
-    if (!window.confirm(`Send ${inq.sellerName}'s inquiry to Valuation?`)) return;
+    if (!await window.confirm(`Send ${inq.sellerName}'s inquiry to Valuation?`)) return;
     try {
       const valCnt = await getNextCounter('val');
       const valId = genId('VAL', valCnt);

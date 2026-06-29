@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -77,7 +77,7 @@ const Targets = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete target?')) return;
+    if (!await window.confirm('Delete target?')) return;
     try { await deleteRecord('targets', rec.id); await refresh('targets'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };

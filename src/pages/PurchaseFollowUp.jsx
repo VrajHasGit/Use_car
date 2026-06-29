@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -122,7 +122,7 @@ const PurchaseFollowUp = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete?')) return;
+    if (!await window.confirm('Delete?')) return;
     try { await deleteRecord('pfu', rec.id); await refresh('pfu'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
@@ -249,7 +249,7 @@ const PurchaseFollowUp = () => {
   };
 
   const handleSendToCloser = async (rec) => {
-    if (!window.confirm('Send this inquiry to closer?')) return;
+    if (!await window.confirm('Send this inquiry to closer?')) return;
     try {
       await updateRecord('pfu', rec.id, { pf_stat: 'Closed-Won', stage: 'Closer' });
       const inqRec = data.pur_inq?.find(i => i.inqId === rec.pf_inqid);
@@ -298,7 +298,7 @@ const PurchaseFollowUp = () => {
   };
 
   const handleVerifyDocs = async (rec) => {
-    if (!window.confirm('Send this inquiry to verify documents?')) return;
+    if (!await window.confirm('Send this inquiry to verify documents?')) return;
     try {
       await updateRecord('pfu', rec.id, { pf_stat: 'Closed-Won', stage: 'Closer' });
       const inqRec = data.pur_inq?.find(i => i.inqId === rec.pf_inqid);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -40,13 +40,13 @@ const SalesBooking = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm('Delete this booking?')) return;
+    if (!await window.confirm('Delete this booking?')) return;
     try { await deleteRecord('sob', rec.id); await refresh('sob'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
   const handleMarkDelivered = async (rec) => {
-    if (!window.confirm(`Mark ${rec.sob_cname || rec.buyerName}'s booking as Delivered?`)) return;
+    if (!await window.confirm(`Mark ${rec.sob_cname || rec.buyerName}'s booking as Delivered?`)) return;
     try {
       await updateRecord('sob', rec.id, { status: 'Delivered' });
 

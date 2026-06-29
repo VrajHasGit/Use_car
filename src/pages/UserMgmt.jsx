@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth, toEmail } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -157,7 +157,7 @@ const UserMgmt = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Deactivate user "${rec.name}"? They will no longer be able to login.`)) return;
+    if (!await window.confirm(`Deactivate user "${rec.name}"? They will no longer be able to login.`)) return;
     try {
       // Soft-delete: set status to Inactive (can't delete Firebase Auth accounts from client SDK)
       await updateRecord('users', rec.id, { status: 'Inactive' });
