@@ -9,75 +9,6 @@ import { exportToExcel } from '../utils/exportData';
 
 const PAGE_SIZE = 20;
 
-/* ── Job Task Checklist (expand panel) ───────────── */
-function JobExpandPanel({ rec, onUpdateTasks, onReadyToList }) {
-  const [newTask, setNewTask] = useState('');
-  const tasks = rec.tasks || [];
-
-  const toggleTask = async (idx) => {
-    const updated = tasks.map((t, i) => i === idx ? { ...t, done: !t.done } : t);
-    await onUpdateTasks(rec.id, updated);
-  };
-  const addTask = async () => {
-    if (!newTask.trim()) return;
-    const updated = [...tasks, { label: newTask.trim(), done: false, addedAt: today() }];
-    await onUpdateTasks(rec.id, updated);
-    setNewTask('');
-  };
-
-  const done = tasks.filter(t => t.done).length;
-  const total = tasks.length;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  return (
-    <div className="job-expand open">
-      {/* Progress bar */}
-      {total > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text3)', marginBottom: 4 }}>
-            <span>Job Progress</span><span style={{ fontWeight: 700, color: pct === 100 ? 'var(--success)' : 'var(--text2)' }}>{done}/{total} tasks done ({pct}%)</span>
-          </div>
-          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-            <div style={{ height: 4, background: pct === 100 ? 'var(--success)' : 'var(--or1)', borderRadius: 2, width: `${pct}%`, transition: 'width .3s' }}></div>
-          </div>
-        </div>
-      )}
-      {/* Task list */}
-      {tasks.length === 0 ? (
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 10, textAlign: 'center' }}>
-          <i className="fa fa-list-check" style={{ fontSize: 16, opacity: .3, display: 'block', marginBottom: 4 }}></i>
-          No tasks added yet
-        </div>
-      ) : (
-        <div style={{ marginBottom: 10 }}>
-          {tasks.map((t, i) => (
-            <div key={i} className={`job-task-item ${t.done ? 'done' : ''}`}>
-              <div className={`job-task-cb ${t.done ? 'done' : ''}`} onClick={() => toggleTask(i)}>
-                {t.done && <i className="fa fa-check" style={{ fontSize: 8 }}></i>}
-              </div>
-              <span style={{ flex: 1, fontSize: 12, textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--text3)' : 'var(--text)' }}>{t.label}</span>
-              {t.addedAt && <span style={{ fontSize: 9, color: 'var(--text3)' }}>{t.addedAt}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-      {/* Inline add */}
-      <div className="inline-add-row">
-        <input value={newTask} onChange={e => setNewTask(e.target.value)} placeholder="Add task (e.g. Polish bumper)…"
-          onKeyDown={e => e.key === 'Enter' && addTask()} />
-        <button className="btn btn-or btn-sm" onClick={addTask} disabled={!newTask.trim()}><i className="fa fa-plus"></i></button>
-      </div>
-      {/* Ready to List */}
-      {!rec.readyToList && (
-        <button className="btn" style={{ marginTop: 12, background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', width: '100%', border: '1px solid #047857', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
-          onClick={() => onReadyToList(rec)}>
-          <i className="fa fa-wand-magic-sparkles" style={{ color: '#FFD700', marginRight: '6px' }}></i> ✨ Finalize & Release to Showroom
-        </button>
-      )}
-    </div>
-  );
-}
-
 /* ── Paginate ────────────────────────────────────── */
 function Paginate({ total, page, setPage }) {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -105,7 +36,6 @@ const Workshop = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
   const [toast, setToast] = useState(null);
   const [page, setPage] = useState(1);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
@@ -170,11 +100,6 @@ const Workshop = () => {
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
-  const handleUpdateTasks = async (id, tasks) => {
-    try { await updateRecord('ws', id, { tasks }); await refresh('ws'); }
-    catch (e) { showToast('Failed to update tasks.', 'error'); }
-  };
-
   const handleReadyToList = async (rec) => {
     // Cross-update matching stock record
     const stkRec = stock.find(s => s.regNo === (rec.ws_vnum || rec.regNo) || s.stkId === (rec.ws_stkid || rec.linkedStk));
@@ -200,8 +125,7 @@ const Workshop = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
       'Job ID': r.wsId, 'Date': r.date || r.ws_indate, 'Reg No': r.ws_vnum || r.regNo, Make: r.ws_make || r.make, Model: r.ws_model || r.model,
-      'Job Type': r.ws_wtype || r.jobType, 'Total Cost (INR)': r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0)), 'Technician': r.ws_tech || r.tech || '',
-      'Tasks Count': (r.tasks || []).length, 'Tasks Done': (r.tasks || []).filter(t => t.done).length,
+      'Total Cost (INR)': r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0)), 'Technician': r.ws_tech || r.tech || '',
       Status: r.ws_jstat || r.jStat, Notes: r.ws_rem || r.notes || '',
     }));
     exportToExcel(rows, `workshop_jobs_${today()}.xlsx`);
@@ -279,52 +203,27 @@ const Workshop = () => {
           <table id="tbl_ws">
             <thead>
               <tr>
-                <th style={{ width: 32 }}></th>
                 <th>Job ID</th><th>Inq ID</th><th>Date</th><th>Reg No.</th><th>Vehicle</th>
-                <th>Job Type</th><th>Cost</th><th>Tasks</th><th>Status</th><th>Notes</th>
+                <th>Total Cost</th><th>Status</th><th>Notes</th>
                 <th style={{ minWidth: 160 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length > 0 ? paginated.map(r => {
-                const tasks = r.tasks || [];
-                const done = tasks.filter(t => t.done).length;
-                const isExpanded = expandedId === r.id;
                 return (
                   <React.Fragment key={r.id}>
                     <tr>
-                      <td>
-                        <button onClick={() => setExpandedId(isExpanded ? null : r.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 11, transition: '.2s', transform: isExpanded ? 'rotate(90deg)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 4 }}>
-                          <i className="fa fa-chevron-right"></i>
-                        </button>
-                      </td>
                       <td style={{ fontWeight: 700, color: 'var(--warn)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.wsId || `JC-${String(Array.from(r.id || '').reduce((a,c) => a + c.charCodeAt(0), 0)).padStart(4, '0')}`}</td>
                       <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.ws_inqid || '—'}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.date || r.ws_indate)}</td>
                       <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.ws_vnum || r.regNo}</td>
                       <td>{r.ws_make || r.make} {r.ws_model || r.model}</td>
-                      <td>{r.ws_wtype || r.jobType || '—'}</td>
                       <td className="amt-or">{fmt(r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0)))}</td>
-                      <td>
-                        {tasks.length > 0 ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 48, height: 4, background: 'var(--border)', borderRadius: 2 }}>
-                              <div style={{ height: 4, background: done === tasks.length ? 'var(--success)' : 'var(--or1)', borderRadius: 2, width: `${Math.round(done / tasks.length * 100)}%` }}></div>
-                            </div>
-                            <span style={{ fontSize: 10, color: 'var(--text3)' }}>{done}/{tasks.length}</span>
-                          </div>
-                        ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>—</span>}
-                      </td>
                       <td><span className={`badge ${(r.ws_jstat || r.jStat) === 'Open' ? 'b-open' : (r.ws_jstat || r.jStat) === 'In Process' ? 'b-prog' : 'b-complete'}`}>{r.ws_jstat || r.jStat}</span></td>
                       <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.ws_prob || r.ws_rem || r.notes}>{r.ws_prob || r.ws_rem || r.notes || '—'}</td>
                       <td>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                           <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                          <button className="btn-icon" title="Tasks / Expand" onClick={() => setExpandedId(isExpanded ? null : r.id)}
-                            style={{ background: isExpanded ? 'rgba(200,168,75,.15)' : 'rgba(74,124,222,.1)', color: isExpanded ? 'var(--or1)' : 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <i className={`fa fa-${isExpanded ? 'chevron-up' : 'list-check'}`}></i>
-                          </button>
                           {isManager && !r.readyToList && (
                             <button title="Finalize & Release to Showroom" onClick={() => handleReadyToList(r)}
                               style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', width: 28, height: 28, borderRadius: 5, border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
@@ -336,17 +235,10 @@ const Workshop = () => {
                         </div>
                       </td>
                     </tr>
-                    {isExpanded && (
-                      <tr style={{ background: 'var(--surface2)' }}>
-                        <td colSpan="11" style={{ padding: 0 }}>
-                          <JobExpandPanel rec={r} onUpdateTasks={handleUpdateTasks} onReadyToList={handleReadyToList} />
-                        </td>
-                      </tr>
-                    )}
                   </React.Fragment>
                 );
               }) : (
-                <tr><td colSpan="11" className="empty">
+                <tr><td colSpan="9" className="empty">
                   <i className="fa fa-screwdriver-wrench"></i><br />
                   {search || statusFilter ? 'No results found.' : 'No workshop jobs yet. Click "Add Job" to begin.'}
                 </td></tr>

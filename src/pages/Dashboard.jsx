@@ -25,7 +25,7 @@ const Dashboard = () => {
     const pendingPur = pur_inq.filter(r => r.status === 'In-Progress').length;
     const pendingSal = sal_inq.filter(r => r.status === 'In-Progress').length;
     const totalPendFU = pur_inq.filter(r => r.stage !== 'Closed' && r.fu).length + sal_inq.filter(r => r.stage !== 'Closed' && r.fu).length;
-    const wsOpen = ws.filter(r => r.jStat === 'Open' || r.jStat === 'In Process').length;
+    const wsOpen = ws.filter(r => (r.ws_jstat || r.jStat) === 'Open' || (r.ws_jstat || r.jStat) === 'In Process').length;
     const totalDeals = scl.length + pcl.length;
     const avgAge = stk.length > 0
       ? Math.round(stk.reduce((a, r) => a + ageDays(r.pDate), 0) / stk.length)

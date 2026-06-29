@@ -20,18 +20,18 @@ const PurchaseDashboard = () => {
     won: pur.filter(r => r.status === 'Closed-Won').length,
     lost: pur.filter(r => r.status === 'Closed-Lost').length,
     stock: stk.filter(r => r.status === 'In Stock').length,
-    wsOpen: ws.filter(r => r.jStat === 'Open' || r.jStat === 'In Process').length,
+    wsOpen: ws.filter(r => (r.ws_jstat || r.jStat) === 'Open' || (r.ws_jstat || r.jStat) === 'In Process').length,
     valCount: val.length,
     totalPurchase: pcl.reduce((a, r) => a + (parseFloat(r.agreedPrice) || 0), 0),
     totalPaid: pay.filter(r => r.type === 'purchase').reduce((a, r) => a + (parseFloat(r.amount) || 0), 0),
-    totalWSCost: ws.reduce((a, r) => a + (parseFloat(r.totalCost) || 0), 0),
+    totalWSCost: ws.reduce((a, r) => a + (parseFloat(r.ws_est || r.total || (Number(r.ws_pc || 0) + Number(r.ws_lc || 0))) || 0), 0),
     avgPurchase: pcl.length > 0 ? pcl.reduce((a, r) => a + (parseFloat(r.agreedPrice) || 0), 0) / pcl.length : 0,
   }), [data]);
 
   const recentInq = useMemo(() => pur.slice(-5).reverse(), [pur]);
   const recentVal = useMemo(() => val.slice(-5).reverse(), [val]);
   const recentPcl = useMemo(() => pcl.slice(-5).reverse(), [pcl]);
-  const wsJobs = useMemo(() => ws.filter(r => r.jStat === 'Open' || r.jStat === 'In Process').slice(0, 5), [ws]);
+  const wsJobs = useMemo(() => ws.filter(r => (r.ws_jstat || r.jStat) === 'Open' || (r.ws_jstat || r.jStat) === 'In Process').slice(0, 5), [ws]);
   const stockList = useMemo(() => stk.filter(r => r.status === 'In Stock' || r.status === 'Refurb').slice(0, 8), [stk]);
 
   const ageDays = (dateStr) => {
@@ -196,10 +196,10 @@ const PurchaseDashboard = () => {
               <tbody>
                 {wsJobs.length > 0 ? wsJobs.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/workshop')}>
-                    <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 11 }}>{r.jobId || r.id?.slice(0, 10)}</td>
-                    <td>{r.make} {r.model}</td>
-                    <td>{r.workType || '—'}</td>
-                    <td><span className={`badge ${statusBadge(r.jStat)}`}>{r.jStat}</span></td>
+                    <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 11 }}>{r.wsId || r.jobId || r.id?.slice(0, 10)}</td>
+                    <td>{r.ws_make || r.make} {r.ws_model || r.model}</td>
+                    <td>{r.ws_wtype || r.wtype || '—'}</td>
+                    <td><span className={`badge ${statusBadge(r.ws_jstat || r.jStat)}`}>{r.ws_jstat || r.jStat || '—'}</span></td>
                   </tr>
                 )) : <tr><td colSpan="4" className="empty">No open workshop jobs</td></tr>}
               </tbody>

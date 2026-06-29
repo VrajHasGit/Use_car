@@ -408,7 +408,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           </div>
           <div className="grid2" style={{ marginTop: 14 }}>
             <div className="fg"><label>Token Paid ₹</label><input type="number" name="pc_tok" value={formData.pc_tok} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Remaining Balance ₹ (Auto)</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {remBal.toLocaleString()}</div></div>
+            <div className="fg"><label>Remaining Balance ₹ (Auto)</label><div className="calc-out" style={{ color: remBal > 0 ? 'var(--warn)' : 'var(--success)' }}>₹ {remBal.toLocaleString('en-IN')}</div></div>
           </div>
           {(formData.payments || []).map((pmt, idx) => (
             <div key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: idx < (formData.payments.length - 1) ? '1px dashed var(--border)' : 'none' }}>

@@ -9,8 +9,11 @@ import { StkModal } from '../components/modals/StkModal';
 import { WsModal } from '../components/modals/WsModal';
 import { VtModal } from '../components/modals/VtModal';
 import { QrModal } from '../components/modals/QrModal';
+import { StkPhotosModal } from '../components/modals/StkPhotosModal';
+import { QuotationModal } from '../components/modals/QuotationModal';
 import { exportToExcel } from '../utils/exportData';
 import { autoFillFromVal } from '../utils/relations';
+import { loadMediaFromFirestore } from '../utils/uploadMedia';
 
 const PAGE_SIZE = 20;
 
@@ -52,6 +55,25 @@ function Paginate({ total, page, setPage }) {
   );
 }
 
+function StkCardImage({ r }) {
+  const [frontUrl, setFrontUrl] = useState(null);
+  useEffect(() => {
+    loadMediaFromFirestore('stk', r.id).then(media => {
+      const front = media.find(m => m.name === 'Front');
+      if (front?.url) setFrontUrl(front.url);
+    }).catch(console.error);
+  }, [r.id]);
+
+  return (
+    <div className="stk-card-img" style={frontUrl ? { backgroundImage: `url(${frontUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+      {!frontUrl && <i className="fa fa-car-side" style={{ color: 'var(--text3)' }}></i>}
+      <div className="stk-status-overlay">
+        <span className={`badge ${statusBadge(r.status)}`}>{r.status}</span>
+      </div>
+    </div>
+  );
+}
+
 const Stock = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
@@ -66,6 +88,7 @@ const Stock = () => {
   const [yearTo, setYearTo] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [page, setPage] = useState(1);
+  const [quotRec, setQuotRec] = useState(null);
 
   React.useEffect(() => {
     const migrate = async () => {
@@ -85,6 +108,7 @@ const Stock = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quickModal, setQuickModal] = useState({ type: null, stkId: null });
   const [editRec, setEditRec] = useState(null);
+  const [photoModalRec, setPhotoModalRec] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
@@ -241,10 +265,11 @@ const Stock = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
       'Stock ID': r.stkId || r.id,
-      'Reg No': r.regNo, Make: r.make, Model: r.model, Year: r.year,
+      'Reg No': r.regNo, Make: r.make, Model: r.model, 'Mfg Year': r.year,
+      'Passing Year': r.ryear || r.sk_ryear || r.regYear || '',
       Variant: r.variant, Colour: r.color, Fuel: r.fuel, Transmission: r.trans,
-      'Odometer (km)': r.km, 'Asking Price (INR)': r.sp,
-      ...(isAdmin ? { 'Cost Price (INR)': r.tcp, 'Margin (INR)': r.profit } : {}),
+      'Odometer (km)': r.km, 'Insurance': r.sk_insval || r.insval || r.insVal ? (r.sk_insval || r.insval || r.insVal) : 'No', 'Location': r.loc || r.sk_loc || '',
+      ...(isAdmin ? { 'Selling Price (INR)': r.sp || r.sk_sp } : {}),
       Status: r.status, 'Purchase Date': r.pDate,
       'Days in Stock': r.pDate ? ageDays(r.pDate) : '',
     }));
@@ -281,6 +306,7 @@ const Stock = () => {
       <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} stockDocId={quickModal.docId} stockIdForWs={quickModal.stkId} />
       <VtModal isOpen={quickModal.type === 'vt'} onClose={closeQuickModal} stkId={quickModal.stkId} />
       <QrModal isOpen={quickModal.type === 'qr'} onClose={closeQuickModal} stkId={quickModal.stkId} />
+      <QuotationModal isOpen={!!quotRec} onClose={() => setQuotRec(null)} stockRec={quotRec} />
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -364,9 +390,9 @@ const Stock = () => {
             <table id="tbl_stk">
               <thead>
                 <tr>
-                  <th>Stock ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Year</th>
-                  <th>Fuel</th><th>Colour</th><th>KM</th>
-                  {isAdmin && <><th>TCP</th><th>Selling Price</th><th>Profit</th></>}
+                  <th>Stock ID</th><th>Inq ID</th><th>Reg No.</th><th>Make / Model</th><th>Mfg - Reg Year</th>
+                  <th>Fuel</th><th>Trans.</th><th>Colour</th><th>KM</th><th>Insurance</th><th>Location</th>
+                  {isAdmin && <><th>Selling Price</th></>}
                   <th>Days</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th>
                 </tr>
               </thead>
@@ -409,8 +435,9 @@ const Stock = () => {
                     </td>
                     <td style={{ fontWeight: 700, color: 'var(--or1)', fontFamily: "'Space Grotesk',sans-serif" }}>{rRegNo}</td>
                     <td><span style={{ fontWeight: 600 }}>{rMake}</span> {rModel}<br /><small style={{ color: 'var(--text3)' }}>{rVariant}</small></td>
-                    <td>{rYear}</td>
+                    <td>{(rYear || '—')} - {(r.ryear || r.sk_ryear || linkedInq?.ryear || linkedInq?.regYear || '—')}</td>
                     <td>{rFuel ? <span className="badge b-prog">{rFuel}</span> : '—'}</td>
+                    <td>{r.trans || r.sk_trans || linkedInq?.trans || linkedInq?.transmission || '—'}</td>
                     <td>
                       {rColor ? (
                         <div className="colour-dot">
@@ -420,10 +447,10 @@ const Stock = () => {
                       ) : '—'}
                     </td>
                     <td>{rKm ? `${Number(rKm).toLocaleString('en-IN')} km` : '—'}</td>
+                    <td>{r.insval || r.sk_insval || r.insVal || 'No'}</td>
+                    <td>{r.loc || r.sk_loc || '—'}</td>
                     {isAdmin && <>
-                      <td className="amt-or">{fmt(r.tcp || r.sk_tcp || (Number(r.sk_pp||r.pp||r.purchasePrice||0)+Number(r.sk_refurb||r.refurb||0)+Number(r.sk_rto||r.rto||0)+Number(r.sk_ins||r.ins||0)))}</td>
                       <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.sp || r.sk_sp)}</td>
-                      <td className={(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) > 0 ? 'profit-pos' : (r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) < 0 ? 'profit-neg' : ''}>{fmt(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0))))}</td>
                     </>}
                     <td><DaysInStock pDate={r.pDate || r.sk_pdate} /></td>
                     <td>
@@ -437,12 +464,14 @@ const Stock = () => {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gap: 6 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 28px)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
                         <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => handleSendToWorkshop(r)}><i className="fa fa-wrench"></i></button>
                         <button className="btn-icon bi-view" title="Vehicle History" onClick={() => setQuickModal({ type: 'vt', stkId: r.stkId || r.id })}><i className="fa fa-timeline"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.1)', color: 'var(--pink)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
                         <button className="btn-icon" style={{ background: 'rgba(37,99,235,.1)', color: 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="QR Code" onClick={() => setQuickModal({ type: 'qr', stkId: r.stkId || r.id })}><i className="fa fa-qrcode"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(200,168,75,.12)', color: '#B8860B', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Generate Quotation" onClick={() => setQuotRec(r)}><i className="fa fa-file-invoice-dollar"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>
@@ -476,15 +505,18 @@ const Stock = () => {
               <div className="stock-grid">
                 {paginated.map(r => (
                   <div key={r.id} className="stk-card">
-                    <div className="stk-card-img">
-                      <i className="fa fa-car-side" style={{ color: 'var(--text3)' }}></i>
-                      <div className="stk-status-overlay">
-                        <span className={`badge ${statusBadge(r.status)}`}>{r.status}</span>
-                      </div>
-                    </div>
+                    <StkCardImage r={r} />
                     <div className="stk-card-body">
                       <div className="stk-card-title">{r.make} {r.model}</div>
-                      <div className="stk-card-sub">{r.year} · {r.variant || 'Standard'}</div>
+                      <div className="stk-card-sub">
+                        <div style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 600 }}>{r.year} · {r.variant || 'Standard'}</div>
+                        <div style={{ marginTop: 8, display: 'flex', gap: '12px', flexWrap: 'wrap', color: 'var(--text2)', fontWeight: 500 }}>
+                          <span><i className="fa fa-id-card-clip" style={{opacity:0.6, marginRight: 4}}></i> {r.regNo || '—'}</span>
+                          <span><i className="fa fa-gauge" style={{opacity:0.6, marginRight: 4}}></i> {r.km ? `${Number(r.km).toLocaleString('en-IN')} km` : '—'}</span>
+                          <span><i className="fa fa-gear" style={{opacity:0.6, marginRight: 4}}></i> {r.trans || r.sk_trans || '—'}</span>
+                        </div>
+                        <div style={{ marginTop: 6, color: 'var(--text3)', fontSize: 10 }}>Stock ID: {r.stkId || r.id?.slice(0, 12)}</div>
+                      </div>
                       <div className="stk-card-price">{fmt(r.sp || r.sk_sp)}</div>
                       <div className="stk-card-pills">
                         {r.fuel && <span className="badge b-prog" style={{ fontSize: 9 }}>{r.fuel}</span>}
@@ -496,11 +528,13 @@ const Stock = () => {
                         )}
                         <DaysInStock pDate={r.pDate} />
                       </div>
-                    </div>
-                    <div className="stk-card-actions">
-                      <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                      {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.15)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                      <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      
+                      <div className="stk-card-actions">
+                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.15)', color: 'var(--success)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
+                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.15)', color: 'var(--pink)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -512,6 +546,19 @@ const Stock = () => {
             </>
           )}
         </>
+      )}
+
+      {/* Modals */}
+      {photoModalRec && (
+        <StkPhotosModal 
+          isOpen={true} 
+          onClose={() => setPhotoModalRec(null)} 
+          stkRec={photoModalRec} 
+          onSaved={() => {
+            showToast('Photos saved successfully!');
+            refresh('stk');
+          }}
+        />
       )}
     </div>
   );

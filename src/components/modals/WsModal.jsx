@@ -23,6 +23,10 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
       if (editData) {
         const properMake = MAKES.find(m => m.toLowerCase() === (editData.ws_make || '').toLowerCase()) || editData.ws_make || '';
         const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (editData.ws_model || '').toLowerCase()) || editData.ws_model || '';
+        const toTitleCase = (str) => {
+          if (!str) return str;
+          return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        };
         setFormData({
           ...editData,
           ws_make: properMake,
@@ -30,7 +34,9 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           ws_dp: editData.ws_dp || [],
           ws_mw: editData.ws_mw || [],
           ws_manager: editData.ws_manager || "",
-          ws_val_refurb: editData.ws_val_refurb || ""
+          ws_val_refurb: editData.ws_val_refurb || "",
+          ws_pstat: toTitleCase(editData.ws_pstat || editData.pStat || "Pending"),
+          ws_jstat: toTitleCase(editData.ws_jstat || editData.jStat || "Open")
         });
         setModelOptions(MODELS[properMake] || []);
         
@@ -254,7 +260,13 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     setSaving(true);
     try {
       if (onSave) {
-        await onSave(formData);
+        await onSave({
+          ...formData,
+          ws_lc: dpTotal,
+          ws_pc: mechTotal,
+          ws_est: dpTotal + mechTotal,
+          total: dpTotal + mechTotal
+        });
       } else {
         const { getNextCounter } = await import('../../services/db');
         const { genId } = await import('../../utils/helpers');
@@ -388,7 +400,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                       <td style={TD0}><input value={row.name} onChange={e => updateDpRow(i,'name',e.target.value)} placeholder="e.g. Hood paint, Bumper…" style={INPUT} /></td>
                       <td style={TD0}><input type="number" value={row.qty} onChange={e => updateDpRow(i,'qty',e.target.value)} placeholder="0" style={INPUT} /></td>
                       <td style={TD0}><input type="number" value={row.cost} onChange={e => updateDpRow(i,'cost',e.target.value)} placeholder="0" style={INPUT} /></td>
-                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString()}</td>
+                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString('en-IN')}</td>
                       <td style={{border:'1px solid var(--border)',textAlign:'center',padding:'4px'}}>
                         <button type="button" onClick={() => removeDpRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'14px',padding:'2px 5px',lineHeight:1}}>✕</button>
                       </td>
@@ -398,7 +410,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                   {dpRows.length > 0 && (
                     <tr style={{background:'var(--surface2)'}}>
                       <td colSpan={3} style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'12px',fontWeight:700,color:'var(--text3)'}}>Labour Cost (D&P Total)</td>
-                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {dpTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {dpTotal.toLocaleString('en-IN')}</td>
                       <td style={{border:'1px solid var(--border)'}}></td>
                     </tr>
                   )}
@@ -441,7 +453,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                       <td style={TD0}><input value={row.name} onChange={e => updateMwRow(i,'name',e.target.value)} placeholder="e.g. Engine oil, Brake pads…" style={INPUT} /></td>
                       <td style={TD0}><input type="number" value={row.qty} onChange={e => updateMwRow(i,'qty',e.target.value)} placeholder="0" style={INPUT} /></td>
                       <td style={TD0}><input type="number" value={row.cost} onChange={e => updateMwRow(i,'cost',e.target.value)} placeholder="0" style={INPUT} /></td>
-                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString()}</td>
+                      <td style={{...TD0,padding:'8px 10px',fontWeight:600,color:'var(--text)',fontSize:'13px'}}>₹ {rowTotal.toLocaleString('en-IN')}</td>
                       <td style={{border:'1px solid var(--border)',textAlign:'center',padding:'4px'}}>
                         <button type="button" onClick={() => removeMwRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'14px',padding:'2px 5px',lineHeight:1}}>✕</button>
                       </td>
@@ -451,7 +463,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                   {mwRows.length > 0 && (
                     <tr style={{background:'var(--surface2)'}}>
                       <td colSpan={3} style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'12px',fontWeight:700,color:'var(--text3)'}}>Estimated Cost (Mech Total)</td>
-                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {mechTotal.toLocaleString()}</td>
+                      <td style={{border:'1px solid var(--border)',padding:'8px 12px',fontSize:'13px',fontWeight:700,color:'var(--text)'}}>₹ {mechTotal.toLocaleString('en-IN')}</td>
                       <td style={{border:'1px solid var(--border)'}}></td>
                     </tr>
                   )}
@@ -468,13 +480,13 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
 
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Summary — AUTO</div>
           <div className="grid3">
-            <div className="fg"><label>Labour Cost ₹ (D&P — AUTO)</label><div className="calc-out">₹ {dpTotal.toLocaleString()}</div></div>
-            <div className="fg"><label>Estimated Cost ₹ (Mech — AUTO)</label><div className="calc-out">₹ {mechTotal.toLocaleString()}</div></div>
-            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out" style={{fontWeight:800,color:'var(--or1)'}}>₹ {grandTotal.toLocaleString()}</div></div>
+            <div className="fg"><label>Labour Cost ₹ (D&P — AUTO)</label><div className="calc-out">₹ {dpTotal.toLocaleString('en-IN')}</div></div>
+            <div className="fg"><label>Estimated Cost ₹ (Mech — AUTO)</label><div className="calc-out">₹ {mechTotal.toLocaleString('en-IN')}</div></div>
+            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out" style={{fontWeight:800,color:'var(--or1)'}}>₹ {grandTotal.toLocaleString('en-IN')}</div></div>
           </div>
           {formData.ws_val_refurb && (
             <div style={{marginBottom:'12px'}}>
-              <div className="fg"><label>Tentative Refurb Cost (By Valuator)</label><div className="calc-out" style={{background:'rgba(255,107,0,.08)',color:'var(--or1)',border:'1px dashed var(--or1)'}}>{`₹ ${Number(formData.ws_val_refurb).toLocaleString()}`}</div></div>
+              <div className="fg"><label>Tentative Refurb Cost (By Valuator)</label><div className="calc-out" style={{background:'rgba(255,107,0,.08)',color:'var(--or1)',border:'1px dashed var(--or1)'}}>{`₹ ${Number(formData.ws_val_refurb).toLocaleString('en-IN')}`}</div></div>
             </div>
           )}
           <div className="grid2">

@@ -81,6 +81,19 @@ export const autoFillFromDoc = async (docId) => {
   return doc;
 };
 
+// ─── Workshop auto-fill (used by: Stock) ───
+export const autoFillFromWs = async (stkId, regNo) => {
+  if (stkId) {
+    const ws = await findOne('ws', 'ws_stkid', stkId);
+    if (ws) return ws;
+  }
+  if (regNo) {
+    const ws = await findOne('ws', 'ws_vnum', regNo);
+    if (ws) return ws;
+  }
+  return null;
+};
+
 // ─── Legacy exports ───
 export const loadBrands = () => [
   'Maruti Suzuki','Hyundai','Tata','Honda','Toyota','Mahindra','Ford',

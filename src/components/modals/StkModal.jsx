@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useData } from '../../contexts/DataContext';
-import { autoFillFromInq, autoFillFromDoc } from '../../utils/relations';
+import { autoFillFromInq, autoFillFromDoc, autoFillFromWs } from '../../utils/relations';
 import { today } from '../../utils/helpers';
 import { MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
@@ -15,7 +15,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     sk_stat: "In Stock", sk_loc: "", sk_pdate: "", sk_insval: "",
     sk_rc: "Yes", sk_photos: "Yes", sk_pp: "", sk_refurb: "", sk_rto: "",
     sk_ins: "", sk_sp: "", sk_sp2: "", sk_sp3: "", sk_360: "No",
-    sk_portal: "No", sk_mkt: "None"
+    sk_portal: [], sk_mkt: "None"
   });
 
   const [modelOptions, setModelOptions] = useState([]);
@@ -57,6 +57,11 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_pdate: prev.sk_pdate || finalDate || today()
       }));
       setModelOptions(MODELS[inqData.make] || []);
+      
+      const wsData = await autoFillFromWs(null, inqData.regNo);
+      if (wsData && wsData.ws_est) {
+        setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+      }
     }
   };
 
@@ -79,6 +84,12 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_rc: docData.dc_rc ? 'Yes' : prev.sk_rc
       }));
       setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
+      
+      const regNo = docData.dc_regn || docData.ob_regn || docData.regNo;
+      const wsData = await autoFillFromWs(null, regNo);
+      if (wsData && wsData.ws_est) {
+        setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+      }
     }
   };
 
@@ -87,7 +98,12 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       if (editData) {
         const inqIdToUse = editData.sk_inqid || editData.inqId || '';
         const docIdToUse = editData.sk_docid || editData.docId || '';
-        setFormData({ ...editData, sk_inqid: inqIdToUse, sk_docid: docIdToUse });
+        setFormData({ 
+          ...editData, 
+          sk_inqid: inqIdToUse, 
+          sk_docid: docIdToUse,
+          sk_portal: Array.isArray(editData.sk_portal) ? editData.sk_portal : (editData.sk_portal && editData.sk_portal !== 'No' ? String(editData.sk_portal).split(',').map(s => s.trim()) : [])
+        });
         setModelOptions(MODELS[editData.sk_make] || []);
         if (inqIdToUse) applyAutoFillInq(inqIdToUse);
         if (docIdToUse) applyAutoFillDoc(docIdToUse);
@@ -105,9 +121,18 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           sk_stat: "In Stock", sk_loc: "", sk_pdate: new Date().toISOString().split('T')[0], sk_insval: "",
           sk_rc: "Yes", sk_photos: "Yes", sk_pp: "", sk_refurb: "", sk_rto: "",
           sk_ins: "", sk_sp: "", sk_sp2: "", sk_sp3: "", sk_360: "No",
-          sk_portal: "No", sk_mkt: "None"
+          sk_portal: [], sk_mkt: "None"
         });
         setModelOptions([]);
+      }
+      
+      // Auto-fetch refurb from workshop if it exists and refurb is empty
+      if (editData && editData.stkId && !editData.sk_refurb) {
+        autoFillFromWs(editData.stkId, editData.sk_regn || editData.regNo).then(wsData => {
+          if (wsData && wsData.ws_est) {
+            setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+          }
+        });
       }
     }
   }, [isOpen, editData, quickInqId, quickDocId]);
@@ -129,6 +154,16 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
     if (name === 'sk_inqid' && value.length >= 5) {
       applyAutoFillInq(value.toUpperCase());
+    }
+  };
+
+  const handlePortalChange = (e) => {
+    const { value, checked } = e.target;
+    let currentPortals = Array.isArray(formData.sk_portal) ? formData.sk_portal : [];
+    if (checked) {
+      setFormData(prev => ({ ...prev, sk_portal: [...currentPortals, value] }));
+    } else {
+      setFormData(prev => ({ ...prev, sk_portal: currentPortals.filter(p => p !== value) }));
     }
   };
 
@@ -317,26 +352,35 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           </div>
           <div className="grid3">
             <div className="fg"><label>Insurance Cost ₹</label><input type="number" name="sk_ins" value={formData.sk_ins} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Total Cost Price ₹ (AUTO)</label><div className="calc-out">₹ {tcp.toLocaleString()}</div></div>
+            <div className="fg"><label>Total Cost Price ₹ (AUTO)</label><div className="calc-out">₹ {tcp.toLocaleString('en-IN')}</div></div>
             <div className="fg"><label>Sale Price ₹</label><input type="number" name="sk_sp" value={formData.sk_sp} onChange={handleChange} placeholder="0" /></div>
           </div>
           <div className="grid3">
             <div className="fg"><label>2nd Price ₹ (Floor)</label><input type="number" name="sk_sp2" value={formData.sk_sp2} onChange={handleChange} placeholder="0" /></div>
             <div className="fg"><label>3rd Price ₹ (Minimum)</label><input type="number" name="sk_sp3" value={formData.sk_sp3} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Profit / Loss ₹ (AUTO)</label><div className="calc-out" style={{ color: profit < 0 ? 'var(--danger)' : 'var(--success)' }}>₹ {profit.toLocaleString()}</div></div>
+            <div className="fg"></div>
           </div>
           <div className="calc-panel">
-            <div className="calc-row"><span className="cl">Purchase Price</span><span>₹ {pp.toLocaleString()}</span></div>
-            <div className="calc-row"><span className="cl">+ Refurbishment</span><span>₹ {refurb.toLocaleString()}</span></div>
-            <div className="calc-row"><span className="cl">+ RTO Transfer</span><span>₹ {rto.toLocaleString()}</span></div>
-            <div className="calc-row"><span className="cl">+ Insurance</span><span>₹ {ins.toLocaleString()}</span></div>
-            <div className="calc-row"><span className="cl">= Total Cost</span><span>₹ {tcp.toLocaleString()}</span></div>
-            <div className="calc-row"><span className="cl">Sale Price</span><span>₹ {sp.toLocaleString()}</span></div>
-            <div className="calc-row"><span style={{color:"var(--or2)"}}>PROFIT / LOSS</span><span style={{color: profit < 0 ? 'var(--danger)' : 'var(--success)'}}>₹ {profit.toLocaleString()}</span></div>
+            <div className="calc-row"><span className="cl">Purchase Price</span><span>₹ {pp.toLocaleString('en-IN')}</span></div>
+            <div className="calc-row"><span className="cl">+ Refurbishment</span><span>₹ {refurb.toLocaleString('en-IN')}</span></div>
+            <div className="calc-row"><span className="cl">+ RTO Transfer</span><span>₹ {rto.toLocaleString('en-IN')}</span></div>
+            <div className="calc-row"><span className="cl">+ Insurance</span><span>₹ {ins.toLocaleString('en-IN')}</span></div>
+            <div className="calc-row"><span className="cl">= Total Cost</span><span>₹ {tcp.toLocaleString('en-IN')}</span></div>
+            <div className="calc-row"><span className="cl">Sale Price</span><span>₹ {sp.toLocaleString('en-IN')}</span></div>
           </div>
           <div className="grid3" style={{marginTop:"14px"}}>
             <div className="fg"><label>360° Video</label><select name="sk_360" value={formData.sk_360} onChange={handleChange}><option>No</option><option>Yes</option></select></div>
-            <div className="fg"><label>Listed on Portal</label><select name="sk_portal" value={formData.sk_portal} onChange={handleChange}><option>No</option><option>OLX</option><option>CarDekho</option><option>Cars24</option><option>All</option></select></div>
+            <div className="fg">
+              <label>Listed on Portal</label>
+              <div style={{display:'flex', gap:'16px', alignItems:'center', height:'36px'}}>
+                <label style={{display:'flex', alignItems:'center', gap:'6px', margin:0, cursor:'pointer', textTransform:'none', letterSpacing:'normal', fontSize:'13px'}}>
+                  <input type="checkbox" value="CarWale" checked={(Array.isArray(formData.sk_portal) ? formData.sk_portal : []).includes('CarWale')} onChange={handlePortalChange} style={{width:'16px', height:'16px', margin:0}} /> CarWale
+                </label>
+                <label style={{display:'flex', alignItems:'center', gap:'6px', margin:0, cursor:'pointer', textTransform:'none', letterSpacing:'normal', fontSize:'13px'}}>
+                  <input type="checkbox" value="OLX" checked={(Array.isArray(formData.sk_portal) ? formData.sk_portal : []).includes('OLX')} onChange={handlePortalChange} style={{width:'16px', height:'16px', margin:0}} /> OLX
+                </label>
+              </div>
+            </div>
             <div className="fg"><label>Marketing</label><select name="sk_mkt" value={formData.sk_mkt} onChange={handleChange}><option>None</option><option>Social Media</option><option>WhatsApp</option><option>YouTube</option><option>All</option></select></div>
           </div>
         </div>

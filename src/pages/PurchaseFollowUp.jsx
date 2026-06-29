@@ -376,9 +376,9 @@ const PurchaseFollowUp = () => {
                     })()}
                   </td>
                   <td><span className={`badge ${statusBadge(lastFu.stat || lastFu.status || lastFu.pf_stat)}`}>{lastFu.stat || lastFu.status || lastFu.pf_stat}</span></td>
-                  <td style={{ fontWeight: 600 }}>{lastFu.offer ? `₹${Number(lastFu.offer).toLocaleString()}` : '—'}</td>
+                  <td style={{ fontWeight: 600 }}>{lastFu.offer ? `₹${Number(lastFu.offer).toLocaleString('en-IN')}` : '—'}</td>
                   <td style={{ fontWeight: 600, color: (Number(lastFu.offer || 0) - Number(lastFu.exp || 0)) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                    {lastFu.offer && lastFu.exp ? `₹${(Number(lastFu.offer) - Number(lastFu.exp)).toLocaleString()}` : '—'}
+                    {lastFu.offer && lastFu.exp ? `₹${(Number(lastFu.offer) - Number(lastFu.exp)).toLocaleString('en-IN')}` : '—'}
                   </td>
                   <td style={{ fontSize: 13, color: 'var(--text2)' }}>{lastFu.exec || '—'}</td>
                   <td>{won ? <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: 12 }}>Deal Won ✅</span> : (lastFu.nfd || lastFu.nextFU || lastFu.pf_nfd ? fmtDate(lastFu.nfd || lastFu.nextFU || lastFu.pf_nfd) : '—')}</td>

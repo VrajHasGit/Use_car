@@ -41,6 +41,7 @@ import Tasks from './pages/Tasks';
 import './index.css';
 
 import SplashLoader from './components/SplashLoader';
+import CustomCursor from './components/CustomCursor';
 
 // ── Protected Route: must be logged in ──
 const ProtectedRoute = ({ children }) => {
@@ -187,11 +188,14 @@ export default function App() {
   const [appLoading, setAppLoading] = React.useState(true);
 
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        {appLoading && <SplashLoader onComplete={() => setAppLoading(false)} />}
-        {!appLoading && <AppInner />}
-      </AuthProvider>
-    </BrowserRouter>
+    <>
+      <CustomCursor />
+      <BrowserRouter>
+        <AuthProvider>
+          {appLoading && <SplashLoader onComplete={() => setAppLoading(false)} />}
+          {!appLoading && <AppInner />}
+        </AuthProvider>
+      </BrowserRouter>
+    </>
   );
 }

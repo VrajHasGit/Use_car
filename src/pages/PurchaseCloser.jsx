@@ -113,7 +113,7 @@ const PurchaseCloser = () => {
         trans: linkedInq?.trans || rec.trans || '',
         color: linkedInq?.color || rec.color || '',
         km: linkedInq?.km || rec.km || '',
-        status: 'In Stock',
+        status: 'Workshop Pending',
         pDate: rec.pc_date || rec.date || today(),
         linkedCloser: rec.pclId || rec.id,
         inqId: linkedInqId,

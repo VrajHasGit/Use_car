@@ -322,7 +322,7 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
                         <div className="fg">
                           <label>Difference (Offer - Exp.) ₹</label>
                           <div style={{ padding: '8px 12px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: (Number(fu.offer || 0) - Number(fu.exp || 0)) >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
-                            ₹ {(Number(fu.offer || 0) - Number(fu.exp || 0)).toLocaleString()}
+                            ₹ {(Number(fu.offer || 0) - Number(fu.exp || 0)).toLocaleString('en-IN')}
                           </div>
                         </div>
                       </div>
