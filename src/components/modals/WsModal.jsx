@@ -325,7 +325,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             <div className="fg"><label>In Date *</label><input type="date" name="ws_indate" value={formData.ws_indate} onChange={handleChange} /></div>
             <div className="fg"><label>KM Reading {pf('ws_km') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label><input type="number" name="ws_km" value={formData.ws_km} onChange={handleChange} placeholder="Current KM" disabled={pf('ws_km')} style={pf('ws_km') ? DISABLED_STYLE : {}} /></div>
           </div>
-          <div className="grid3">
+          <div className="grid4">
             <div className="fg">
               <label>Make {pf('ws_make') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label>
               <select name="ws_make" value={formData.ws_make} onChange={handleChange}
@@ -343,18 +343,6 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 {!MODELS[formData.ws_make] && formData.ws_make && <option value={formData.ws_model}>{formData.ws_model}</option>}
                 <option value="Other">Other</option>
               </select>
-            </div>
-            <div className="fg">
-              <label>Customer Name {pf('ws_cname') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label>
-              <input name="ws_cname" value={formData.ws_cname} onChange={handleChange} placeholder="Owner name"
-                disabled={pf('ws_cname')} style={pf('ws_cname') ? DISABLED_STYLE : {}} />
-            </div>
-          </div>
-          <div className="grid3">
-            <div className="fg">
-              <label>Contact No. {pf('ws_cont') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label>
-              <input name="ws_cont" value={formData.ws_cont} onChange={handleChange} type="tel" placeholder="Mobile"
-                disabled={pf('ws_cont')} style={pf('ws_cont') ? DISABLED_STYLE : {}} />
             </div>
             <div className="fg"><label>Work Type *</label><select name="ws_wtype" value={formData.ws_wtype} onChange={handleChange}><option>General Service</option><option>Engine Work</option><option>Denting</option><option>Painting</option><option>AC Repair</option><option>Tyre Work</option><option>Electrical</option><option>Washing</option><option>Accessories</option><option>Body Work</option><option>Full Refurb</option><option>Other</option></select></div>
             <div className="fg"><label>Technician Name</label><input name="ws_tech" value={formData.ws_tech} onChange={handleChange} placeholder="Mechanic name" /></div>
