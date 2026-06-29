@@ -58,6 +58,33 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             }
           });
         }
+
+        // If make is blank in the stored record, recover it from stock or inquiry
+        if (!properMake) {
+          const recoverMakeModel = (rawMake, rawModel) => {
+            const m = MAKES.find(x => x.toLowerCase() === rawMake.toLowerCase()) || rawMake;
+            const mo = (MODELS[m] || []).find(x => x.toLowerCase() === rawModel.toLowerCase()) || rawModel;
+            if (m) { setFormData(prev => ({ ...prev, ws_make: m, ws_model: mo })); setModelOptions(MODELS[m] || []); }
+          };
+          const stkId = editData.ws_stkid;
+          const inqId = editData.ws_inqid;
+          if (stkId) {
+            autoFillFromStockId(stkId).then(stkData => {
+              if (stkData) {
+                const rm = (stkData.make || stkData.sk_make || '').trim();
+                const rmo = (stkData.model || stkData.sk_model || '').trim();
+                if (rm) { recoverMakeModel(rm, rmo); return; }
+              }
+              if (inqId) autoFillFromInq(inqId).then(inqData => {
+                if (inqData) recoverMakeModel((inqData.make || '').trim(), (inqData.model || '').trim());
+              });
+            });
+          } else if (inqId) {
+            autoFillFromInq(inqId).then(inqData => {
+              if (inqData) recoverMakeModel((inqData.make || '').trim(), (inqData.model || '').trim());
+            });
+          }
+        }
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, ws_inqid: quickInqId }));
         autoFillFromInq(quickInqId).then(inqData => {
@@ -89,22 +116,31 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setFormData(prev => ({ ...prev, ws_stkid: stockIdForWs }));
         autoFillFromStockId(stockIdForWs).then(stkData => {
           if (stkData) {
-            const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || '').toLowerCase()) || stkData.make || '';
-            const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || '').toLowerCase()) || stkData.model || '';
+            const rawMake = (stkData.make || stkData.sk_make || '').trim();
+            const properMake = MAKES.find(m => m.toLowerCase() === rawMake.toLowerCase()) || rawMake;
+            const rawModel = (stkData.model || stkData.sk_model || '').trim();
+            const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === rawModel.toLowerCase()) || rawModel;
+            const rawKm = stkData.km || stkData.sk_km || '';
+            const rawRegNo = stkData.regNo || stkData.sk_regn || '';
             const inqId = stkData.inqId || stkData.sk_inqid || '';
             if (inqId) {
               autoFillFromInq(inqId).then(inqData => {
+                // If stock had no make, fall back to inquiry's make
+                const inqRawMake = inqData ? (inqData.make || '').trim() : '';
+                const finalMake = properMake || MAKES.find(m => m.toLowerCase() === inqRawMake.toLowerCase()) || inqRawMake;
+                const inqRawModel = inqData ? (inqData.model || '').trim() : '';
+                const finalModel = properModel || (MODELS[finalMake] || []).find(m => m.toLowerCase() === inqRawModel.toLowerCase()) || inqRawModel;
                 setFormData(prev => ({
                   ...prev,
                   ws_inqid: inqId,
-                  ws_make: properMake,
-                  ws_model: properModel,
-                  ws_km: stkData.km || '',
-                  ws_vnum: stkData.regNo || '',
+                  ws_make: finalMake,
+                  ws_model: finalModel,
+                  ws_km: rawKm || (inqData ? inqData.km || '' : ''),
+                  ws_vnum: rawRegNo,
                   ws_cname: inqData ? inqData.sellerName || '' : '',
                   ws_cont: inqData ? inqData.mobile || '' : ''
                 }));
-                setModelOptions(MODELS[properMake] || []);
+                setModelOptions(MODELS[finalMake] || []);
                 setPrefilled(new Set(['ws_stkid', 'ws_inqid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont']));
                 autoFillFromVal(inqId).then(valData => {
                   if (valData && valData.v_ref_cost) {
@@ -118,11 +154,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 ws_inqid: '',
                 ws_make: properMake,
                 ws_model: properModel,
-                ws_km: stkData.km || '',
-                ws_vnum: stkData.regNo || ''
+                ws_km: rawKm,
+                ws_vnum: rawRegNo
               }));
               setModelOptions(MODELS[properMake] || []);
-              setPrefilled(new Set(['ws_stkid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
+              setPrefilled(new Set(['ws_stkid', ...(properMake ? ['ws_make', 'ws_model'] : []), 'ws_vnum', ...(rawKm ? ['ws_km'] : [])]));
             }
           }
         });
@@ -153,22 +189,30 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_stkid' && value.length >= 5) {
       autoFillFromStockId(value.toUpperCase()).then(stkData => {
         if (stkData) {
-          const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
-          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
+          const rawMake = (stkData.make || stkData.sk_make || '').trim();
+          const properMake = MAKES.find(m => m.toLowerCase() === rawMake.toLowerCase()) || rawMake;
+          const rawModel = (stkData.model || stkData.sk_model || '').trim();
+          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === rawModel.toLowerCase()) || rawModel;
+          const rawKm = stkData.km || stkData.sk_km || '';
+          const rawRegNo = stkData.regNo || stkData.sk_regn || '';
           const inqId = stkData.inqId || stkData.sk_inqid || '';
           if (inqId) {
             autoFillFromInq(inqId).then(inqData => {
+              const inqRawMake = inqData ? (inqData.make || '').trim() : '';
+              const finalMake = properMake || MAKES.find(m => m.toLowerCase() === inqRawMake.toLowerCase()) || inqRawMake;
+              const inqRawModel = inqData ? (inqData.model || '').trim() : '';
+              const finalModel = properModel || (MODELS[finalMake] || []).find(m => m.toLowerCase() === inqRawModel.toLowerCase()) || inqRawModel;
               setFormData(prev => ({
                 ...prev,
                 ws_inqid: inqId || prev.ws_inqid,
-                ws_make: properMake,
-                ws_model: properModel,
-                ws_km: stkData.km || prev.ws_km,
-                ws_vnum: stkData.regNo || prev.ws_vnum,
+                ws_make: finalMake,
+                ws_model: finalModel,
+                ws_km: rawKm || (inqData ? inqData.km || '' : '') || prev.ws_km,
+                ws_vnum: rawRegNo || prev.ws_vnum,
                 ws_cname: (inqData && inqData.sellerName) || prev.ws_cname,
                 ws_cont: (inqData && inqData.mobile) || prev.ws_cont,
               }));
-              setModelOptions(MODELS[properMake] || []);
+              setModelOptions(MODELS[finalMake] || []);
               setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont', 'ws_inqid']));
               autoFillFromVal(inqId).then(valData => {
                 if (valData && valData.v_ref_cost) {
@@ -181,8 +225,8 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
               ...prev,
               ws_make: properMake,
               ws_model: properModel,
-              ws_km: stkData.km || prev.ws_km,
-              ws_vnum: stkData.regNo || prev.ws_vnum,
+              ws_km: rawKm || prev.ws_km,
+              ws_vnum: rawRegNo || prev.ws_vnum,
             }));
             setModelOptions(MODELS[properMake] || []);
             setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
@@ -219,8 +263,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_vnum' && value.length >= 6) {
       autoFillFromStock(value.toUpperCase()).then(stkData => {
         if (stkData) {
-          const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
-          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
+          const rawMake = (stkData.make || stkData.sk_make || '').trim();
+          const properMake = MAKES.find(m => m.toLowerCase() === rawMake.toLowerCase()) || rawMake;
+          const rawModel = (stkData.model || stkData.sk_model || '').trim();
+          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === rawModel.toLowerCase()) || rawModel;
+          const rawKm = stkData.km || stkData.sk_km || '';
           const inqId = stkData.inqId || stkData.sk_inqid || '';
           if (inqId) {
             autoFillFromInq(inqId).then(inqData => {
@@ -229,7 +276,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 ws_inqid: inqId || prev.ws_inqid,
                 ws_make: properMake,
                 ws_model: properModel,
-                ws_km: stkData.km || prev.ws_km,
+                ws_km: rawKm || prev.ws_km,
                 ws_cname: (inqData && inqData.sellerName) || prev.ws_cname,
                 ws_cont: (inqData && inqData.mobile) || prev.ws_cont,
               }));
@@ -246,7 +293,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
               ...prev,
               ws_make: properMake,
               ws_model: properModel,
-              ws_km: stkData.km || prev.ws_km,
+              ws_km: rawKm || prev.ws_km,
             }));
             setModelOptions(MODELS[properMake] || []);
             setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km']));

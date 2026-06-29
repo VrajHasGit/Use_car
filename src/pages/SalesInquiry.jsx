@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
-import { today, genId, fmtDate, fmt, statusBadge, ageDays } from '../utils/helpers';
+import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SalInqModal } from '../components/modals/SalInqModal';
 import { SfuModal } from '../components/modals/SfuModal';
 import { SclModal } from '../components/modals/SclModal';
@@ -140,7 +140,7 @@ const SalesInquiry = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete inquiry for ${rec.buyerName}?\n\nThis cannot be undone.`)) return;
+    if (!await window.confirm(`Delete inquiry for ${rec.buyerName}?\n\nThis cannot be undone.`)) return;
     try { await deleteRecord('sal_inq', rec.id); await refresh('sal_inq'); showToast('Inquiry deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
@@ -225,6 +225,7 @@ const SalesInquiry = () => {
             {SOURCES.map(s => <option key={s}>{s}</option>)}
           </select>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
+          <button className="btn btn-or" onClick={() => { setEditRecord(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Inquiry</button>
         </div>
       </div>
 

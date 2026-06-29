@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
@@ -11,8 +11,8 @@ import { VtModal } from '../components/modals/VtModal';
 import { QrModal } from '../components/modals/QrModal';
 import { StkPhotosModal } from '../components/modals/StkPhotosModal';
 import { QuotationModal } from '../components/modals/QuotationModal';
+import CustomSelect from '../components/CustomSelect';
 import { exportToExcel } from '../utils/exportData';
-import { autoFillFromVal } from '../utils/relations';
 import { loadMediaFromFirestore } from '../utils/uploadMedia';
 
 const PAGE_SIZE = 20;
@@ -195,13 +195,13 @@ const Stock = () => {
   };
 
   const handleDelete = async (rec) => {
-    if (!window.confirm(`Delete stock for ${rec.regNo}?\n\nThis cannot be undone.`)) return;
+    if (!await window.confirm(`Delete stock for ${rec.regNo}?\n\nThis cannot be undone.`)) return;
     try { await deleteRecord('stk', rec.id); await refresh('stk'); showToast('Deleted.', 'info'); }
     catch (e) { showToast('Delete failed.', 'error'); }
   };
 
   const handleMarkSold = async (rec) => {
-    if (!window.confirm(`Mark ${rec.regNo} (${rec.make} ${rec.model}) as Sold?`)) return;
+    if (!await window.confirm(`Mark ${rec.regNo} (${rec.make} ${rec.model}) as Sold?`)) return;
     try {
       await updateRecord('stk', rec.id, { status: 'Sold', soldDate: today() });
       await refresh('stk');
@@ -209,59 +209,7 @@ const Stock = () => {
     } catch (e) { showToast('Failed to mark as sold.', 'error'); }
   };
 
-  const handleSendToWorkshop = async (rec) => {
-    if (!window.confirm(`Send ${rec.regNo} (${rec.make} ${rec.model}) to Workshop?`)) return;
-    try {
-      await updateRecord('stk', rec.id, { status: 'Workshop' });
-      
-      let ws_cname = '';
-      let ws_cont = '';
-      let ws_val_refurb = '';
-      const inqId = rec.inqId || rec.sk_inqid || '';
-      if (inqId && data.pur_inq) {
-        const inqData = data.pur_inq.find(i => i.inqId === inqId || i.id === inqId);
-        if (inqData) {
-          ws_cname = inqData.sellerName || '';
-          ws_cont = inqData.mobile || '';
-        }
-        
-        const valData = await autoFillFromVal(inqId);
-        if (valData && valData.v_ref_cost) {
-          ws_val_refurb = valData.v_ref_cost;
-        }
-      }
-      
-      // Create auto-generated workshop job card
-      const cnt = await getNextCounter('ws');
-      const wsId = genId('JC', cnt);
-      const wsData = {
-        wsId,
-        ws_stkid: rec.stkId || rec.id,
-        ws_inqid: inqId,
-        ws_vnum: rec.regNo || '',
-        ws_make: rec.make || '',
-        ws_model: rec.model || '',
-        ws_km: rec.km || '',
-        ws_cname,
-        ws_cont,
-        ws_val_refurb,
-        ws_indate: today(),
-        date: today(),
-        ws_wtype: "General Service",
-        ws_pstat: "Pending",
-        ws_jstat: "Open",
-        tasks: [],
-        createdAt: new Date().toISOString()
-      };
-      await addRecord('ws', wsData);
-      
-      await refresh('stk');
-      await refresh('ws');
-      showToast(`${rec.regNo} sent to Workshop!`);
-    } catch (e) { showToast('Failed to send to workshop.', 'error'); }
-  };
-
-  const handleExport = () => {
+const handleExport = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
       'Stock ID': r.stkId || r.id,
@@ -303,7 +251,7 @@ const Stock = () => {
 
       {/* Modals */}
       {isModalOpen && <StkModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
-      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} stockDocId={quickModal.docId} stockIdForWs={quickModal.stkId} />
+      <WsModal isOpen={quickModal.type === 'ws'} onClose={closeQuickModal} stockDocId={quickModal.docId} stockIdForWs={quickModal.stkId} onSuccess={async () => { closeQuickModal(); await refresh('ws'); await refresh('stk'); showToast('Job card created! Car moved to Workshop.'); }} />
       <VtModal isOpen={quickModal.type === 'vt'} onClose={closeQuickModal} stkId={quickModal.stkId} />
       <QrModal isOpen={quickModal.type === 'qr'} onClose={closeQuickModal} stkId={quickModal.stkId} />
       <QuotationModal isOpen={!!quotRec} onClose={() => setQuotRec(null)} stockRec={quotRec} />
@@ -349,18 +297,18 @@ const Stock = () => {
       {/* Filter Bar */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14, padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', }}>
         <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
-        <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
+        <CustomSelect className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ minWidth: 120 }}>
           <option value="">All Status</option>
           <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>Workshop</option><option>On Hold</option><option>Cancelled</option>
-        </select>
-        <select className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }}>
+        </CustomSelect>
+        <CustomSelect className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }} style={{ minWidth: 130 }}>
           <option value="">All Makes</option>
           {makes.map(m => <option key={m}>{m}</option>)}
-        </select>
-        <select className="flt" value={fuelFilter} onChange={e => { setFuelFilter(e.target.value); setPage(1); }}>
+        </CustomSelect>
+        <CustomSelect className="flt" value={fuelFilter} onChange={e => { setFuelFilter(e.target.value); setPage(1); }} style={{ minWidth: 110 }}>
           <option value="">All Fuel</option>
           <option>Petrol</option><option>Diesel</option><option>EV</option><option>Hybrid</option><option>CNG</option>
-        </select>
+        </CustomSelect>
         <input className="flt" type="number" placeholder="Year From" value={yearFrom} onChange={e => { setYearFrom(e.target.value); setPage(1); }} style={{ width: 100 }} min="1990" max={thisYear} />
         <input className="flt" type="number" placeholder="Year To" value={yearTo} onChange={e => { setYearTo(e.target.value); setPage(1); }} style={{ width: 100 }} min="1990" max={thisYear} />
         {hasFilter && (
@@ -464,15 +412,13 @@ const Stock = () => {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 28px)', gap: 6 }}>
-                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => handleSendToWorkshop(r)}><i className="fa fa-wrench"></i></button>
-                        <button className="btn-icon bi-view" title="Vehicle History" onClick={() => setQuickModal({ type: 'vt', stkId: r.stkId || r.id })}><i className="fa fa-timeline"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.1)', color: 'var(--pink)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(37,99,235,.1)', color: 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="QR Code" onClick={() => setQuickModal({ type: 'qr', stkId: r.stkId || r.id })}><i className="fa fa-qrcode"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(200,168,75,.12)', color: '#B8860B', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Generate Quotation" onClick={() => setQuotRec(r)}><i className="fa fa-file-invoice-dollar"></i></button>
-                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 30px)', gap: 6 }}>
+                        <button className="btn-icon bi-edit" title="Edit" style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }} onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.12)', color: 'var(--success)', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
+                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id, docId: r.id })} style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }}><i className="fa fa-wrench"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.12)', color: 'var(--pink)', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(200,168,75,.13)', color: '#B8860B', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Generate Quotation" onClick={() => setQuotRec(r)}><i className="fa fa-file-invoice-dollar"></i></button>
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)} style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>
                   </tr>
@@ -504,7 +450,7 @@ const Stock = () => {
             <>
               <div className="stock-grid">
                 {paginated.map(r => (
-                  <div key={r.id} className="stk-card">
+                  <div key={r.id} className="stk-card" style={{ position: 'relative' }}>
                     <StkCardImage r={r} />
                     <div className="stk-card-body">
                       <div className="stk-card-title">{r.make} {r.model}</div>
@@ -528,13 +474,15 @@ const Stock = () => {
                         )}
                         <DaysInStock pDate={r.pDate} />
                       </div>
-                      
-                      <div className="stk-card-actions">
-                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.15)', color: 'var(--success)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.15)', color: 'var(--pink)', width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
-                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
-                      </div>
+                    </div>
+                    {/* Make Quotation — appears only on hover */}
+                    <div className="stk-card-quot-hover">
+                      <button
+                        onClick={() => setQuotRec(r)}
+                        style={{ background: 'linear-gradient(135deg,rgba(200,168,75,.95),rgba(184,134,11,.9))', border: 'none', color: '#fff', fontWeight: 700, fontSize: 11, padding: '7px 14px', borderRadius: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 14px rgba(200,168,75,0.4)', letterSpacing: '.3px', whiteSpace: 'nowrap' }}
+                      >
+                        <i className="fa fa-file-invoice-dollar"></i> Make Quotation
+                      </button>
                     </div>
                   </div>
                 ))}

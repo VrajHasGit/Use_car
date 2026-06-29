@@ -547,6 +547,9 @@ textarea:focus-visible{
 .stk-card-actions{display:none;position:absolute;inset:0;background:rgba(255,255,255,.9);backdrop-filter:blur(2px);align-items:center;justify-content:center;gap:12px}
 .stk-card:hover .stk-card-actions{display:flex}
 [data-theme="dark"] .stk-card-actions{background:rgba(17,17,17,.9)}
+/* Make Quotation hover button on grid cards */
+.stk-card-quot-hover{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:2;transform:translateX(-50%) translateY(4px)}
+.stk-card:hover .stk-card-quot-hover{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
 
 /* ══════════════════════════════════════════════════
    VIEW TOGGLE (List / Grid)
@@ -2037,63 +2040,62 @@ body[data-theme="maroon-cream"] { --cc: var(--or1); }
   .cc-dot {
     position: fixed;
     top: 0; left: 0;
-    width: 6px; height: 6px;
-    background: var(--cc);
+    width: 16px; height: 16px;
+    background: #ffffff;
+    border: 3px solid var(--cc);
     border-radius: 50%;
     pointer-events: none;
-    z-index: 999999;
+    z-index: 999999 !important;
     transform: translate(-50%,-50%);
     will-change: left, top;
-    box-shadow: 0 0 8px 3px color-mix(in srgb, var(--cc) 50%, transparent),
-                0 0 16px 6px color-mix(in srgb, var(--cc) 16%, transparent);
-    transition: width .15s ease, height .15s ease, background .2s, box-shadow .2s;
+    box-shadow: 0 0 7px 3px color-mix(in srgb, var(--cc) 35%, transparent);
+    transition: background .2s, border-color .2s, box-shadow .2s;
   }
 
   .cc-ring {
     position: fixed;
     top: 0; left: 0;
-    width: 30px; height: 30px;
+    width: 56px; height: 56px;
     border: 2.5px solid color-mix(in srgb, var(--cc) 78%, transparent);
     border-radius: 50%;
     pointer-events: none;
-    z-index: 999998;
+    z-index: 999998 !important;
     transform: translate(-50%,-50%);
     will-change: left, top;
-    transition: width .28s cubic-bezier(.175,.885,.32,1.275),
-                height .28s cubic-bezier(.175,.885,.32,1.275),
-                border-color .2s, border-width .2s, opacity .2s;
+    transition: border-color .2s, border-width .2s, opacity .2s, background .2s, box-shadow .2s;
     opacity: .8;
   }
 
   /* ─ Hover ─ */
   body.cc-hover .cc-dot {
-    width: 4px; height: 4px;
-    box-shadow: 0 0 6px 2px color-mix(in srgb, var(--cc) 55%, transparent);
+    box-shadow: 0 0 8px 4px color-mix(in srgb, var(--cc) 55%, transparent);
   }
   body.cc-hover .cc-ring {
-    width: 42px; height: 42px;
     border-color: color-mix(in srgb, var(--cc) 90%, transparent);
+    background: color-mix(in srgb, var(--cc) 12%, transparent);
     opacity: 1;
   }
 
   /* ─ Click ─ */
   body.cc-click .cc-dot {
-    width: 10px; height: 10px;
-    box-shadow: 0 0 16px 6px color-mix(in srgb, var(--cc) 85%, transparent);
+    background: var(--cc);
+    box-shadow: 0 0 14px 6px color-mix(in srgb, var(--cc) 85%, transparent);
   }
   body.cc-click .cc-ring {
-    width: 20px; height: 20px;
     border-width: 3px;
+    background: color-mix(in srgb, var(--cc) 10%, transparent);
     opacity: 1;
   }
 
   /* ─ Danger ─ */
   body.cc-danger .cc-dot {
     background: var(--danger);
+    border-color: var(--danger);
     box-shadow: 0 0 8px 3px color-mix(in srgb, var(--danger) 65%, transparent);
   }
   body.cc-danger .cc-ring {
     border-color: color-mix(in srgb, var(--danger) 75%, transparent);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
   }
 }
 

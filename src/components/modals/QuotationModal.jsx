@@ -61,6 +61,194 @@ function getQNo(stkId) {
   return `CC-Q-${yr}-${num}`;
 }
 
+/* ─── Vehicle Features Database ─── */
+const FDB = {
+  'JEEP': {
+    'COMPASS': {
+      base: ['10.1" Uconnect Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ABS with EBD & EBA', 'Electronic Stability Control', 'Rear Camera with Sensors', 'Automatic Climate Control', 'Keyless Entry & Push-Button Start', '17" Alloy Wheels', 'Hill Start Assist'],
+      'MODEL S (O)': ['Panoramic Fixed Glass Roof', 'Ventilated Front Seats', 'Adaptive Cruise Control', 'Blind Spot Monitoring', 'Lane Departure Warning', 'Wireless Phone Charger', 'Auto-Dimming IRVM', 'Electronic Parking Brake', 'LED Projector Headlamps with DRLs'],
+      'MODEL S': ['Dual-Zone Automatic Climate', 'Leatherette Seats', 'Auto-Dimming IRVM', 'Electronic Parking Brake', 'LED Headlamps', 'Rear Sunshade'],
+      'NIGHT EAGLE': ['Dark Edition Styling', 'Leatherette Seats', 'Electronic Parking Brake', 'LED Headlamps'],
+    },
+    'MERIDIAN': {
+      base: ['12.3" Uconnect Touchscreen', 'Wireless Apple CarPlay & Android Auto', '7 Airbags', 'ADAS Safety Suite', '3-Zone Automatic Climate Control', 'Power Tailgate', '18" Alloy Wheels', 'Bi-LED Projector Headlamps', 'Wireless Charging', 'Ventilated Front Seats'],
+    },
+    'WRANGLER': {
+      base: ['12.3" Uconnect Touchscreen', '7 Airbags', 'Part-Time 4x4 with Low Range', 'Electronic Sway-bar Disconnect', 'Dana 44 Rear Axle', 'LED Headlamps', 'Alpine Premium Sound'],
+    },
+  },
+  'HYUNDAI': {
+    'CRETA': {
+      base: ['10.25" Touchscreen Navigation', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ADAS with Level 2 Safety', 'Rear Camera & Sensors', 'Bose Premium Sound System', 'Panoramic Sunroof', 'Bluelink Connected Car', 'Electronic Stability Control', 'Ventilated Front Seats'],
+    },
+    'VENUE': {
+      base: ['8" Touchscreen', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Rear Camera & Sensors', 'Automatic Climate Control', 'Bluelink Connected Car', 'Electronic Stability Control', 'Sunroof (select variants)'],
+    },
+    'VERNA': {
+      base: ['10.25" Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ADAS Level 2 Safety Suite', 'Bose 8-Speaker Sound', 'Ventilated Front Seats', 'Panoramic Sunroof', 'Electronic Parking Brake', 'Connected Car Technology'],
+    },
+    'TUCSON': {
+      base: ['10.25" Touchscreen', '8 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'Ventilated & Heated Seats', 'Bose Premium Sound', 'Wireless Charging', 'Electronic Parking Brake', 'Bluelink Technology'],
+    },
+    'I20': {
+      base: ['10.25" Touchscreen', 'Apple CarPlay & Android Auto', '6 Airbags', 'Sunroof', 'Bose Sound System', 'Bluelink Connected', 'ABS + EBD', 'Electronic Stability Control'],
+    },
+  },
+  'KIA': {
+    'SELTOS': {
+      base: ['10.25" HD Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ADAS Level 1', 'Bose 8-Speaker Sound', 'Panoramic Sunroof', 'Ventilated Front Seats', 'Electronic Parking Brake', 'Rear Camera & Sensors', 'UVO Connected Car'],
+    },
+    'SONET': {
+      base: ['10.25" HD Touchscreen', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Bose Premium Audio', 'Sunroof', 'UVO Connected Car', 'Electronic Stability Control'],
+    },
+    'CARENS': {
+      base: ['10.25" HD Touchscreen', '6 Airbags', 'ADAS Level 1', 'Panoramic Sunroof', 'Bose Sound System', 'Wireless Charging', 'Ventilated Seats', 'UVO Connected Tech'],
+    },
+  },
+  'TATA': {
+    'NEXON': {
+      base: ['10.25" Float Sense Touchscreen', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Electronic Stability Control', 'Sunroof', 'Harman Audio System', 'iRA Connected Car', 'Rear Camera & Sensors'],
+    },
+    'HARRIER': {
+      base: ['10.25" Infotainment', '6 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'JBL 9-Speaker Audio', 'Ventilated Front Seats', 'Terrain Response Modes', 'Electronic Parking Brake', 'iRA Connected Car'],
+    },
+    'SAFARI': {
+      base: ['10.25" Infotainment', '6 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'JBL 9-Speaker Audio', '7-Seater Captain Chairs', 'Terrain Response', 'Electronic Parking Brake', 'iRA Connected Car'],
+    },
+    'PUNCH': {
+      base: ['7" Infotainment', 'Apple CarPlay & Android Auto', '2 Airbags', 'ABS + EBD', 'Rear Camera', 'iRA Connected Car', 'Hill Hold Assist', 'Electronic Stability Control'],
+    },
+  },
+  'MAHINDRA': {
+    'SCORPIO': {
+      base: ['8" Touchscreen', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', '4x4 Capability', 'Electrically Adjustable Seats', 'AdrenoX Connected', 'Hill Hold & Descent Control', 'All-Terrain Tyres'],
+    },
+    'XUV700': {
+      base: ['10.25" Dual-Screen Infotainment', 'Wireless Apple CarPlay & Android Auto', '7 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'Sony 3D Audio (12 Speakers)', 'Ventilated & Heated Seats', 'Wireless Charging', 'AdrenoX AI Connected', 'Electronic Parking Brake'],
+    },
+    'THAR': {
+      base: ['7" Touchscreen', 'Apple CarPlay & Android Auto', '2 Airbags', '4x4 with Low Range & Diff Lock', 'Convertible Soft/Hard Top', 'Bi-Halogen Projector Headlamps', 'Adventure Statistics Display'],
+    },
+    'BOLERO': {
+      base: ['ABS + EBD', '2 Airbags', 'Power Steering', 'High Ground Clearance', 'Rear AC Vents', 'Rugged Body-on-Frame Build'],
+    },
+  },
+  'MARUTI SUZUKI': {
+    'BREZZA': {
+      base: ['9" SmartPlay Pro+ Infotainment', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Electronic Stability Control', 'Sunroof', 'Head-Up Display', 'Suzuki Connect', 'Rear Camera & Sensors'],
+    },
+    'GRAND VITARA': {
+      base: ['9" SmartPlay Pro+ Infotainment', '5 Airbags', 'Panoramic Sunroof', 'Wireless Charging', 'Ventilated Seats', 'Head-Up Display', 'ALLGRIP AWD (Hybrid variants)', '360° Camera', 'Electronic Parking Brake'],
+    },
+    'SWIFT': {
+      base: ['9" SmartPlay Pro+', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Electronic Stability Control', 'Rear Camera', 'Suzuki Connect', 'Keyless Entry & Start'],
+    },
+    'DZIRE': {
+      base: ['9" SmartPlay Pro+', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Rear Camera', 'Automatic Climate Control', 'Suzuki Connect'],
+    },
+    'ERTIGA': {
+      base: ['7" SmartPlay Studio', 'Apple CarPlay & Android Auto', '2 Airbags', 'ABS + EBD', 'Rear AC Vents', '7-Seater Versatile Layout', 'Rear Camera'],
+    },
+  },
+  'HONDA': {
+    'CITY': {
+      base: ['8" Honda Connect+ Infotainment', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'Honda Sensing (ADAS)', 'Sunroof', 'Ventilated Seats', 'Lane Watch Camera', 'Electronic Parking Brake', 'Rear Camera & Sensors'],
+    },
+    'ELEVATE': {
+      base: ['10.25" Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'Honda Sensing ADAS', 'Sunroof', 'Rear Camera & Sensors', 'Connected Vehicle Tech', 'Electronic Parking Brake', 'Ventilated Front Seats'],
+    },
+    'AMAZE': {
+      base: ['7" Touchscreen', 'Apple CarPlay & Android Auto', '2 Airbags', 'ABS + EBD', 'Rear Camera', 'Automatic Climate Control', 'Sunroof (select variants)'],
+    },
+  },
+  'TOYOTA': {
+    'FORTUNER': {
+      base: ['9" Touchscreen', 'Apple CarPlay & Android Auto', '7 Airbags', '4x4 with Active Traction Control', 'Panoramic View Monitor', 'Wireless Charging', 'JBL Premium Audio', 'Rear Diff Lock', 'Ventilated Front Seats', 'Adaptive Cruise Control'],
+    },
+    'INNOVA HYCROSS': {
+      base: ['10.1" Touchscreen', 'Wireless Apple CarPlay & Android Auto', '7 Airbags', 'ADAS', 'Panoramic Sunroof', 'Ventilated Captain Seats', 'JBL 11-Speaker Audio', 'Wireless Charging', 'Toyota Connected Services'],
+    },
+    'HYRYDER': {
+      base: ['10.25" SmartPlay Pro+', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'Sunroof', 'Wireless Charging', 'Head-Up Display', 'Rear Camera', 'Strong Hybrid Technology'],
+    },
+    'GLANZA': {
+      base: ['9" SmartPlay Pro+', 'Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Electronic Stability Control', 'Sunroof', 'Toyota Connected Tech'],
+    },
+  },
+  'MG': {
+    'HECTOR': {
+      base: ["India's Largest 14\" Portrait Screen", 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'Wireless Charging', 'Ventilated Seats', 'i-Smart Connected Car', 'Electronic Parking Brake', 'PM2.5 Air Purifier'],
+    },
+    'ASTOR': {
+      base: ['10.1" Infotainment', '6 Airbags', 'ADAS Level 2', 'Sunroof', 'Wireless Charging', 'i-Smart 2.0 Connected', 'Ventilated Seats', 'Rear Camera & Sensors'],
+    },
+    'GLOSTER': {
+      base: ['12.3" Dual-Screen Infotainment', '6 Airbags', 'ADAS Level 2', 'Panoramic Sunroof', 'Wireless Charging', 'Ventilated Seats', '7-Seater Layout', 'i-Smart Connected', 'Electronic Parking Brake'],
+    },
+  },
+  'VOLKSWAGEN': {
+    'TAIGUN': {
+      base: ['10.1" Infotainment', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ADAS with Travel Assist', 'Sunroof', 'Ventilated Front Seats', 'Electronic Parking Brake', 'Wireless Charging', 'Lane Assist'],
+    },
+    'VIRTUS': {
+      base: ['10.1" Infotainment', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'Travel Assist (ADAS)', 'Sunroof', 'Ventilated Seats', 'Electronic Parking Brake', 'Wireless Charging'],
+    },
+  },
+  'SKODA': {
+    'KUSHAQ': {
+      base: ['10" Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'ABS + EBD', 'Sunroof', 'Electronic Parking Brake', 'Ventilated Seats', 'Wireless Charging', 'Smartlink+ Connectivity'],
+    },
+    'SLAVIA': {
+      base: ['10" Touchscreen', 'Wireless Apple CarPlay & Android Auto', '6 Airbags', 'Sunroof', 'Ventilated Seats', 'Electronic Parking Brake', 'Travel Assist', 'Wireless Charging'],
+    },
+    'OCTAVIA': {
+      base: ['10" Virtual Cockpit', 'Wireless Apple CarPlay & Android Auto', '8 Airbags', 'ACC with Travel Assist', 'Panoramic Sunroof', 'Canton Sound System', 'Heated & Ventilated Seats', 'Lane Assist', 'Virtual Cockpit'],
+    },
+  },
+};
+
+function getVehicleFeatures(make, model, variant) {
+  const m = (make || '').toUpperCase().trim();
+  const mod = (model || '').toUpperCase().trim();
+  const v = (variant || '').toUpperCase().trim();
+
+  const makeData = FDB[m];
+  if (!makeData) return getGenericFeatures();
+
+  // Try to find the model (partial match)
+  let modelData = makeData[mod];
+  if (!modelData) {
+    const key = Object.keys(makeData).find(k => mod.includes(k) || k.includes(mod));
+    modelData = key ? makeData[key] : null;
+  }
+  if (!modelData) return getGenericFeatures();
+
+  const base = modelData.base || [];
+  let variantExtras = [];
+  Object.keys(modelData).forEach(key => {
+    if (key !== 'base' && v && (v.includes(key) || key.split(' ').every(w => v.includes(w)))) {
+      variantExtras = modelData[key];
+    }
+  });
+
+  return [...new Set([...variantExtras, ...base])].slice(0, 12);
+}
+
+function getGenericFeatures() {
+  return [
+    'Touchscreen Infotainment System',
+    'Apple CarPlay & Android Auto',
+    'Multiple Airbags for Safety',
+    'ABS with Electronic Brakeforce Distribution',
+    'Electronic Stability Control',
+    'Rear Parking Camera & Sensors',
+    'Automatic Climate Control',
+    'Alloy Wheels',
+    'Keyless Entry & Push-Button Start',
+    'Power Windows & ORVMs',
+  ];
+}
+
 /* ─── Tiny car SVG for empty photo slots ─── */
 const CarSVG = () => (
   <svg width="40" height="34" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,6 +306,8 @@ function QuotationDoc({ r, clientName, photos, qNo, todayDate }) {
   const total    = sp + rto + ins;
   const { full: rtoFull, short: rtoShort } = rtoInfo(regNo);
   const vehicleName = [make, model, variant].filter(Boolean).join(' ');
+
+  const features = getVehicleFeatures(make, model, variant);
 
   const leftDetails = [
     ['Make',            make        || '—'],
@@ -235,6 +425,19 @@ function QuotationDoc({ r, clientName, photos, qNo, todayDate }) {
         </div>
       </div>
 
+      {/* ── KEY FEATURES ── */}
+      <div style={{ padding:'16px 32px', borderBottom:`1px solid ${C.border}` }}>
+        <SectionHead label="Key Features & Highlights" />
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px 20px' }}>
+          {features.map((feat, i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'3px 0' }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:C.gold, flexShrink:0 }}></div>
+              <span style={{ fontSize:10.5, color:C.text, fontWeight:500 }}>{feat}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── ROAD-READY ASSURANCE ── */}
       <div style={{ background:C.navy, padding:'12px 32px', display:'flex', alignItems:'center', flexWrap:'wrap', gap:4 }}>
         <span style={{ fontSize:9, fontWeight:700, color:C.gold, letterSpacing:1.5, textTransform:'uppercase', marginRight:14, whiteSpace:'nowrap' }}>Road-Ready Assurance</span>
@@ -337,18 +540,35 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
         a.click();
       } else {
         const { default: jsPDF } = await import('jspdf');
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pdfW = pdf.internal.pageSize.getWidth();
-        const imgH = (canvas.height / canvas.width) * pdfW;
         const pdfH = pdf.internal.pageSize.getHeight();
-        // Fit single page: scale down if taller than A4
+
+        // Calculate how tall the image would be at full page width
+        const imgH = (canvas.height / canvas.width) * pdfW;
+
         if (imgH <= pdfH) {
-          pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, imgH);
+          // Fits in a single page
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfW, imgH);
         } else {
-          const scale = pdfH / imgH;
-          const fW = pdfW * scale;
-          pdf.addImage(imgData, 'JPEG', (pdfW - fW) / 2, 0, fW, pdfH);
+          // Multi-page: slice canvas into A4-height chunks
+          const pageHeightPx = Math.floor((pdfH / pdfW) * canvas.width);
+          let yOffset = 0;
+          let pageIndex = 0;
+          while (yOffset < canvas.height) {
+            const chunkH = Math.min(pageHeightPx, canvas.height - yOffset);
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = chunkH;
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, yOffset, canvas.width, chunkH, 0, 0, canvas.width, chunkH);
+            const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+            if (pageIndex > 0) pdf.addPage();
+            const renderedH = (chunkH / canvas.width) * pdfW;
+            pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfW, renderedH);
+            yOffset += pageHeightPx;
+            pageIndex++;
+          }
         }
         pdf.save(`${safeName}.pdf`);
       }
