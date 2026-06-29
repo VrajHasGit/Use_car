@@ -10,6 +10,7 @@ import { WsModal } from '../components/modals/WsModal';
 import { VtModal } from '../components/modals/VtModal';
 import { QrModal } from '../components/modals/QrModal';
 import { exportToExcel } from '../utils/exportData';
+import { autoFillFromVal } from '../utils/relations';
 
 const PAGE_SIZE = 20;
 
@@ -95,8 +96,8 @@ const Stock = () => {
   }, [data.stk, location.state?.autoOpenId]);
 
   const rawStock = data.stk || [];
-  // Exclude Sold and Workshop from the main table view (unless searching)
-  const stock = rawStock.filter(r => r.status !== 'Sold' && r.status !== 'Workshop');
+  // Exclude only Sold from the main table view
+  const stock = rawStock.filter(r => r.status !== 'Sold');
 
   // Unique makes for filter
   const makes = useMemo(() => [...new Set(stock.map(r => r.make).filter(Boolean))].sort(), [stock]);
@@ -191,12 +192,18 @@ const Stock = () => {
       
       let ws_cname = '';
       let ws_cont = '';
+      let ws_val_refurb = '';
       const inqId = rec.inqId || rec.sk_inqid || '';
       if (inqId && data.pur_inq) {
         const inqData = data.pur_inq.find(i => i.inqId === inqId || i.id === inqId);
         if (inqData) {
           ws_cname = inqData.sellerName || '';
           ws_cont = inqData.mobile || '';
+        }
+        
+        const valData = await autoFillFromVal(inqId);
+        if (valData && valData.v_ref_cost) {
+          ws_val_refurb = valData.v_ref_cost;
         }
       }
       
@@ -213,6 +220,7 @@ const Stock = () => {
         ws_km: rec.km || '',
         ws_cname,
         ws_cont,
+        ws_val_refurb,
         ws_indate: today(),
         date: today(),
         ws_wtype: "General Service",
@@ -317,7 +325,7 @@ const Stock = () => {
         <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
         <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
           <option value="">All Status</option>
-          <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>On Hold</option><option>Cancelled</option>
+          <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>Workshop</option><option>On Hold</option><option>Cancelled</option>
         </select>
         <select className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }}>
           <option value="">All Makes</option>
@@ -380,6 +388,8 @@ const Stock = () => {
                   const rColor = r.color || r.sk_color || linkedInq?.color || '';
                   const rKm = r.km || r.sk_km || linkedInq?.km || '';
                   const rRegNo = r.regNo || r.sk_regn || linkedInq?.regNo || '';
+                  const wsJobs = (data.ws || []).filter(ws => ws.ws_stkid === (r.stkId || r.id) || ws.ws_vnum === rRegNo);
+                  const activeWsJob = wsJobs.find(ws => ws.ws_jstat !== 'Complete') || wsJobs[wsJobs.length - 1];
                   return (
                   <tr key={r.id}>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--bl5)', fontSize: 10 }}>{r.stkId || r.id?.slice(0, 12)}</td>
@@ -416,7 +426,16 @@ const Stock = () => {
                       <td className={(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) > 0 ? 'profit-pos' : (r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0)))) < 0 ? 'profit-neg' : ''}>{fmt(r.profit || (Number(r.sk_sp||0)-(Number(r.sk_pp||0)+Number(r.sk_refurb||0)+Number(r.sk_rto||0)+Number(r.sk_ins||0))))}</td>
                     </>}
                     <td><DaysInStock pDate={r.pDate || r.sk_pdate} /></td>
-                    <td><span className={`badge ${statusBadge(r.status || r.sk_stat || 'In Stock')}`}>{r.status || r.sk_stat || 'In Stock'}</span></td>
+                    <td>
+                      <span className={`badge ${statusBadge(r.status || r.sk_stat || 'In Stock')}`}>{r.status || r.sk_stat || 'In Stock'}</span>
+                      {activeWsJob && (
+                        <div style={{ marginTop: 3 }}>
+                          <span style={{ display: 'inline-block', background: 'rgba(245,158,11,.15)', color: '#B45309', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 20, letterSpacing: '.4px' }}>
+                            🔧 {activeWsJob.ws_jstat || 'Open'}
+                          </span>
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>

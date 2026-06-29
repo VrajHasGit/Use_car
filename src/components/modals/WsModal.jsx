@@ -43,6 +43,14 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         if (editData.ws_cname) locks.add('ws_cname');
         if (editData.ws_cont) locks.add('ws_cont');
         setPrefilled(locks);
+
+        if (editData.ws_inqid && !editData.ws_val_refurb) {
+          autoFillFromVal(editData.ws_inqid).then(valData => {
+            if (valData && valData.v_ref_cost) {
+              setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+            }
+          });
+        }
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, ws_inqid: quickInqId }));
         autoFillFromInq(quickInqId).then(inqData => {
