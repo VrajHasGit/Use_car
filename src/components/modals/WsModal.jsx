@@ -70,16 +70,34 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           if (stkData) {
             const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || '').toLowerCase()) || stkData.make || '';
             const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || '').toLowerCase()) || stkData.model || '';
-            setFormData(prev => ({
-              ...prev,
-              ws_inqid: stkData.inqId || stkData.sk_inqid || '',
-              ws_make: properMake,
-              ws_model: properModel,
-              ws_km: stkData.km || '',
-              ws_vnum: stkData.regNo || ''
-            }));
-            setModelOptions(MODELS[properMake] || []);
-            setPrefilled(new Set(['ws_stkid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', ...(stkData.inqId || stkData.sk_inqid ? ['ws_inqid'] : [])]));
+            const inqId = stkData.inqId || stkData.sk_inqid || '';
+            if (inqId) {
+              autoFillFromInq(inqId).then(inqData => {
+                setFormData(prev => ({
+                  ...prev,
+                  ws_inqid: inqId,
+                  ws_make: properMake,
+                  ws_model: properModel,
+                  ws_km: stkData.km || '',
+                  ws_vnum: stkData.regNo || '',
+                  ws_cname: inqData ? inqData.sellerName || '' : '',
+                  ws_cont: inqData ? inqData.mobile || '' : ''
+                }));
+                setModelOptions(MODELS[properMake] || []);
+                setPrefilled(new Set(['ws_stkid', 'ws_inqid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont']));
+              });
+            } else {
+              setFormData(prev => ({
+                ...prev,
+                ws_inqid: '',
+                ws_make: properMake,
+                ws_model: properModel,
+                ws_km: stkData.km || '',
+                ws_vnum: stkData.regNo || ''
+              }));
+              setModelOptions(MODELS[properMake] || []);
+              setPrefilled(new Set(['ws_stkid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
+            }
           }
         });
       } else {
@@ -112,15 +130,33 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         if (stkData) {
           const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
           const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
-          setFormData(prev => ({
-            ...prev,
-            ws_make: properMake,
-            ws_model: properModel,
-            ws_km: stkData.km || prev.ws_km,
-            ws_vnum: stkData.regNo || prev.ws_vnum,
-          }));
-          setModelOptions(MODELS[properMake] || []);
-          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
+          const inqId = stkData.inqId || stkData.sk_inqid || '';
+          if (inqId) {
+            autoFillFromInq(inqId).then(inqData => {
+              setFormData(prev => ({
+                ...prev,
+                ws_inqid: inqId || prev.ws_inqid,
+                ws_make: properMake,
+                ws_model: properModel,
+                ws_km: stkData.km || prev.ws_km,
+                ws_vnum: stkData.regNo || prev.ws_vnum,
+                ws_cname: (inqData && inqData.sellerName) || prev.ws_cname,
+                ws_cont: (inqData && inqData.mobile) || prev.ws_cont,
+              }));
+              setModelOptions(MODELS[properMake] || []);
+              setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont', 'ws_inqid']));
+            });
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              ws_make: properMake,
+              ws_model: properModel,
+              ws_km: stkData.km || prev.ws_km,
+              ws_vnum: stkData.regNo || prev.ws_vnum,
+            }));
+            setModelOptions(MODELS[properMake] || []);
+            setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
+          }
         }
       });
     }
@@ -150,14 +186,31 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         if (stkData) {
           const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
           const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
-          setFormData(prev => ({
-            ...prev,
-            ws_make: properMake,
-            ws_model: properModel,
-            ws_km: stkData.km || prev.ws_km,
-          }));
-          setModelOptions(MODELS[properMake] || []);
-          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km']));
+          const inqId = stkData.inqId || stkData.sk_inqid || '';
+          if (inqId) {
+            autoFillFromInq(inqId).then(inqData => {
+              setFormData(prev => ({
+                ...prev,
+                ws_inqid: inqId || prev.ws_inqid,
+                ws_make: properMake,
+                ws_model: properModel,
+                ws_km: stkData.km || prev.ws_km,
+                ws_cname: (inqData && inqData.sellerName) || prev.ws_cname,
+                ws_cont: (inqData && inqData.mobile) || prev.ws_cont,
+              }));
+              setModelOptions(MODELS[properMake] || []);
+              setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km', 'ws_cname', 'ws_cont', 'ws_inqid']));
+            });
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              ws_make: properMake,
+              ws_model: properModel,
+              ws_km: stkData.km || prev.ws_km,
+            }));
+            setModelOptions(MODELS[properMake] || []);
+            setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km']));
+          }
         }
       });
     }

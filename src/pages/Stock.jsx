@@ -189,17 +189,30 @@ const Stock = () => {
     try {
       await updateRecord('stk', rec.id, { status: 'Workshop' });
       
+      let ws_cname = '';
+      let ws_cont = '';
+      const inqId = rec.inqId || rec.sk_inqid || '';
+      if (inqId && data.pur_inq) {
+        const inqData = data.pur_inq.find(i => i.inqId === inqId || i.id === inqId);
+        if (inqData) {
+          ws_cname = inqData.sellerName || '';
+          ws_cont = inqData.mobile || '';
+        }
+      }
+      
       // Create auto-generated workshop job card
       const cnt = await getNextCounter('ws');
       const wsId = genId('JC', cnt);
       const wsData = {
         wsId,
         ws_stkid: rec.stkId || rec.id,
-        ws_inqid: rec.inqId || rec.sk_inqid || '',
+        ws_inqid: inqId,
         ws_vnum: rec.regNo || '',
         ws_make: rec.make || '',
         ws_model: rec.model || '',
         ws_km: rec.km || '',
+        ws_cname,
+        ws_cont,
         ws_indate: today(),
         date: today(),
         ws_wtype: "General Service",
