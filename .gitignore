@@ -31,3 +31,6 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Data exports — contain sensitive info, never commit
+carecay_export.json
+
