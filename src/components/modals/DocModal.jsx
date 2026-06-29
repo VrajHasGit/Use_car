@@ -55,15 +55,21 @@ export const DocModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickId
   "dcu_tto": "",
   "dc_bphoto": "",
   "dcu_bphoto": "",
-  "dc_stat": "",
+  "dc_stat": "Pending",
   "dc_verby": "",
   "dc_verdate": "",
   "dc_rem": ""
 });
 
+  const DC_STAT_MAP = { 'COMPLETE': 'Complete', 'INCOMPLETE': 'Incomplete', 'PENDING': 'Pending' };
+
   useEffect(() => {
     if (editData) {
-      setFormData(prev => ({ ...prev, ...editData }));
+      setFormData(prev => ({
+        ...prev,
+        ...editData,
+        dc_stat: DC_STAT_MAP[editData.dc_stat] || editData.dc_stat || 'Pending',
+      }));
     }
   }, [editData]);
 

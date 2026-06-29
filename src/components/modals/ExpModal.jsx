@@ -1,21 +1,22 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
 export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
-  const [formData, setFormData] = useState({
-  "ex_date": "",
-  "ex_cat": "",
-  "ex_branch": "",
-  "ex_desc": "",
-  "ex_amt": "",
-  "ex_paid": "",
-  "ex_mode": "",
-  "ex_appby": "",
-  "ex_rcpt": "",
-  "ex_ref": "",
-  "ex_car_inp": ""
-});
+  const [formData, setFormData] = useState(editData || {
+    date: new Date().toISOString().split('T')[0],
+    category: "Misc",
+    branch: "SG Highway",
+    description: "",
+    amount: "",
+    gstRate: "",
+    paidBy: "Petty Cash",
+    payMethod: "Cash",
+    approvedBy: "Manager",
+    receiptNo: "",
+    reference: "",
+    notes: ""
+  });
 
   if (!isOpen) return null;
 
@@ -23,10 +24,13 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = async () => {
+  const handleSaveBtn = async () => {
     try {
-      await addDoc(collection(db, 'exp'), { ...formData, createdAt: new Date().toISOString() });
-      if (onSave) { await onSave(formData); } else { onClose(); }
+      if (onSave) { 
+        await onSave(formData); 
+      } else { 
+        onClose(); 
+      }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');
@@ -39,27 +43,28 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
   <div className="m-hdr"><div className="m-hdr-icon">ðŸ§¾</div><h3>Add Expense</h3><button className="m-close" onClick={onClose} >âœ•</button></div>
   <div className="m-body">
    <div className="grid3">
-    <div className="fg"><label>Date *</label><input type="date" id="ex_date" name="ex_date" value={formData['ex_date'] || ''} onChange={handleChange} /></div>
-    <div className="fg"><label>Category *</label><select id="ex_cat" name="ex_cat" value={formData['ex_cat'] || ''} onChange={handleChange}>
-     <option>Petrol/Travel</option><option>Office</option><option>Advertising</option>
-     <option>Workshop</option><option>RTO/Legal</option><option>Staff</option><option>Misc</option>
+    <div className="fg"><label>Date *</label><input type="date" name="date" value={formData.date || ''} onChange={handleChange} /></div>
+    <div className="fg"><label>Category *</label><select name="category" value={formData.category || ''} onChange={handleChange}>
+     <option>Fuel</option><option>Parts</option><option>Marketing</option><option>Salary</option><option>Utilities</option><option>Maintenance</option>
+     <option>Office</option><option>Insurance</option><option>Transport</option><option>Miscellaneous</option><option>Misc</option>
     </select></div>
-    <div className="fg"><label>Branch *</label><select id="ex_branch" name="ex_branch" value={formData['ex_branch'] || ''} onChange={handleChange}><option>SG Highway</option><option>Vastral</option><option>Head Office</option></select></div>
-   </div>
-   <div className="grid2">
-    <div className="fg"><label>Description *</label><input id="ex_desc" name="ex_desc" value={formData['ex_desc'] || ''} onChange={handleChange} placeholder="What was the expense for?" /></div>
-    <div className="fg"><label>Amount â‚¹ *</label><input type="number" id="ex_amt" name="ex_amt" value={formData['ex_amt'] || ''} onChange={handleChange} placeholder="0" /></div>
+    <div className="fg"><label>Branch *</label><select name="branch" value={formData.branch || ''} onChange={handleChange}><option>SG Highway</option><option>Vastral</option><option>Head Office</option></select></div>
    </div>
    <div className="grid3">
-    <div className="fg"><label>Paid By</label><select id="ex_paid" name="ex_paid" value={formData['ex_paid'] || ''} onChange={handleChange}>
+    <div className="fg"><label>Description *</label><input name="description" value={formData.description || ''} onChange={handleChange} placeholder="What was the expense for?" /></div>
+    <div className="fg"><label>Amount ₹ *</label><input type="number" name="amount" value={formData.amount || ''} onChange={handleChange} placeholder="0" /></div>
+    <div className="fg"><label>GST Rate %</label><input type="number" name="gstRate" value={formData.gstRate || ''} onChange={handleChange} placeholder="0" /></div>
+   </div>
+   <div className="grid3">
+    <div className="fg"><label>Paid By</label><select name="paidBy" value={formData.paidBy || ''} onChange={handleChange}>
      <option>Ritesh Shah</option><option>Rajan Desai</option><option>Kalpesh Joshi</option><option>Marut Dandawala</option><option>Isha Dashraniya</option><option>Pinal Desai</option><option>Mittal Mehta</option><option>Amisha Dave</option><option>Dipti</option><option>Petty Cash</option>
     </select></div>
-    <div className="fg"><label>Payment Mode</label><select id="ex_mode" name="ex_mode" value={formData['ex_mode'] || ''} onChange={handleChange}><option>Cash</option><option>UPI</option><option>NEFT</option><option>Card</option></select></div>
-    <div className="fg"><label>Approved By</label><select id="ex_appby" name="ex_appby" value={formData['ex_appby'] || ''} onChange={handleChange}><option>Manager</option><option>Admin</option><option>Self</option></select></div>
+    <div className="fg"><label>Payment Mode</label><select name="payMethod" value={formData.payMethod || ''} onChange={handleChange}><option>Cash</option><option>UPI</option><option>NEFT</option><option>Card</option></select></div>
+    <div className="fg"><label>Approved By</label><select name="approvedBy" value={formData.approvedBy || ''} onChange={handleChange}><option>Manager</option><option>Admin</option><option>Self</option></select></div>
    </div>
    <div className="grid2">
-    <div className="fg"><label>Receipt No.</label><input id="ex_rcpt" name="ex_rcpt" value={formData['ex_rcpt'] || ''} onChange={handleChange} placeholder="Bill / voucher number" /></div>
-    <div className="fg"><label>Reference (Booking ID / Reg No.)</label><input id="ex_ref" name="ex_ref" value={formData['ex_ref'] || ''} onChange={handleChange} placeholder="OB-2025-0001 or GJ-01-AB-1234" /></div>
+    <div className="fg"><label>Receipt No.</label><input name="receiptNo" value={formData.receiptNo || ''} onChange={handleChange} placeholder="Bill / voucher number" /></div>
+    <div className="fg"><label>Reference (Booking ID / Reg No.)</label><input name="reference" value={formData.reference || ''} onChange={handleChange} placeholder="OB-2025-0001 or GJ-01-AB-1234" /></div>
    </div>
 
    
@@ -84,7 +89,7 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
    </div>
    <div id="ex_bill_previews" style={{"display":"flex","flexWrap":"wrap","gap":"8px","marginBottom":"4px"}}></div>
   </div>
-  <div className="m-foot"><button className="btn btn-out"  onClick={onClose}>Cancel</button><button className="btn btn-or" onClick={handleSave} ><i className="fa fa-save"></i> Save Expense</button></div>
+  <div className="m-foot"><button className="btn btn-out"  onClick={onClose}>Cancel</button><button className="btn btn-or" onClick={handleSaveBtn} ><i className="fa fa-save"></i> Save Expense</button></div>
  </div>
 </div>
   );

@@ -21,6 +21,9 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   const [expandedSection, setExpandedSection] = useState('customer'); // 'customer', 'followups'
   const [audioFiles, setAudioFiles] = useState({}); // { index: File }
 
+  const EXEC_OPTIONS = ['Ritesh Shah', 'Rajan Desai', 'Kalpesh Joshi', 'Marut Dandawala', 'Isha Dashraniya', 'Pinal Desai', 'Mittal Mehta', 'Amisha Dave', 'Dipti'];
+  const normalizeExec = (val) => EXEC_OPTIONS.find(n => n.toUpperCase() === (val || '').toUpperCase()) || val || 'Ritesh Shah';
+
   const lookupInquiry = async (inqId) => {
     if (!inqId) return null;
     const local = (ctxData?.pur_inq || []).find(r =>
@@ -79,8 +82,8 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
         }
         if (!migratedData.followUps) migratedData.followUps = [];
         
-        // Mark existing follow-ups as saved/locked
-        migratedData.followUps = migratedData.followUps.map(fu => ({ ...fu, isSaved: true }));
+        // Mark existing follow-ups as saved/locked; normalize exec casing from old uppercase saves
+        migratedData.followUps = migratedData.followUps.map(fu => ({ ...fu, isSaved: true, exec: normalizeExec(fu.exec) }));
 
         const inqIdToUse = migratedData.pf_inqid || migratedData.inqId || '';
         setFormData({ ...migratedData, pf_inqid: inqIdToUse });
@@ -111,15 +114,11 @@ export const PfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   };
 
   const handleFollowUpChange = (index, field, value) => {
-    const newFollowUps = [...formData.followUps];
-    newFollowUps[index][field] = value;
-    if (index === 0 && field === 'exec') {
-      for (let i = 1; i < newFollowUps.length; i++) {
-        if (!newFollowUps[i].isSaved) {
-          newFollowUps[i].exec = value;
-        }
-      }
-    }
+    const newFollowUps = formData.followUps.map((fu, i) => {
+      if (i === index) return { ...fu, [field]: value };
+      if (index === 0 && field === 'exec' && !fu.isSaved) return { ...fu, exec: value };
+      return fu;
+    });
     setFormData(prev => ({ ...prev, followUps: newFollowUps }));
   };
 

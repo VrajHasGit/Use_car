@@ -184,6 +184,7 @@ const Expenses = () => {
             <option value="">All Status</option>
             <option>Pending</option><option>Approved</option><option>Rejected</option><option>Reimbursed</option>
           </select>
+          <button className="btn btn-sm" style={{ background: 'var(--danger)', color: '#fff' }} onClick={() => { setEditRec(null); setIsModalOpen(true); }}><i className="fa fa-plus"></i> Add Expense</button>
           <button className="btn btn-out btn-sm" onClick={handleExport}><i className="fa fa-file-csv"></i> Export</button>
         </div>
       </div>
