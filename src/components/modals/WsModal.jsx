@@ -352,7 +352,6 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div className="fg"><label>Technician Name</label><input name="ws_tech" value={formData.ws_tech} onChange={handleChange} placeholder="Mechanic name" /></div>
             <div className="fg"><label>Manager</label>
               <select name="ws_manager" value={formData.ws_manager} onChange={handleChange}>
                 <option value="">Select Manager</option>
