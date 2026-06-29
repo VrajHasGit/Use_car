@@ -22,9 +22,26 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
   useEffect(() => {
     if (isOpen) {
       if (editData) {
-        setFormData({ ...editData, ws_dp: editData.ws_dp || [] });
-        setModelOptions(MODELS[editData.ws_make] || []);
-        setPrefilled(new Set());
+        const properMake = MAKES.find(m => m.toLowerCase() === (editData.ws_make || '').toLowerCase()) || editData.ws_make || '';
+        const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (editData.ws_model || '').toLowerCase()) || editData.ws_model || '';
+        setFormData({ 
+          ...editData, 
+          ws_make: properMake,
+          ws_model: properModel,
+          ws_dp: editData.ws_dp || [] 
+        });
+        setModelOptions(MODELS[properMake] || []);
+        
+        const locks = new Set();
+        if (editData.ws_stkid) locks.add('ws_stkid');
+        if (editData.ws_inqid) locks.add('ws_inqid');
+        if (editData.ws_vnum) locks.add('ws_vnum');
+        if (editData.ws_make) locks.add('ws_make');
+        if (editData.ws_model) locks.add('ws_model');
+        if (editData.ws_km) locks.add('ws_km');
+        if (editData.ws_cname) locks.add('ws_cname');
+        if (editData.ws_cont) locks.add('ws_cont');
+        setPrefilled(locks);
       } else if (quickInqId) {
         setFormData(prev => ({ ...prev, ws_inqid: quickInqId }));
         autoFillFromInq(quickInqId).then(inqData => {
