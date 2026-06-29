@@ -184,6 +184,15 @@ const Stock = () => {
     } catch (e) { showToast('Failed to mark as sold.', 'error'); }
   };
 
+  const handleSendToWorkshop = async (rec) => {
+    if (!window.confirm(`Send ${rec.regNo} (${rec.make} ${rec.model}) to Workshop?`)) return;
+    try {
+      await updateRecord('stk', rec.id, { status: 'Workshop' });
+      await refresh('stk');
+      showToast(`${rec.regNo} sent to Workshop!`);
+    } catch (e) { showToast('Failed to send to workshop.', 'error'); }
+  };
+
   const handleExport = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
@@ -376,7 +385,7 @@ const Stock = () => {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gap: 6 }}>
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => setQuickModal({ type: 'ws', docId: r.id, stkId: r.stkId || r.id })}><i className="fa fa-wrench"></i></button>
+                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => handleSendToWorkshop(r)}><i className="fa fa-wrench"></i></button>
                         <button className="btn-icon bi-view" title="Vehicle History" onClick={() => setQuickModal({ type: 'vt', stkId: r.stkId || r.id })}><i className="fa fa-timeline"></i></button>
                         <button className="btn-icon" style={{ background: 'rgba(37,99,235,.1)', color: 'var(--bl5)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="QR Code" onClick={() => setQuickModal({ type: 'qr', stkId: r.stkId || r.id })}><i className="fa fa-qrcode"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
