@@ -188,7 +188,30 @@ const Stock = () => {
     if (!window.confirm(`Send ${rec.regNo} (${rec.make} ${rec.model}) to Workshop?`)) return;
     try {
       await updateRecord('stk', rec.id, { status: 'Workshop' });
+      
+      // Create auto-generated workshop job card
+      const cnt = await getNextCounter('ws');
+      const wsId = genId('JC', cnt);
+      const wsData = {
+        wsId,
+        ws_stkid: rec.stkId || rec.id,
+        ws_inqid: rec.inqId || rec.sk_inqid || '',
+        ws_vnum: rec.regNo || '',
+        ws_make: rec.make || '',
+        ws_model: rec.model || '',
+        ws_km: rec.km || '',
+        ws_indate: today(),
+        date: today(),
+        ws_wtype: "General Service",
+        ws_pstat: "Pending",
+        ws_jstat: "Open",
+        tasks: [],
+        createdAt: new Date().toISOString()
+      };
+      await addRecord('ws', wsData);
+      
       await refresh('stk');
+      await refresh('ws');
       showToast(`${rec.regNo} sent to Workshop!`);
     } catch (e) { showToast('Failed to send to workshop.', 'error'); }
   };

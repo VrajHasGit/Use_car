@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useData } from '../../contexts/DataContext';
 import { autoFillFromInq, autoFillFromDoc } from '../../utils/relations';
+import { today } from '../../utils/helpers';
 import { MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
 export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInqId, quickDocId }) => {
+  const { data: ctxData } = useData();
   const [formData, setFormData] = useState({
     sk_inqid: "", sk_docid: "", sk_regn: "", sk_chas: "", sk_eng: "", sk_make: "",
     sk_model: "", sk_var: "", sk_year: "", sk_ryear: "", sk_fuel: "Petrol",
@@ -20,6 +23,20 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
   const applyAutoFillInq = async (inqId) => {
     const inqData = await autoFillFromInq(inqId);
+    let finalDate = "";
+    let finalDealPrice = "";
+    
+    if (ctxData?.pfu) {
+      const pfuRec = ctxData.pfu.find(r => (r.pf_inqid || '').toLowerCase() === (inqId || '').toLowerCase());
+      if (pfuRec && pfuRec.followUps) {
+        const cwFu = [...pfuRec.followUps].reverse().find(fu => fu.stat === 'Closed-Won');
+        if (cwFu) {
+          if (cwFu.date) finalDate = cwFu.date;
+          if (cwFu.dealPrice) finalDealPrice = cwFu.dealPrice;
+        }
+      }
+    }
+
     if (inqData) {
       setFormData(prev => ({
         ...prev,
@@ -35,7 +52,9 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_own: inqData.own || inqData.owner || inqData.owners || prev.sk_own,
         sk_ryear: inqData.ryear || inqData.regYear || prev.sk_ryear,
         sk_chas: inqData.chas || inqData.chassis || prev.sk_chas,
-        sk_eng: inqData.eng || inqData.engine || prev.sk_eng
+        sk_eng: inqData.eng || inqData.engine || prev.sk_eng,
+        sk_pp: prev.sk_pp || finalDealPrice || "",
+        sk_pdate: prev.sk_pdate || finalDate || today()
       }));
       setModelOptions(MODELS[inqData.make] || []);
     }
@@ -283,7 +302,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             <div className="fg"><label>Stock Location</label><input name="sk_loc" value={formData.sk_loc} onChange={handleChange} placeholder="Parking location" /></div>
           </div>
           <div className="grid2">
-            <div className="fg"><label>Purchase Date</label><input type="date" name="sk_pdate" value={formData.sk_pdate} onChange={handleChange} disabled={true} style={{background: 'var(--surface2)', cursor: 'not-allowed', opacity: 0.8}} /></div>
+            <div className="fg"><label>Purchase Date</label><input type="date" name="sk_pdate" value={formData.sk_pdate} onChange={handleChange} /></div>
             <div className="fg"><label>Insurance Validity</label><input type="date" name="sk_insval" value={formData.sk_insval} onChange={handleChange} disabled={true} style={{background: 'var(--surface2)', cursor: 'not-allowed', opacity: 0.8}} /></div>
           </div>
           <div className="grid2">

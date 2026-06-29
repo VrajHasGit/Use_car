@@ -10,9 +10,9 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
   const [formData, setFormData] = useState({
     ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
-    ws_tech: "", ws_prob: "", ws_parts: "", ws_est: "", ws_pc: "",
+    ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
     ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: ""
+    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: []
   });
 
   const [modelOptions, setModelOptions] = useState([]);
@@ -22,7 +22,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
   useEffect(() => {
     if (isOpen) {
       if (editData) {
-        setFormData({ ...editData });
+        setFormData({ ...editData, ws_dp: editData.ws_dp || [] });
         setModelOptions(MODELS[editData.ws_make] || []);
         setPrefilled(new Set());
       } else if (quickInqId) {
@@ -64,9 +64,9 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setFormData({
           ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
           ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
-          ws_tech: "", ws_prob: "", ws_parts: "", ws_est: "", ws_pc: "",
+          ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
           ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: ""
+          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: []
         });
         setModelOptions([]);
         setPrefilled(new Set());
@@ -174,6 +174,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
 
   const pf = (field) => prefilled.has(field);
 
+  const addDpRow = () => setFormData(prev => ({ ...prev, ws_dp: [...(prev.ws_dp || []), { name: '', cost: '' }] }));
+  const updateDpRow = (i, field, val) => setFormData(prev => ({ ...prev, ws_dp: prev.ws_dp.map((r, idx) => idx === i ? { ...r, [field]: val } : r) }));
+  const removeDpRow = (i) => setFormData(prev => ({ ...prev, ws_dp: prev.ws_dp.filter((_, idx) => idx !== i) }));
+  const dpTotal = (formData.ws_dp || []).reduce((sum, r) => sum + Number(r.cost || 0), 0);
+
   return (
     <div className="overlay on" id="m_ws">
       <div className="mbox">
@@ -239,7 +244,41 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             <div className="fg"><label>Work Type *</label><select name="ws_wtype" value={formData.ws_wtype} onChange={handleChange}><option>General Service</option><option>Engine Work</option><option>Denting</option><option>Painting</option><option>AC Repair</option><option>Tyre Work</option><option>Electrical</option><option>Washing</option><option>Accessories</option><option>Body Work</option><option>Full Refurb</option><option>Other</option></select></div>
             <div className="fg"><label>Technician Name</label><input name="ws_tech" value={formData.ws_tech} onChange={handleChange} placeholder="Mechanic name" /></div>
           </div>
-          <div className="grid1"><div className="fg"><label>Problem Details</label><textarea name="ws_prob" value={formData.ws_prob} onChange={handleChange} placeholder="Customer complaint / problem description…"></textarea></div></div>
+          <div className="sect-lbl"><i className="fa fa-paint-brush"></i> Denting / Painting</div>
+          <div style={{border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',overflow:'hidden',marginBottom:'12px'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr style={{background:'var(--surface2)'}}>
+                  <th style={{padding:'8px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',borderBottom:'1px solid var(--border)'}}>Part Name</th>
+                  <th style={{padding:'8px 12px',textAlign:'left',fontSize:'11px',color:'var(--text3)',fontWeight:700,letterSpacing:'.6px',borderBottom:'1px solid var(--border)',width:'140px'}}>Cost ₹</th>
+                  <th style={{width:'36px',borderBottom:'1px solid var(--border)'}}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(formData.ws_dp || []).map((row, i) => (
+                  <tr key={i} style={{borderBottom:'1px solid var(--border)'}}>
+                    <td style={{padding:'4px 8px'}}>
+                      <input value={row.name} onChange={e => updateDpRow(i, 'name', e.target.value)} placeholder="e.g. Front bumper, Hood paint…" style={{width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'4px'}} />
+                    </td>
+                    <td style={{padding:'4px 8px'}}>
+                      <input type="number" value={row.cost} onChange={e => updateDpRow(i, 'cost', e.target.value)} placeholder="0" style={{width:'100%',border:'none',background:'transparent',color:'var(--text)',fontFamily:'inherit',fontSize:'13px',outline:'none',padding:'4px'}} />
+                    </td>
+                    <td style={{padding:'4px 8px',textAlign:'center'}}>
+                      <button type="button" onClick={() => removeDpRow(i)} style={{background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:'14px',padding:'2px 6px',lineHeight:1}}>✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{padding:'8px 12px',borderTop:(formData.ws_dp||[]).length>0?'1px solid var(--border)':'none',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <button type="button" onClick={addDpRow} style={{background:'none',border:'1px dashed var(--border2)',borderRadius:'var(--radius-sm)',color:'var(--or3)',cursor:'pointer',padding:'5px 14px',fontSize:'12px',fontWeight:600,display:'flex',alignItems:'center',gap:'6px'}}>
+                <span style={{fontSize:'16px',lineHeight:1,fontWeight:400}}>+</span> Add Part
+              </button>
+              {(formData.ws_dp||[]).length > 0 && (
+                <span style={{fontSize:'12px',color:'var(--text3)',fontWeight:600}}>Total: ₹ {dpTotal.toLocaleString()}</span>
+              )}
+            </div>
+          </div>
           <div className="grid1"><div className="fg"><label>Parts Required</label><textarea name="ws_parts" value={formData.ws_parts} onChange={handleChange} placeholder="List all parts needed…"></textarea></div></div>
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Calculation — AUTO</div>
           <div className="grid3">
