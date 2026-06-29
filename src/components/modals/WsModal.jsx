@@ -29,17 +29,19 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setFormData(prev => ({ ...prev, ws_inqid: quickInqId }));
         autoFillFromInq(quickInqId).then(inqData => {
           if (inqData) {
+            const properMake = MAKES.find(m => m.toLowerCase() === (inqData.make || '').toLowerCase()) || inqData.make || '';
+            const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (inqData.model || '').toLowerCase()) || inqData.model || '';
             setFormData(prev => ({
               ...prev,
-              ws_make: inqData.make || '',
-              ws_model: inqData.model || '',
+              ws_make: properMake,
+              ws_model: properModel,
               ws_cname: inqData.sellerName || '',
               ws_cont: inqData.mobile || '',
               ws_vnum: inqData.regNo || '',
               ws_km: inqData.km || '',
             }));
-            setModelOptions(MODELS[inqData.make] || []);
-            setPrefilled(new Set(['ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum']));
+            setModelOptions(MODELS[properMake] || []);
+            setPrefilled(new Set(['ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum', 'ws_km']));
           }
         });
       } else if (quickDocId) {
@@ -49,15 +51,18 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         setFormData(prev => ({ ...prev, ws_stkid: stockIdForWs }));
         autoFillFromStockId(stockIdForWs).then(stkData => {
           if (stkData) {
+            const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || '').toLowerCase()) || stkData.make || '';
+            const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || '').toLowerCase()) || stkData.model || '';
             setFormData(prev => ({
               ...prev,
-              ws_make: stkData.make || '',
-              ws_model: stkData.model || '',
+              ws_inqid: stkData.inqId || stkData.sk_inqid || '',
+              ws_make: properMake,
+              ws_model: properModel,
               ws_km: stkData.km || '',
               ws_vnum: stkData.regNo || ''
             }));
-            setModelOptions(MODELS[stkData.make] || []);
-            setPrefilled(new Set(['ws_make', 'ws_model', 'ws_vnum']));
+            setModelOptions(MODELS[properMake] || []);
+            setPrefilled(new Set(['ws_stkid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', ...(stkData.inqId || stkData.sk_inqid ? ['ws_inqid'] : [])]));
           }
         });
       } else {
@@ -88,15 +93,17 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_stkid' && value.length >= 5) {
       autoFillFromStockId(value.toUpperCase()).then(stkData => {
         if (stkData) {
+          const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
+          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
           setFormData(prev => ({
             ...prev,
-            ws_make: stkData.make || prev.ws_make,
-            ws_model: stkData.model || prev.ws_model,
+            ws_make: properMake,
+            ws_model: properModel,
             ws_km: stkData.km || prev.ws_km,
             ws_vnum: stkData.regNo || prev.ws_vnum,
           }));
-          setModelOptions(MODELS[stkData.make] || []);
-          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum']));
+          setModelOptions(MODELS[properMake] || []);
+          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km']));
         }
       });
     }
@@ -104,17 +111,19 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_inqid' && value.length >= 5) {
       autoFillFromInq(value.toUpperCase()).then(inqData => {
         if (inqData) {
+          const properMake = MAKES.find(m => m.toLowerCase() === (inqData.make || prev.ws_make || '').toLowerCase()) || inqData.make || prev.ws_make || '';
+          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (inqData.model || prev.ws_model || '').toLowerCase()) || inqData.model || prev.ws_model || '';
           setFormData(prev => ({
             ...prev,
-            ws_make: inqData.make || prev.ws_make,
-            ws_model: inqData.model || prev.ws_model,
+            ws_make: properMake,
+            ws_model: properModel,
             ws_cname: inqData.sellerName || prev.ws_cname,
             ws_cont: inqData.mobile || prev.ws_cont,
             ws_vnum: inqData.regNo || prev.ws_vnum,
             ws_km: inqData.km || prev.ws_km,
           }));
-          setModelOptions(MODELS[inqData.make] || []);
-          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum']));
+          setModelOptions(MODELS[properMake] || []);
+          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum', 'ws_km']));
         }
       });
     }
@@ -122,14 +131,16 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     if (name === 'ws_vnum' && value.length >= 6) {
       autoFillFromStock(value.toUpperCase()).then(stkData => {
         if (stkData) {
+          const properMake = MAKES.find(m => m.toLowerCase() === (stkData.make || prev.ws_make || '').toLowerCase()) || stkData.make || prev.ws_make || '';
+          const properModel = (MODELS[properMake] || []).find(m => m.toLowerCase() === (stkData.model || prev.ws_model || '').toLowerCase()) || stkData.model || prev.ws_model || '';
           setFormData(prev => ({
             ...prev,
-            ws_make: stkData.make || prev.ws_make,
-            ws_model: stkData.model || prev.ws_model,
+            ws_make: properMake,
+            ws_model: properModel,
             ws_km: stkData.km || prev.ws_km,
           }));
-          setModelOptions(MODELS[stkData.make] || []);
-          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model']));
+          setModelOptions(MODELS[properMake] || []);
+          setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km']));
         }
       });
     }
@@ -192,12 +203,12 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             <span style={{fontSize:"18px"}}>⚡</span>
             <div style={{display:"flex",gap:"10px",width:"100%"}}>
               <div className="fg" style={{margin:"0",flex:"1"}}>
-                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Stock ID — Auto-Fill</label>
-                <input name="ws_stkid" value={formData.ws_stkid} onChange={handleChange} placeholder="STK-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Stock ID {pf('ws_stkid') && <span style={{color:"var(--success)"}}>⚡ AUTO-FILLED</span>}</label>
+                <input name="ws_stkid" value={formData.ws_stkid} onChange={handleChange} placeholder="STK-2025-0001" style={pf('ws_stkid') ? {...DISABLED_STYLE, width:"100%", padding:"8px 12px"} : {background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} disabled={pf('ws_stkid')} />
               </div>
               <div className="fg" style={{margin:"0",flex:"1"}}>
-                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Purchase INQ ID — Auto-Fill</label>
-                <input name="ws_inqid" value={formData.ws_inqid} onChange={handleChange} placeholder="INQ-2025-0001" style={{background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} />
+                <label style={{color:"var(--or3)",fontSize:"10px",fontWeight:"700",letterSpacing:".8px",textTransform:"uppercase",marginBottom:"4px",display:"block"}}>Purchase INQ ID {pf('ws_inqid') && <span style={{color:"var(--success)"}}>⚡ AUTO-FILLED</span>}</label>
+                <input name="ws_inqid" value={formData.ws_inqid} onChange={handleChange} placeholder="INQ-2025-0001" style={pf('ws_inqid') ? {...DISABLED_STYLE, width:"100%", padding:"8px 12px"} : {background:"var(--bg)",border:"1px solid rgba(255,107,0,.4)",color:"var(--text)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontFamily:"inherit",fontSize:"12px",width:"100%"}} disabled={pf('ws_inqid')} />
               </div>
             </div>
           </div>
@@ -208,7 +219,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 disabled={pf('ws_vnum')} style={pf('ws_vnum') ? DISABLED_STYLE : {}} />
             </div>
             <div className="fg"><label>In Date *</label><input type="date" name="ws_indate" value={formData.ws_indate} onChange={handleChange} /></div>
-            <div className="fg"><label>KM Reading</label><input type="number" name="ws_km" value={formData.ws_km} onChange={handleChange} placeholder="Current KM" /></div>
+            <div className="fg"><label>KM Reading {pf('ws_km') && <span style={{color:"var(--success)",fontSize:"9px",fontWeight:700}}>⚡ AUTO-FILLED</span>}</label><input type="number" name="ws_km" value={formData.ws_km} onChange={handleChange} placeholder="Current KM" disabled={pf('ws_km')} style={pf('ws_km') ? DISABLED_STYLE : {}} /></div>
           </div>
           <div className="grid3">
             <div className="fg">
