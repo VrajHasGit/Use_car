@@ -1,15 +1,17 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import fs from "fs";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 
 const firebaseConfig = {
-  apiKey: "FIREBASE_API_KEY_REDACTED",
-  authDomain: "use-car-c9e76.firebaseapp.com",
-  projectId: "use-car-c9e76",
-  storageBucket: "use-car-c9e76.firebasestorage.app",
-  messagingSenderId: "964924436035",
-  appId: "1:964924436035:web:195103ff57222bbe8eaef6",
-  measurementId: "G-YRGG6DEL4Q"
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -29,7 +31,7 @@ async function migrate() {
   for (const [key, value] of Object.entries(data)) {
     try {
       const parsedValue = JSON.parse(value);
-      
+
       if (Array.isArray(parsedValue)) {
         console.log(`Migrating array key: ${key} (${parsedValue.length} items)`);
         for (let i = 0; i < parsedValue.length; i++) {
