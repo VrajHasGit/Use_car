@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
-import { autoFillFromInq, autoFillFromStock, autoFillFromStockId } from '../../utils/relations';
+import { autoFillFromInq, autoFillFromStock, autoFillFromStockId, autoFillFromVal } from '../../utils/relations';
 import { MAKES, MODELS } from '../../utils/constants';
 
 const DISABLED_STYLE = { background: 'var(--surface2)', cursor: 'not-allowed', opacity: 0.8 };
@@ -12,7 +12,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
     ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
     ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: []
+    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_val_refurb: ""
   });
 
   const [modelOptions, setModelOptions] = useState([]);
@@ -28,7 +28,8 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           ...editData, 
           ws_make: properMake,
           ws_model: properModel,
-          ws_dp: editData.ws_dp || [] 
+          ws_dp: editData.ws_dp || [],
+          ws_val_refurb: editData.ws_val_refurb || ""
         });
         setModelOptions(MODELS[properMake] || []);
         
@@ -59,6 +60,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             }));
             setModelOptions(MODELS[properMake] || []);
             setPrefilled(new Set(['ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum', 'ws_km']));
+            autoFillFromVal(quickInqId).then(valData => {
+              if (valData && valData.v_ref_cost) {
+                setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+              }
+            });
           }
         });
       } else if (quickDocId) {
@@ -85,6 +91,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
                 }));
                 setModelOptions(MODELS[properMake] || []);
                 setPrefilled(new Set(['ws_stkid', 'ws_inqid', 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont']));
+                autoFillFromVal(inqId).then(valData => {
+                  if (valData && valData.v_ref_cost) {
+                    setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+                  }
+                });
               });
             } else {
               setFormData(prev => ({
@@ -106,7 +117,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
           ws_tech: "", ws_parts: "", ws_est: "", ws_pc: "",
           ws_lc: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: []
+          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_val_refurb: ""
         });
         setModelOptions([]);
         setPrefilled(new Set());
@@ -145,6 +156,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
               }));
               setModelOptions(MODELS[properMake] || []);
               setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_vnum', 'ws_km', 'ws_cname', 'ws_cont', 'ws_inqid']));
+              autoFillFromVal(inqId).then(valData => {
+                if (valData && valData.v_ref_cost) {
+                  setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+                }
+              });
             });
           } else {
             setFormData(prev => ({
@@ -177,6 +193,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           }));
           setModelOptions(MODELS[properMake] || []);
           setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_cname', 'ws_cont', 'ws_vnum', 'ws_km']));
+          autoFillFromVal(value.toUpperCase()).then(valData => {
+            if (valData && valData.v_ref_cost) {
+              setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+            }
+          });
         }
       });
     }
@@ -200,6 +221,11 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
               }));
               setModelOptions(MODELS[properMake] || []);
               setPrefilled(prev => new Set([...prev, 'ws_make', 'ws_model', 'ws_km', 'ws_cname', 'ws_cont', 'ws_inqid']));
+              autoFillFromVal(inqId).then(valData => {
+                if (valData && valData.v_ref_cost) {
+                  setFormData(prev => ({ ...prev, ws_val_refurb: valData.v_ref_cost }));
+                }
+              });
             });
           } else {
             setFormData(prev => ({
@@ -372,12 +398,13 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           <div className="grid1"><div className="fg"><label>Parts Required</label><textarea name="ws_parts" value={formData.ws_parts} onChange={handleChange} placeholder="List all parts needed…"></textarea></div></div>
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Calculation — AUTO</div>
           <div className="grid3">
+            <div className="fg"><label>Tentative Refurb Cost (By Valuator)</label><div className="calc-out" style={{background:'rgba(255,107,0,.08)',color:'var(--or1)',border:'1px dashed var(--or1)'}}>{formData.ws_val_refurb ? `₹ ${Number(formData.ws_val_refurb).toLocaleString()}` : '—'}</div></div>
             <div className="fg"><label>Estimated Cost ₹</label><input type="number" name="ws_est" value={formData.ws_est} onChange={handleChange} placeholder="0" /></div>
+            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out">₹ {totalCost.toLocaleString()}</div></div>
+          </div>
+          <div className="grid4">
             <div className="fg"><label>Parts Cost ₹ *</label><input type="number" name="ws_pc" value={formData.ws_pc} onChange={handleChange} placeholder="0" /></div>
             <div className="fg"><label>Labour Cost ₹ *</label><input type="number" name="ws_lc" value={formData.ws_lc} onChange={handleChange} placeholder="0" /></div>
-          </div>
-          <div className="grid3">
-            <div className="fg"><label>Total Cost ₹ (AUTO)</label><div className="calc-out">₹ {totalCost.toLocaleString()}</div></div>
             <div className="fg"><label>Payment Status</label><select name="ws_pstat" value={formData.ws_pstat} onChange={handleChange}><option>Pending</option><option>Paid</option></select></div>
             <div className="fg"><label>Job Status</label><select name="ws_jstat" value={formData.ws_jstat} onChange={handleChange}><option>Open</option><option>In Process</option><option>Complete</option></select></div>
           </div>

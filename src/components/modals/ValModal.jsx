@@ -15,6 +15,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     v_rc: false, v_ins: false, v_key2: false, v_war: false, v_inv: false,
     v_tyre: "100%", v_eng: "Good",
     v_ovr: "Good", v_stat: "Pending", v_nextfu: "", v_rem: "", v_valname: "",
+    v_ref_cost: "",
     v_media: []
   });
   
@@ -69,7 +70,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           v_inqid: "", v_date: new Date().toISOString().split('T')[0], v_vnum: "", v_cname: "", v_cont: "", v_km: "",
           v_make: "", v_model: "", v_var: "", v_year: "", v_fuel: "Petrol", v_own: "1st",
           v_rc: false, v_ins: false, v_key2: false, v_war: false, v_inv: false, v_tyre: "100%", v_eng: "Good",
-          v_ovr: "Good", v_stat: "Pending", v_nextfu: "", v_rem: "", v_valname: "",
+          v_ovr: "Good", v_stat: "Pending", v_nextfu: "", v_rem: "", v_valname: "", v_ref_cost: "",
           v_media: []
         };
         setFormData({ ...defaultData, ...editData, v_media: [], v_inqid: inqIdToUse });
@@ -91,7 +92,7 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           v_inqid: "", v_date: new Date().toISOString().split('T')[0], v_vnum: "", v_cname: "", v_cont: "", v_km: "",
           v_make: "", v_model: "", v_var: "", v_year: "", v_fuel: "Petrol", v_own: "1st",
           v_rc: false, v_ins: false, v_key2: false, v_war: false, v_inv: false, v_tyre: "100%", v_eng: "Good",
-          v_ovr: "Good", v_stat: "Pending", v_nextfu: "", v_rem: "", v_valname: "",
+          v_ovr: "Good", v_stat: "Pending", v_nextfu: "", v_rem: "", v_valname: "", v_ref_cost: "",
           v_media: []
         });
         setModelOptions([]);
@@ -430,16 +431,28 @@ export const ValModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
             </div>
           )}
 
-          <div className="fg" style={{ marginBottom: 20 }}>
-            <label>Valuator Remarks</label>
-            <textarea 
-              name="v_rem" 
-              value={formData.v_rem} 
-              onChange={handleChange} 
-              rows="4" 
-              placeholder="Add valuator remarks here (max 1000 words)..." 
-              style={{ width: '100%', resize: 'vertical', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} 
-            />
+          <div className="grid3" style={{ marginBottom: 20 }}>
+            <div className="fg" style={{ gridColumn: 'span 2' }}>
+              <label>Valuator Remarks</label>
+              <textarea 
+                name="v_rem" 
+                value={formData.v_rem} 
+                onChange={handleChange} 
+                rows="4" 
+                placeholder="Add valuator remarks here (max 1000 words)..." 
+                style={{ width: '100%', resize: 'vertical', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} 
+              />
+            </div>
+            <div className="fg">
+              <label>Tentative Refurb Cost (₹)</label>
+              <input 
+                name="v_ref_cost" 
+                type="number"
+                value={formData.v_ref_cost || ''} 
+                onChange={handleChange} 
+                placeholder="e.g. 15000" 
+              />
+            </div>
           </div>
 
           <div className="fg" style={{ marginBottom: 20 }}>

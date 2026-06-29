@@ -28,6 +28,12 @@ export const autoFillFromInq = async (inqId) => {
   return null;
 };
 
+// ─── Valuation auto-fill (used by: Workshop) ───
+export const autoFillFromVal = async (inqId) => {
+  if (!inqId) return null;
+  return await findOne('val', 'v_inqid', inqId);
+};
+
 // ─── Sales Inquiry auto-fill (used by: SalesFollowUp, SalesCloser, TestDrive) ───
 export const autoFillFromSalInq = async (salId) => {
   if (!salId) return null;
