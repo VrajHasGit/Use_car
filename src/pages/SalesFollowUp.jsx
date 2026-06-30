@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -31,7 +31,13 @@ const SalesFollowUp = () => {
     if (records.length > 0) fixIds();
   }, [records]);
 
+  const getLastFu = (r) => (r.followUps && r.followUps.length > 0) ? r.followUps[r.followUps.length - 1] : r;
+
   const filtered = records.filter(r => {
+    const lastFu = getLastFu(r);
+    const isWon = r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won' || lastFu?.stat === 'Closed-Won';
+    if (isWon) return false;
+
     if (search) {
       const q = search.toLowerCase();
       return (r.sfuId || '').toLowerCase().includes(q) ||
@@ -41,15 +47,15 @@ const SalesFollowUp = () => {
         (r.sf_regn || r.regNo || '').toLowerCase().includes(q) ||
         (r.sf_make || '').toLowerCase().includes(q);
     }
-    if (r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won') return false;
     return true;
   });
 
   const handleSave = async (fd) => {
     try {
       const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
-      if (editRec) { await updateRecord('sfu', editRec.id, fd, { title: 'Sales Follow-Up Updated', message: (fd.sf_bname || fd.buyerName || '') + ' — ' + (fd.sf_veh || ''), link: '/sales-follow', actor }); showToast('Updated!'); }
-      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', { ...fd, sfuId: genId('SFU', cnt), date: fd.sf_date || today() }, { title: 'Sales Follow-Up Added', message: (fd.sf_bname || fd.buyerName || '') + ' — ' + (fd.sf_veh || ''), link: '/sales-follow', actor }); showToast('Follow-up added!'); }
+      const vehicle = `${fd.sf_make || ''} ${fd.sf_model || ''}`.trim();
+      if (editRec) { await updateRecord('sfu', editRec.id, fd, { title: 'Sales Follow-Up Updated', message: (fd.sf_cname || '') + ' — ' + vehicle, link: '/sales-follow', actor }); showToast('Updated!'); }
+      else { const cnt = await getNextCounter('sfu'); await addRecord('sfu', { ...fd, sfuId: genId('SFU', cnt), date: fd.date || today() }, { title: 'Sales Follow-Up Added', message: (fd.sf_cname || '') + ' — ' + vehicle, link: '/sales-follow', actor }); showToast('Follow-up added!'); }
       await refresh('sfu'); setIsModalOpen(false);
     } catch (e) { showToast('Failed: ' + e.message, 'error'); }
   };
@@ -73,12 +79,12 @@ const SalesFollowUp = () => {
       await updateRecord('sfu', rec.id, { sf_stat: 'Closed-Won' });
 
       // Auto-create closer record
-      const exists = data.scl?.find(p => p.sc_inqid === rec.sf_inqid);
-      if (!exists && rec.sf_inqid) {
+      const exists = rec.sf_inqid ? data.scl?.find(p => p.sc_inqid === rec.sf_inqid) : false;
+      if (!exists) {
         const cnt = await getNextCounter('scl');
         await addRecord('scl', {
           sclId: genId('SCL', cnt),
-          sc_inqid: rec.sf_inqid,
+          sc_inqid: rec.sf_inqid || '',
           sc_stkid: rec.sf_stkid || '',
           sc_bname: rec.sf_cname || rec.buyerName || '',
           sc_mob: rec.sf_mob || rec.mobile || '',
@@ -111,11 +117,16 @@ const SalesFollowUp = () => {
     }
   };
 
+
   // KPIs
   const interested = records.filter(r => r.sf_stat === 'Interested').length;
   const callback = records.filter(r => r.sf_stat === 'Callback').length;
   const won = records.filter(r => r.sf_stat === 'Closed-Won').length;
-  const overdue = records.filter(r => r.sf_nfd && r.sf_nfd < today() && r.sf_stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost').length;
+  const overdue = records.filter(r => {
+    const lastFu = getLastFu(r);
+    const nfd = lastFu.nfd || r.sf_nfd;
+    return nfd && nfd < today() && r.sf_stat !== 'Closed-Won' && lastFu.stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost';
+  }).length;
 
   return (
     <div className="page on" id="pg_sal_follow">
@@ -126,7 +137,7 @@ const SalesFollowUp = () => {
           <input className="srch" placeholder="🔍 Search buyer / stock ID…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
-      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} onSendToCloser={handleSendToCloser} />}
 
       {/* KPI Strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -151,7 +162,9 @@ const SalesFollowUp = () => {
             <thead><tr><th>ID</th><th>Inq ID</th><th>Stock ID</th><th>Date</th><th>Buyer</th><th>Mobile</th><th>Vehicle</th><th>Status</th><th>Next F/U</th><th>Notes</th><th style={{ minWidth: 180 }}>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => {
-                const isOverdue = r.sf_nfd && r.sf_nfd < today() && r.sf_stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost' && r.sf_stat !== 'Not Interested';
+                const lastFu = getLastFu(r);
+                const nfd = lastFu.nfd || r.sf_nfd;
+                const isOverdue = nfd && nfd < today() && r.sf_stat !== 'Closed-Won' && lastFu.stat !== 'Closed-Won' && r.sf_stat !== 'Closed-Lost' && r.sf_stat !== 'Not Interested';
                 return (
                   <tr key={r.id} className={isOverdue ? 'doc-alert-row' : ''}>
                     <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.sfuId || r.id?.slice(0, 12)}</td>
@@ -161,20 +174,20 @@ const SalesFollowUp = () => {
                         <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: '#059669', fontSize: 10, background: 'rgba(5,150,105,.1)', padding: '2px 8px', borderRadius: 10 }}>{r.sf_stkid}</span>
                       ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>—</span>}
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.sf_date || r.date)}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(lastFu.date || r.date)}</td>
                     <td style={{ fontWeight: 600 }}>{r.sf_cname || r.buyerName}</td>
                     <td><a href={`tel:${r.sf_mob || r.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{r.sf_mob || r.mobile}</a></td>
                     <td style={{ fontSize: 11, color: 'var(--text2)' }}>{r.sf_make || ''} {r.sf_model || ''} {r.sf_year ? `(${r.sf_year})` : ''}</td>
-                    <td><span className={`badge ${statusBadge(r.sf_stat || r.status)}`}>{r.sf_stat || r.status}</span></td>
+                    <td><span className={`badge ${statusBadge(lastFu.stat || r.sf_stat || r.status)}`}>{lastFu.stat || r.sf_stat || r.status}</span></td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      {r.sf_nfd ? (
+                      {nfd ? (
                         <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--text2)', fontWeight: isOverdue ? 700 : 400 }}>
                           {isOverdue && <i className="fa fa-exclamation-triangle" style={{ marginRight: 4 }}></i>}
-                          {fmtDate(r.sf_nfd)}
+                          {fmtDate(nfd)}
                         </span>
                       ) : '—'}
                     </td>
-                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11, color: 'var(--text3)' }}>{r.sf_rem || r.notes || '—'}</td>
+                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11, color: 'var(--text3)' }}>{lastFu.rem || r.sf_rem || r.notes || '—'}</td>
                     <td>
                       <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
