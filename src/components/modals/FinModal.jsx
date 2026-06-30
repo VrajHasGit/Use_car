@@ -1,26 +1,28 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 
-export const FinModal = ({ isOpen, onClose, onSave, editData }) => {
-  const [formData, setFormData] = useState({
-  "fin_date": "",
-  "fin_cname": "",
-  "fin_mob": "",
-  "fin_sobid": "",
-  "fin_veh": "",
-  "fin_regn": "",
-  "fin_bank": "",
-  "fin_sp": "",
-  "fin_dp": "",
-  "fin_roi": "",
-  "fin_ten": "",
-  "fin_stat": "",
-  "fin_disd": "",
-  "fin_exec": "",
-  "fin_fileno": "",
-  "fin_rem": ""
-});
+const BLANK = {
+  fin_date: "", fin_cname: "", fin_mob: "", fin_sobid: "", fin_veh: "",
+  fin_regn: "", fin_bank: "SBI", fin_sp: "", fin_dp: "", fin_roi: "",
+  fin_ten: "36", fin_stat: "Applied", fin_disd: "", fin_exec: "",
+  fin_fileno: "", fin_rem: ""
+};
+
+export const FinModal = ({ isOpen, onClose, onSave, editData, quickData }) => {
+  const [formData, setFormData] = useState(BLANK);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setFormData({ ...BLANK, ...editData });
+      } else if (quickData) {
+        setFormData({ ...BLANK, ...quickData, fin_date: new Date().toISOString().split('T')[0] });
+      } else {
+        setFormData({ ...BLANK, fin_date: new Date().toISOString().split('T')[0] });
+      }
+    }
+  }, [isOpen, editData, quickData]);
 
   if (!isOpen) return null;
 
@@ -30,8 +32,16 @@ export const FinModal = ({ isOpen, onClose, onSave, editData }) => {
 
   const handleSave = async () => {
     try {
-      await addDoc(collection(db, 'fin'), { ...formData, createdAt: new Date().toISOString() });
-      if (onSave) { await onSave(formData); } else { onClose(); }
+      if (onSave) { 
+        await onSave(formData); 
+      } else {
+        if (editData) {
+          await updateDoc(doc(db, 'fin', editData.id), formData);
+        } else {
+          await addDoc(collection(db, 'fin'), { ...formData, createdAt: new Date().toISOString() });
+        }
+        onClose(); 
+      }
     } catch (error) {
       console.error("Error saving record: ", error);
       alert('Failed to save record.');

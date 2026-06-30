@@ -1,11 +1,10 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
-import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
+import { today, genId, fmtDate, fmt } from '../utils/helpers';
 import { SclModal } from '../components/modals/SclModal';
-import { SobModal } from '../components/modals/SobModal';
-import { PayModal } from '../components/modals/PayModal';
+import { FinModal } from '../components/modals/FinModal';
 
 const SalesCloser = () => {
   const { data, refresh } = useData();
@@ -63,23 +62,9 @@ const SalesCloser = () => {
   const [quickModal, setQuickModal] = useState({ type: null, sclId: null, rec: null });
   const closeQuickModal = () => setQuickModal({ type: null, sclId: null, rec: null });
 
-  const markShifted = async (targetStage, recId) => {
-    const rec = data.scl.find(r => r.id === recId || r.sclId === recId);
-    if (rec) {
-      try {
-        await updateRecord('scl', rec.id, { stage: targetStage });
-        await refresh('scl');
-        showToast(`Shifted to ${targetStage}`);
-        closeQuickModal();
-      } catch (e) {
-        showToast('Failed to shift', 'error');
-      }
-    }
-  };
-
-  const handleSendToBooking = async (rec) => {
-    if (!await window.confirm(`Create Order Booking for ${rec.sc_bname || rec.buyerName}?`)) return;
-    setQuickModal({ type: 'sob', sclId: rec.id, rec });
+  const handleSendToFinance = async (rec) => {
+    if (!await window.confirm(`Create Finance / Loan file for ${rec.sc_bname || rec.buyerName}?`)) return;
+    setQuickModal({ type: 'fin', sclId: rec.id, rec });
   };
 
   // KPIs
@@ -98,8 +83,18 @@ const SalesCloser = () => {
         </div>
       </div>
       {isModalOpen && <SclModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
-      <PayModal isOpen={quickModal.type === 'pay'} onClose={closeQuickModal} onSuccess={() => markShifted('Payment', quickModal.sclId)} quickId={quickModal.sclId} type="sale" />
-      <SobModal isOpen={quickModal.type === 'sob'} onClose={closeQuickModal} />
+      <FinModal 
+        isOpen={quickModal.type === 'fin'} 
+        onClose={closeQuickModal} 
+        quickData={quickModal.rec ? {
+          fin_inqid: quickModal.rec.sc_inqid || '',
+          fin_cname: quickModal.rec.sc_bname || quickModal.rec.buyerName || '',
+          fin_mob: quickModal.rec.sc_mob || quickModal.rec.mobile || '',
+          fin_veh: `${quickModal.rec.sc_make || ''} ${quickModal.rec.sc_model || ''}`.trim(),
+          fin_regn: quickModal.rec.sc_regn || quickModal.rec.regNo || '',
+          fin_sp: quickModal.rec.final || quickModal.rec.sc_price || ''
+        } : null} 
+      />
 
       {/* KPI Strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -121,37 +116,42 @@ const SalesCloser = () => {
         <div className="tc-hdr"><div className="tc-title"><i className="fa fa-trophy" style={{ color: 'var(--success)' }}></i> Sales Deals <span style={{ background: 'var(--success)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table id="tbl_scl">
-            <thead><tr><th>ID</th><th>Inq ID</th><th>Stock ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Final Price</th><th>Profit</th><th>Status</th><th style={{ minWidth: 180 }}>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Inq ID</th><th>Close Date</th><th>Buyer Name</th><th>Reg No.</th><th>Vehicle</th><th>Agreed Price</th><th>Token Paid</th><th>Balance</th><th>Payment Status</th><th>Profit</th><th style={{ minWidth: 140 }}>Actions</th></tr></thead>
             <tbody>
-              {filtered.length > 0 ? filtered.map(r => (
-                <tr key={r.id}>
-                  <td style={{ fontWeight: 700, color: 'var(--success)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.sclId || r.id?.slice(0, 12)}</td>
-                  <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sc_inqid || '—'}</td>
-                  <td>
-                    {r.sc_stkid ? (
-                      <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: '#059669', fontSize: 10, background: 'rgba(5,150,105,.1)', padding: '2px 8px', borderRadius: 10 }}>{r.sc_stkid}</span>
-                    ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>—</span>}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.sc_date || r.date)}</td>
-                  <td style={{ fontWeight: 600 }}>{r.sc_bname || r.buyerName}</td>
-                  <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.sc_regn || r.regNo || '—'}</td>
-                  <td>{r.sc_make || r.make} {r.sc_model || r.model}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.final)}</td>
-                  <td className={r.profit > 0 ? 'profit-pos' : r.profit < 0 ? 'profit-neg' : ''}>{r.profit ? fmt(r.profit) : '—'}</td>
-                  <td><span className={`badge ${statusBadge(r.sc_stat || r.status)}`}>{r.sc_stat || r.status}</span></td>
-                  <td>
-                    <div className="act-grp">
-                      <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                      <button className="btn-icon bi-next" title="Create Order Booking" onClick={() => handleSendToBooking(r)}><i className="fa fa-clipboard-list"></i></button>
-                      <button className="btn-icon" title="Send to Payment" onClick={() => setQuickModal({ type: 'pay', sclId: r.id })}
-                        style={{ background: 'rgba(232,93,4,.1)', color: '#E85D04' }}>
-                        <i className="fa fa-indian-rupee-sign"></i>
-                      </button>
-                      <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              )) : <tr><td colSpan="11" className="empty"><i className="fa fa-trophy"></i><br />{search ? 'No results found' : 'No sales deals yet. Click "Add Deal" to create one.'}</td></tr>}
+              {filtered.length > 0 ? filtered.map(r => {
+                const price = parseFloat(r.sc_price) || parseFloat(r.final) || 0;
+                const tokenAmt = parseFloat(r.sc_tok) || 0;
+                const paidTotal = Array.isArray(r.payments) && r.payments.length > 0
+                  ? r.payments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0)
+                  : 0;
+                const remBal = price - tokenAmt - paidTotal;
+
+                let pStatus = 'New Deal';
+                if (price > 0) pStatus = remBal <= 0 ? 'Paid in Full' : 'Pending Payment';
+
+                return (
+                  <tr key={r.id}>
+                    <td style={{ fontWeight: 700, color: 'var(--success)', fontFamily: "'Space Grotesk',sans-serif" }}>{r.sclId || r.id?.slice(0, 12)}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--text2)' }}>{r.sc_inqid || '—'}</td>
+                    <td>{fmtDate(r.sc_date || r.date)}</td>
+                    <td style={{ fontWeight: 600 }}>{r.sc_bname || r.buyerName}</td>
+                    <td className="plate">{r.sc_regn || r.regNo || '—'}</td>
+                    <td>{r.sc_make || r.make} {r.sc_model || r.model}</td>
+                    <td className="amt-or">{fmt(price)}</td>
+                    <td style={{ color: 'var(--success)', fontWeight: 600 }}>{fmt(tokenAmt)}</td>
+                    <td style={{ color: remBal > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>{fmt(remBal)}</td>
+                    <td><span className={`badge ${pStatus === 'Paid in Full' ? 'suc' : pStatus === 'Pending Payment' ? 'wrn' : 'blu'}`}>{pStatus}</span></td>
+                    <td className={r.profit > 0 ? 'profit-pos' : r.profit < 0 ? 'profit-neg' : ''}>{r.profit ? fmt(r.profit) : '—'}</td>
+                    <td>
+                      <div className="act-grp">
+                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        <button className="btn-icon bi-next" style={{ background: '#4A7CDE', color: '#fff' }} title="Send to Finance / Loan" onClick={() => handleSendToFinance(r)}><i className="fa fa-landmark"></i></button>
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : <tr><td colSpan="12" className="empty"><i className="fa fa-trophy"></i><br />{search ? 'No results found' : 'No sales deals yet. Click "Add Deal" to create one.'}</td></tr>}
             </tbody>
           </table>
         </div>
