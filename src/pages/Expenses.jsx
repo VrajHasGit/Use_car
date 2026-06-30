@@ -4,11 +4,11 @@ import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt } from '../utils/helpers';
-import { ExpModal } from '../components/modals/ExpModal';
+import { ExpModal, COMMON_CATEGORIES, CAR_CATEGORIES } from '../components/modals/ExpModal';
 import { exportToExcel } from '../utils/exportData';
 
 const PAGE_SIZE = 20;
-const CATEGORIES = ['Fuel', 'Parts', 'Marketing', 'Salary', 'Utilities', 'Maintenance', 'Office', 'Insurance', 'Transport', 'Miscellaneous'];
+const CATEGORIES = [...COMMON_CATEGORIES, ...CAR_CATEGORIES];
 
 /* ── Reject Reason Modal ─────────────────────────── */
 function RejectModal({ rec, onClose, onReject }) {
@@ -75,6 +75,7 @@ const Expenses = () => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
   const [rejectRec, setRejectRec] = useState(null);
@@ -96,6 +97,8 @@ const Expenses = () => {
   const monthVsLast = lastMonthTotal > 0 ? (((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100).toFixed(1) : null;
   const catTotals = CATEGORIES.map(c => ({ cat: c, total: records.filter(r => r.category === c).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0) })).sort((a, b) => b.total - a.total);
   const topCat = catTotals[0]?.cat || '—';
+  const commonTotal = records.filter(r => (r.expType || 'Common') === 'Common').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const carTotal = records.filter(r => r.expType === 'Car').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
 
   const chartData = useMemo(() => {
     return catTotals.filter(c => c.total > 0).map(c => ({ name: c.cat, value: c.total }));
@@ -105,11 +108,12 @@ const Expenses = () => {
 
   const filtered = useMemo(() => records.filter(r => {
     const q = search.toLowerCase();
-    const matchSearch = !search || (r.description || '').toLowerCase().includes(q) || (r.expId || '').toLowerCase().includes(q) || (r.paidBy || '').toLowerCase().includes(q);
+    const matchSearch = !search || (r.description || '').toLowerCase().includes(q) || (r.expId || '').toLowerCase().includes(q) || (r.paidBy || '').toLowerCase().includes(q) || (r.regNo || '').toLowerCase().includes(q);
     const matchCat = !categoryFilter || r.category === categoryFilter;
     const matchStatus = !statusFilter || r.status === statusFilter;
-    return matchSearch && matchCat && matchStatus;
-  }), [records, search, categoryFilter, statusFilter]);
+    const matchType = !typeFilter || (r.expType || 'Common') === typeFilter;
+    return matchSearch && matchCat && matchStatus && matchType;
+  }), [records, search, categoryFilter, statusFilter, typeFilter]);
 
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
@@ -155,7 +159,9 @@ const Expenses = () => {
   const handleExport = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
-      'Expense ID': r.expId, Date: r.date, Description: r.description, Category: r.category,
+      'Expense ID': r.expId, Date: r.date, Type: r.expType || 'Common',
+      Vehicle: r.expType === 'Car' ? `${r.carMake || ''} ${r.carModel || ''} (${r.regNo || r.stkId || ''})`.trim() : '',
+      Description: r.description, Category: r.category,
       'Amount (INR)': r.amount, 'GST Rate (%)': r.gstRate || 0, 'GST Amount (INR)': r.gstAmount || 0,
       'Net Amount (INR)': r.netAmount || r.amount, 'Payment Method': r.payMethod, 'Paid By': r.paidBy,
       'Approved By': r.approvedBy || '', 'Approval Date': r.approvedAt?.slice(0, 10) || '',
@@ -175,10 +181,16 @@ const Expenses = () => {
           <p>Track and manage dealership expenses · Approve / Reject / Reimburse workflow</p>
         </div>
         <div className="ph-actions">
-          <input className="srch" placeholder="🔍 Search expense…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          <input className="srch" placeholder="🔍 Search expense or reg no…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          <select className="flt" value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }}>
+            <option value="">All Types</option>
+            <option value="Common">🧾 Common</option>
+            <option value="Car">🚗 Car-Specific</option>
+          </select>
           <select className="flt" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}>
             <option value="">All Categories</option>
-            {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            <optgroup label="Common">{COMMON_CATEGORIES.map(c => <option key={c}>{c}</option>)}</optgroup>
+            <optgroup label="Car-Specific">{CAR_CATEGORIES.map(c => <option key={c}>{c}</option>)}</optgroup>
           </select>
           <select className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
             <option value="">All Status</option>
@@ -190,6 +202,24 @@ const Expenses = () => {
       </div>
 
       {isModalOpen && <ExpModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} />}
+
+      {/* Common vs Car-Specific split */}
+      <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 16px' }}>
+          <i className="fa fa-building" style={{ color: 'var(--info)', fontSize: 16 }}></i>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase' }}>Common Expenses</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{fmt(commonTotal)}</div>
+          </div>
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 16px' }}>
+          <i className="fa fa-car" style={{ color: 'var(--or1)', fontSize: 16 }}></i>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase' }}>Car-Specific Expenses</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{fmt(carTotal)}</div>
+          </div>
+        </div>
+      </div>
 
       {/* KPI Summary Cards (spec §8) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -251,7 +281,7 @@ const Expenses = () => {
           <table>
             <thead>
               <tr>
-                <th>Expense ID</th><th>Date</th><th>Description</th><th>Category</th>
+                <th>Expense ID</th><th>Date</th><th>Type / Vehicle</th><th>Description</th><th>Category</th>
                 <th>Amount</th><th>GST</th><th>Paid By</th><th>Pay Method</th>
                 <th>Status</th><th>Approved By</th><th style={{ minWidth: 200 }}>Actions</th>
               </tr>
@@ -261,6 +291,16 @@ const Expenses = () => {
                 <tr key={r.id}>
                   <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--danger)', fontSize: 10 }}>{r.expId || r.id?.slice(0, 12)}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.date)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {r.expType === 'Car' ? (
+                      <>
+                        <span className="badge" style={{ background: 'rgba(232,93,4,.12)', color: 'var(--or1)' }}><i className="fa fa-car"></i> Car</span>
+                        <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }} title={`${r.carMake || ''} ${r.carModel || ''}`}>{r.regNo || r.stkId || '—'}</div>
+                      </>
+                    ) : (
+                      <span className="badge b-info">🧾 Common</span>
+                    )}
+                  </td>
                   <td style={{ maxWidth: 180 }}><span title={r.description} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '—'}</span></td>
                   <td>{r.category ? <span className="badge b-info" style={{ fontSize: 9 }}>{r.category}</span> : '—'}</td>
                   <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.amount)}</td>
@@ -296,7 +336,7 @@ const Expenses = () => {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="11" className="empty">
+                <tr><td colSpan="12" className="empty">
                   <i className="fa fa-receipt"></i><br />
                   {search || categoryFilter || statusFilter ? 'No expenses match your filters.' : 'No expense records yet. Click "Add Expense" to begin.'}
                 </td></tr>

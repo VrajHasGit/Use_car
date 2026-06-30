@@ -49,7 +49,7 @@ function sanitize(obj) {
   return clean;
 }
 
-const EXEMPT_KEYS = ['password', 'pw', 'appr_pw', 'email', 'loginId', 'lid', 'image', 'stage', 'status', 'stat', 'pf_stat', 'pStatus', 'dc_stat', 'exec', 'mode', 'seq', 'ws_jstat', 'ws_pstat', 'jStat', 'pStat'];
+const EXEMPT_KEYS = ['password', 'pw', 'appr_pw', 'email', 'loginId', 'lid', 'image', 'stage', 'status', 'stat', 'pf_stat', 'pStatus', 'dc_stat', 'exec', 'mode', 'seq', 'ws_jstat', 'ws_pstat', 'jStat', 'pStat', 'category', 'expType'];
 
 function capitalizeData(obj) {
   if (typeof obj === 'string') {
