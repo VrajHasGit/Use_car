@@ -59,8 +59,8 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       setModelOptions(MODELS[inqData.make] || []);
       
       const wsData = await autoFillFromWs(null, inqData.regNo);
-      if (wsData && wsData.ws_est) {
-        setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+      if (wsData && (wsData.total || wsData.ws_est)) {
+        setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
       }
     }
   };
@@ -87,8 +87,8 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       
       const regNo = docData.dc_regn || docData.ob_regn || docData.regNo;
       const wsData = await autoFillFromWs(null, regNo);
-      if (wsData && wsData.ws_est) {
-        setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+      if (wsData && (wsData.total || wsData.ws_est)) {
+        setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
       }
     }
   };
@@ -129,8 +129,8 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
       // Auto-fetch refurb from workshop if it exists and refurb is empty
       if (editData && editData.stkId && !editData.sk_refurb) {
         autoFillFromWs(editData.stkId, editData.sk_regn || editData.regNo).then(wsData => {
-          if (wsData && wsData.ws_est) {
-            setFormData(prev => ({ ...prev, sk_refurb: wsData.ws_est }));
+          if (wsData && (wsData.total || wsData.ws_est)) {
+            setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
           }
         });
       }

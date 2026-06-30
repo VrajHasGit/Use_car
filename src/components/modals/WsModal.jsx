@@ -11,7 +11,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
     ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: "", ws_km: "", ws_make: "",
     ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
     ws_tech: "", ws_manager: "", ws_parts: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-    ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
+    ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
   });
 
   const [modelOptions, setModelOptions] = useState([]);
@@ -49,6 +49,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
         if (editData.ws_km) locks.add('ws_km');
         if (editData.ws_cname) locks.add('ws_cname');
         if (editData.ws_cont) locks.add('ws_cont');
+        if (editData.ws_del) locks.add('ws_del');
         setPrefilled(locks);
 
         if (editData.ws_inqid && !editData.ws_val_refurb) {
@@ -167,7 +168,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           ws_stkid: "", ws_inqid: "", ws_vnum: "", ws_indate: new Date().toISOString().split('T')[0], ws_km: "", ws_make: "",
           ws_model: "", ws_cname: "", ws_cont: "", ws_wtype: "General Service",
           ws_tech: "", ws_manager: "", ws_parts: "", ws_pstat: "Pending", ws_jstat: "Open", ws_del: "",
-          ws_exp: "", ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
+          ws_qc: "", ws_act: "", ws_rem: "", ws_dp: [], ws_mw: [], ws_val_refurb: ""
         });
         setModelOptions([]);
         setPrefilled(new Set());
@@ -328,6 +329,7 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
           ws_lc: dpTotal,
           ws_pc: mechTotal,
           ws_est: dpTotal + mechTotal,
+          total: dpTotal + mechTotal,
           date: formData.ws_indate || new Date().toISOString().split('T')[0],
           tasks: formData.tasks || [],
           createdAt: new Date().toISOString()
@@ -541,12 +543,14 @@ export const WsModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickInq
             <div className="fg"><label>Job Status</label><select name="ws_jstat" value={formData.ws_jstat} onChange={handleChange}><option>Open</option><option>In Process</option><option>Complete</option></select></div>
           </div>
           <div className="grid3">
-            <div className="fg"><label>Delivery Date</label><input type="date" name="ws_del" value={formData.ws_del} onChange={handleChange} /></div>
-            <div className="fg"><label>Expected Completion</label><input type="date" name="ws_exp" value={formData.ws_exp} onChange={handleChange} /></div>
+            <div className="fg">
+              <label>Expected Delivery Date {pf('ws_del') && <span style={{ color: 'var(--success)', fontSize: 9, fontWeight: 700 }}>⚡ LOCKED — SET ONCE</span>}</label>
+              <input type="date" name="ws_del" value={formData.ws_del} onChange={handleChange} disabled={pf('ws_del')} style={pf('ws_del') ? DISABLED_STYLE : {}} />
+            </div>
+            <div className="fg"><label>Actual Delivery Date</label><input type="date" name="ws_act" value={formData.ws_act} onChange={handleChange} /></div>
             <div className="fg"><label>Quality Checked By</label><input name="ws_qc" value={formData.ws_qc} onChange={handleChange} placeholder="QC name" /></div>
           </div>
-          <div className="grid2">
-            <div className="fg"><label>Actual Completion Date</label><input type="date" name="ws_act" value={formData.ws_act} onChange={handleChange} /></div>
+          <div className="grid1">
             <div className="fg"><label>Remarks</label><input name="ws_rem" value={formData.ws_rem} onChange={handleChange} placeholder="Extra notes" /></div>
           </div>
         </div>
