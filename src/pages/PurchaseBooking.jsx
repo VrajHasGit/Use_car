@@ -345,7 +345,7 @@ const PurchaseBooking = () => {
                   </td>
                   <td>{r.ob_branch || r.branch || 'SG Highway'}</td>
                   <td>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, width: 'fit-content' }}>
+                    <div className="act-grp">
                       {(() => {
                         const inqRec = data.pur_inq?.find(p => p.inqId === (r.ob_inqid || r.inqId) || p.id === (r.ob_inqid || r.inqId));
                         const isRcEdited = inqRec?.rcEdited === true;

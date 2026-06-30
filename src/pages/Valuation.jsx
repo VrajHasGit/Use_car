@@ -280,7 +280,7 @@ const Valuation = () => {
                   </td>
                   <td>{r.remarks || r.v_rem || '—'}</td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                      <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-next" title="Send to Purchase Follow-up" onClick={() => valToFU(r)}><i className="fa fa-arrow-right"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>

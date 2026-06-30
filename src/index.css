@@ -789,7 +789,7 @@ tbody tr:hover{background:var(--surface2)}
 .btn-out{background:var(--surface);border:1px solid var(--border2);color:var(--text2)}
 .btn-out:hover{border-color:var(--or1);color:var(--or1);background:var(--or5)}
 .btn-sm{padding:5px 10px;font-size:11px}
-.btn-icon{width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:none;cursor:pointer;font-size:11px;transition:.15s}
+.btn-icon{width:33px;height:33px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;border:none;cursor:pointer;font-size:13px;transition:.15s}
 .upload-box{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;cursor:pointer;transition:.2s;min-height:110px;text-align:center;background:var(--surface2)}
 .upload-box:hover{border-color:var(--or1);background:var(--or5)}
 .photo-thumb{position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
@@ -811,6 +811,11 @@ tbody tr:hover{background:var(--surface2)}
 .bi-view:hover{background:var(--success);color:#fff}
 .bi-print{background:rgba(232,93,4,.1);color:var(--or1)}
 .bi-print:hover{background:var(--or1);color:#fff}
+
+/* ─── ACTION BUTTON GROUP — glass panel wrapper ─── */
+.act-grp{display:flex;flex-wrap:wrap;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:7px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 2px 8px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.4);width:fit-content}
+.act-grp.act-grp-3{max-width:129px}
+.act-grp.act-grp-tight{padding:4px;gap:4px;border-radius:10px}
 
 /* ─── SEARCH/FILTER ─── */
 .srch{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;color:var(--text);font-family:inherit;font-size:12px;min-width:0;box-shadow:0 1px 3px rgba(30,58,95,.06)}

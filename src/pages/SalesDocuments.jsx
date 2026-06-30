@@ -125,9 +125,9 @@ const SalesDocuments = () => {
                     <div style={{color: r.sd_stat?.toUpperCase() === 'COMPLETE' ? '#10B981' : '#D97706', fontSize: 10, fontWeight: 700, textTransform: 'uppercase'}}>{r.sd_stat||'INCOMPLETE'}</div>
                   </td>
                   <td>{r.sd_verby||'-'}</td>
-                  <td><div style={{display: 'flex', flexDirection: 'row', gap: 4, width: 'max-content'}}>
-                    <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}} style={{background:'rgba(59,130,246,.1)',color:'#3B82F6',padding:6}}><i className="fa fa-pen" style={{fontSize:10}}></i></button>
-                    <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)} style={{background:'rgba(239,68,68,.1)',color:'#EF4444',padding:6}}><i className="fa fa-trash" style={{fontSize:10}}></i></button>
+                  <td><div className="act-grp">
+                    <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
+                    <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>
                   </div></td>
                 </tr>
               );

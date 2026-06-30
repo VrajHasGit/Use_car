@@ -180,13 +180,13 @@ const Customers = () => {
                       ) : <span style={{ color: 'var(--text3)' }}>0</span>}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}>
                           <i className="fa fa-pen"></i>
                         </button>
                         {r.mobile && (
-                          <button title="WhatsApp" onClick={() => handleWhatsApp(r)}
-                            style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11 }}>
+                          <button className="btn-icon" title="WhatsApp" onClick={() => handleWhatsApp(r)}
+                            style={{ background: '#25D366', color: '#fff' }}>
                             <i className="fa-brands fa-whatsapp"></i>
                           </button>
                         )}

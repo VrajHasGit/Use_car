@@ -193,7 +193,7 @@ const PurchaseCloser = () => {
                   <td style={{color: 'var(--success)', fontWeight: 600}}>{fmt(token)}</td>
                   <td style={{color: remBal > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600}}>{fmt(remBal)}</td>
                   <td><span className={`badge ${pStatus === 'Paid in Full' ? 'suc' : pStatus === 'Pending Payment' ? 'wrn' : 'blu'}`}>{pStatus}</span></td>
-                  <td><div style={{display: 'flex', gap: 6}}>
+                  <td><div className="act-grp">
                       <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                       <button className="btn-icon bi-next" style={{ background: remBal <= 0 ? 'var(--success)' : '#d1d5db', color: '#fff', opacity: remBal <= 0 ? 1 : 0.5, cursor: remBal <= 0 ? 'pointer' : 'not-allowed' }} disabled={remBal > 0} title={remBal <= 0 ? "Send to Stock" : "Clear balance before sending to stock"} onClick={() => remBal <= 0 && handleSendToStock(r)}><i className="fa fa-warehouse"></i></button>
                       <button className="btn-icon bi-del" title="Delete" onClick={()=>handleDelete(r)}><i className="fa fa-trash"></i></button>

@@ -313,21 +313,21 @@ const Expenses = () => {
                     {r.rejectionReason && <div style={{ fontSize: 9, color: 'var(--danger)', marginTop: 1 }} title={r.rejectionReason}>Reason on file</div>}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div className="act-grp act-grp-3">
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       {isManager && r.status === 'Pending' && <>
-                        <button title="Approve" onClick={() => handleApprove(r)}
-                          style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="btn-icon" title="Approve" onClick={() => handleApprove(r)}
+                          style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)' }}>
                           <i className="fa fa-check"></i>
                         </button>
-                        <button title="Reject" onClick={() => setRejectRec(r)}
-                          style={{ background: 'rgba(239,68,68,.1)', color: 'var(--danger)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="btn-icon" title="Reject" onClick={() => setRejectRec(r)}
+                          style={{ background: 'rgba(239,68,68,.1)', color: 'var(--danger)' }}>
                           <i className="fa fa-xmark"></i>
                         </button>
                       </>}
                       {isManager && r.status === 'Approved' && (
-                        <button title="Mark Reimbursed" onClick={() => handleReimburse(r)}
-                          style={{ background: 'rgba(59,130,246,.1)', color: 'var(--info)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="btn-icon" title="Mark Reimbursed" onClick={() => handleReimburse(r)}
+                          style={{ background: 'rgba(59,130,246,.1)', color: 'var(--info)' }}>
                           <i className="fa fa-coins"></i>
                         </button>
                       )}

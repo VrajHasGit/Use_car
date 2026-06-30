@@ -291,7 +291,7 @@ const UserMgmt = () => {
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div className="act-grp">
                       <button className="btn-icon bi-view" title="View Details" onClick={() => { setEditRec(r); setModalMode('view'); setIsModalOpen(true); }}>
                         <i className="fa fa-eye"></i>
                       </button>

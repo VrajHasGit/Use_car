@@ -145,7 +145,7 @@ const Payment = () => {
                   <td style={{color: (r.bal || r.py_bal || 0) > 0 ? 'var(--warn)' : 'var(--success)', fontWeight: 600}}>{fmt(r.bal || r.py_bal || 0)}</td>
                   <td>{r.hold || r.py_hold || '—'}</td>
                   <td>{r.auth || r.py_auth || '—'}</td>
-                  <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
+                  <td><div className="act-grp">
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                     {r.type === 'Purchase' && <button className="btn-icon bi-next" title="Send to Documents" onClick={() => setQuickModal({ type: 'doc', payId: r.id })}><i className="fa fa-file-lines"></i></button>}
                     {r.type === 'Sale' && <button className="btn-icon bi-next" title="Send to Delivery" onClick={() => setQuickModal({ type: 'del', payId: r.id })}><i className="fa fa-truck"></i></button>}

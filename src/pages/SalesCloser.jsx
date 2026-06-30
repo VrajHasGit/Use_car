@@ -140,11 +140,11 @@ const SalesCloser = () => {
                   <td className={r.profit > 0 ? 'profit-pos' : r.profit < 0 ? 'profit-neg' : ''}>{r.profit ? fmt(r.profit) : '—'}</td>
                   <td><span className={`badge ${statusBadge(r.sc_stat || r.status)}`}>{r.sc_stat || r.status}</span></td>
                   <td>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                    <div className="act-grp">
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       <button className="btn-icon bi-next" title="Create Order Booking" onClick={() => handleSendToBooking(r)}><i className="fa fa-clipboard-list"></i></button>
                       <button className="btn-icon" title="Send to Payment" onClick={() => setQuickModal({ type: 'pay', sclId: r.id })}
-                        style={{ background: 'rgba(232,93,4,.1)', color: '#E85D04', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        style={{ background: 'rgba(232,93,4,.1)', color: '#E85D04' }}>
                         <i className="fa fa-indian-rupee-sign"></i>
                       </button>
                       <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>

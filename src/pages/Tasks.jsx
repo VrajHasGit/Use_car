@@ -234,9 +234,9 @@ const Tasks = () => {
                       <i className="fa fa-user"></i> {task.assignedTo}
                     </div>
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8, justifyContent: 'flex-end' }}>
-                    <button className="btn-icon bi-edit" style={{ width: 22, height: 22, fontSize: 9 }} onClick={() => { setEditTask(task); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                    <button className="btn-icon bi-del" style={{ width: 22, height: 22, fontSize: 9 }} onClick={() => handleDelete(task)}><i className="fa fa-trash"></i></button>
+                  <div className="act-grp act-grp-tight" style={{ marginTop: 8 }}>
+                    <button className="btn-icon bi-edit" style={{ width: 24, height: 24, fontSize: 10 }} onClick={() => { setEditTask(task); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                    <button className="btn-icon bi-del" style={{ width: 24, height: 24, fontSize: 10 }} onClick={() => handleDelete(task)}><i className="fa fa-trash"></i></button>
                   </div>
                 </div>
               );

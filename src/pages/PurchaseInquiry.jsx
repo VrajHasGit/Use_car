@@ -302,12 +302,12 @@ const PurchaseInquiry = () => {
                       ) : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                      <div className="act-grp act-grp-3">
                         <button className="btn-icon bi-edit" title="Edit Inquiry" onClick={() => handleEdit(inq)}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', border: 'none', borderRadius: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
-                        {inq.mobile ? (
-                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff', borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>
-                        ) : <div />}
+                        <button className="btn-icon" title="Setup Reminder" onClick={() => handleReminder(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED' }}><i className="fa fa-bell"></i></button>
+                        {inq.mobile && (
+                          <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)} style={{ background: '#25D366', color: '#fff' }}><i className="fa-brands fa-whatsapp"></i></button>
+                        )}
                         <button className="btn-icon bi-next" title="Send to Valuation" onClick={() => handleShiftToValuation(inq)}><i className="fa fa-arrow-right"></i></button>
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(inq)}><i className="fa fa-trash"></i></button>
                       </div>

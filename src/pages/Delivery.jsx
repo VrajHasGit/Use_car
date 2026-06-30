@@ -83,7 +83,7 @@ const Delivery = () => {
                   <td>{r.make} {r.model}</td>
                   <td>{r.delDate?fmtDate(r.delDate):'—'}</td>
                   <td><span className={`badge ${statusBadge(r.status)}`}>{r.status}</span></td>
-                  <td><div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
+                  <td><div className="act-grp">
                     <button className="btn-icon bi-edit" title="Edit" onClick={()=>{setEditRec(r);setIsModalOpen(true);}}><i className="fa fa-pen"></i></button>
                     <button className="btn-icon bi-print" title="Print" onClick={()=>handlePrintRecord(r)}><i className="fa fa-print"></i></button>
                     <button className="btn-icon bi-next" title="Send to Documents" onClick={() => setQuickModal({ type: 'doc', delId: r.id })}><i className="fa fa-folder-open"></i></button>

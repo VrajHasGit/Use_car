@@ -141,33 +141,46 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
         <div className="m-body">
 
           {/* ── Expense Type Selector ───────────────────────── */}
-          <div className="sect-lbl"><i className="fa fa-layer-group"></i> Expense Type</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            {TYPE_CARDS.map(card => {
-              const active = formData.expType === card.key;
-              return (
-                <div key={card.key} onClick={() => switchType(card.key)}
-                  style={{
-                    cursor: 'pointer', borderRadius: 'var(--radius)', padding: '14px 16px',
-                    border: active ? '2px solid var(--or1)' : '1px solid var(--border2)',
-                    background: active ? 'rgba(232,93,4,.08)' : 'var(--surface2)',
-                    display: 'flex', alignItems: 'center', gap: 12, transition: '.15s',
-                  }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-                    background: active ? 'linear-gradient(135deg,var(--or1),var(--or2))' : 'var(--surface)',
-                    color: active ? '#fff' : 'var(--text3)',
-                  }}><i className={`fa ${card.icon}`}></i></div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: active ? 'var(--or1)' : 'var(--text)' }}>{card.title}</div>
-                    <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 2 }}>{card.sub}</div>
-                  </div>
-                  <div style={{ marginLeft: 'auto', width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                    border: active ? '5px solid var(--or1)' : '2px solid var(--border2)', background: 'var(--surface)' }} />
-                </div>
-              );
-            })}
+          <div className="sect-lbl"><i className="fa fa-layer-group"></i> What kind of expense is this?</div>
+          <div style={{
+            background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 22,
+            padding: 18, marginBottom: 24,
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+              {TYPE_CARDS.map(card => {
+                const active = formData.expType === card.key;
+                return (
+                  <button key={card.key} type="button" onClick={() => switchType(card.key)}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--or1)'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.transform = 'translateY(0)'; } }}
+                    style={{
+                      cursor: 'pointer', borderRadius: 18, padding: '36px 24px', position: 'relative',
+                      border: active ? '3px solid var(--or1)' : '1.5px solid var(--border2)',
+                      background: active ? 'rgba(232,93,4,.1)' : 'var(--surface)',
+                      boxShadow: active ? '0 10px 28px rgba(232,93,4,.22)' : '0 1px 4px rgba(0,0,0,.04)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 14,
+                      transition: '.18s', fontFamily: 'inherit', width: '100%',
+                    }}>
+                    {active && (
+                      <div style={{
+                        position: 'absolute', top: 14, right: 14, width: 26, height: 26, borderRadius: '50%',
+                        background: 'var(--or1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+                      }}><i className="fa fa-check"></i></div>
+                    )}
+                    <div style={{
+                      width: 76, height: 76, borderRadius: 20, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30,
+                      background: active ? 'linear-gradient(135deg,var(--or1),var(--or2))' : 'var(--surface2)',
+                      color: active ? '#fff' : 'var(--text3)',
+                    }}><i className={`fa ${card.icon}`}></i></div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: active ? 'var(--or1)' : 'var(--text)' }}>{card.title}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 7, lineHeight: 1.5 }}>{card.sub}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="grid3">

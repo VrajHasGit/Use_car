@@ -176,10 +176,10 @@ const SalesFollowUp = () => {
                     </td>
                     <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11, color: 'var(--text3)' }}>{r.sf_rem || r.notes || '—'}</td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                      <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-next" title="Send to Closer" onClick={() => handleSendToCloser(r)}><i className="fa fa-handshake"></i></button>
-                        {(r.sf_mob || r.mobile) && <button title="WhatsApp" onClick={() => handleWA(r)} style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa-brands fa-whatsapp"></i></button>}
+                        {(r.sf_mob || r.mobile) && <button className="btn-icon" title="WhatsApp" onClick={() => handleWA(r)} style={{ background: '#25D366', color: '#fff' }}><i className="fa-brands fa-whatsapp"></i></button>}
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>

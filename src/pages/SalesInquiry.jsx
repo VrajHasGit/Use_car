@@ -317,27 +317,26 @@ const SalesInquiry = () => {
                       ) : <span style={{ color: 'var(--text3)', fontSize: 10 }}>No log</span>}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                      <div className="act-grp act-grp-3">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon" title="Log Call / Interaction" onClick={() => setLogCallRec(inq)}
-                          style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)' }}>
                           <i className="fa fa-phone-volume"></i>
                         </button>
                         <button className="btn-icon bi-view" title="Follow-Up" onClick={() => setQuickModal({ type: 'sfu', inqId: inq.salId || inq.id })}><i className="fa fa-phone"></i></button>
                         <button className="btn-icon bi-next" title="Sales Closer" onClick={() => setQuickModal({ type: 'scl', inqId: inq.salId || inq.id })}><i className="fa fa-handshake"></i></button>
-
                         <button className="btn-icon" title="Order Booking" onClick={() => setQuickModal({ type: 'sob', inqId: inq.salId || inq.id })}
-                          style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED' }}>
                           <i className="fa fa-clipboard-list"></i>
                         </button>
                         <button className="btn-icon" title="Test Drive" onClick={() => setQuickModal({ type: 'td', inqId: inq.salId || inq.id })}
-                          style={{ background: 'rgba(157,23,77,.1)', color: '#9D174D', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          style={{ background: 'rgba(157,23,77,.1)', color: '#9D174D' }}>
                           <i className="fa fa-road"></i>
                         </button>
-                        <button className="btn-icon" title="Set Follow-Up Reminder" onClick={() => handleSetFU(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-bell"></i></button>
+                        <button className="btn-icon" title="Set Follow-Up Reminder" onClick={() => handleSetFU(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED' }}><i className="fa fa-bell"></i></button>
                         {inq.mobile && (
                           <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
-                            style={{ background: '#25D366', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            style={{ background: '#25D366', color: '#fff' }}>
                             <i className="fa-brands fa-whatsapp"></i>
                           </button>
                         )}

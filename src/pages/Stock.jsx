@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useData } from '../contexts/DataContext';
@@ -209,6 +209,37 @@ const Stock = () => {
     } catch (e) { showToast('Failed to mark as sold.', 'error'); }
   };
 
+  const handleSendToWorkshop = async (rec) => {
+    if (!await window.confirm(`Send ${rec.regNo} to Workshop?`)) return;
+    try {
+      const cnt = await getNextCounter('ws');
+      const wsId = genId('JC', cnt);
+      await addRecord('ws', {
+        wsId,
+        ws_stkid: rec.stkId || rec.id,
+        ws_inqid: rec.inqId || rec.sk_inqid || '',
+        ws_vnum: rec.regNo || rec.sk_regn || '',
+        ws_make: rec.make || rec.sk_make || '',
+        ws_model: rec.model || rec.sk_model || '',
+        ws_km: rec.km || rec.sk_km || '',
+        ws_indate: today(),
+        date: today(),
+        ws_wtype: "General Service",
+        ws_jstat: 'Open',
+        ws_pstat: 'Pending',
+        ws_lc: 0,
+        ws_pc: 0,
+        ws_est: 0,
+        total: 0,
+        tasks: []
+      });
+      await updateRecord('stk', rec.id, { status: 'Workshop' });
+      await refresh('ws');
+      await refresh('stk');
+      showToast(`${rec.regNo} moved to Workshop! ✅`);
+    } catch (e) { showToast('Failed to move to workshop.', 'error'); }
+  };
+
 const handleExport = () => {
     if (filtered.length === 0) return showToast('No data to export.', 'info');
     const rows = filtered.map(r => ({
@@ -412,13 +443,13 @@ const handleExport = () => {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 30px)', gap: 6 }}>
-                        <button className="btn-icon bi-edit" title="Edit" style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }} onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.12)', color: 'var(--success)', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-circle-check"></i></button>}
-                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => setQuickModal({ type: 'ws', stkId: r.stkId || r.id, docId: r.id })} style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }}><i className="fa fa-wrench"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.12)', color: 'var(--pink)', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
-                        <button className="btn-icon" style={{ background: 'rgba(200,168,75,.13)', color: '#B8860B', width: 30, height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Generate Quotation" onClick={() => setQuotRec(r)}><i className="fa fa-file-invoice-dollar"></i></button>
-                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)} style={{ width: 30, height: 30, borderRadius: 7, fontSize: 12 }}><i className="fa fa-trash"></i></button>
+                      <div className="act-grp act-grp-3">
+                        <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
+                        {r.status !== 'Sold' && <button className="btn-icon" title="Mark as Sold" onClick={() => handleMarkSold(r)} style={{ background: 'rgba(34,197,94,.12)', color: 'var(--success)' }}><i className="fa fa-circle-check"></i></button>}
+                        <button className="btn-icon bi-next" title="Send to Workshop" onClick={() => handleSendToWorkshop(r)}><i className="fa fa-wrench"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(236,72,153,.12)', color: 'var(--pink)' }} title="Upload Photos" onClick={() => setPhotoModalRec(r)}><i className="fa fa-camera"></i></button>
+                        <button className="btn-icon" style={{ background: 'rgba(200,168,75,.13)', color: '#B8860B' }} title="Generate Quotation" onClick={() => setQuotRec(r)}><i className="fa fa-file-invoice-dollar"></i></button>
+                        <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                       </div>
                     </td>
                   </tr>

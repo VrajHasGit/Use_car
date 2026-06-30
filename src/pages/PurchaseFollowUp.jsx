@@ -384,10 +384,10 @@ const PurchaseFollowUp = () => {
                   <td>{won ? <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: 12 }}>Deal Won ✅</span> : (lastFu.nfd || lastFu.nextFU || lastFu.pf_nfd ? fmtDate(lastFu.nfd || lastFu.nextFU || lastFu.pf_nfd) : '—')}</td>
                   <td style={{ fontSize: 12, color: 'var(--text2)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.aiSuggestion || ''}>{r.aiSuggestion || '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    <div className="act-grp">
                       <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                       {won && (
-                        <button className="btn-icon" title="Send to Documents" onClick={() => handleVerifyDocs(r)} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><i className="fa fa-file-contract"></i></button>
+                        <button className="btn-icon" title="Send to Documents" onClick={() => handleVerifyDocs(r)} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}><i className="fa fa-file-contract"></i></button>
                       )}
                       <button className="btn-icon" style={{ background: 'rgba(124,58,237,.12)', color: '#7C3AED' }} onClick={() => showAIPrice(r)} title="AI Price Suggestion"><i className="fa fa-robot"></i></button>
                       <button className="btn-icon" style={{ background: 'rgba(59,130,246,.12)', color: '#3B82F6' }} onClick={() => showMarketPrice(r)} title="Market Pricing Data"><i className="fa fa-globe"></i></button>

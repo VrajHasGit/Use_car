@@ -285,15 +285,15 @@ const Workshop = () => {
                       <td><span className={`badge ${(r.ws_jstat || r.jStat) === 'Open' ? 'b-open' : (r.ws_jstat || r.jStat) === 'In Process' ? 'b-prog' : 'b-complete'}`}>{r.ws_jstat || r.jStat}</span></td>
                       <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.ws_prob || r.ws_rem || r.notes}>{r.ws_prob || r.ws_rem || r.notes || '—'}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div className="act-grp">
                           <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                           {isManager && !r.readyToList && (
-                            <button title="Finalize & Release to Showroom" onClick={() => handleReadyToList(r)}
-                              style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', width: 28, height: 28, borderRadius: 5, border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
+                            <button className="btn-icon" title="Finalize & Release to Showroom" onClick={() => handleReadyToList(r)}
+                              style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
                               <i className="fa fa-wand-magic-sparkles"></i>
                             </button>
                           )}
-                          {r.readyToList && <span title="Listed in Stock" style={{ color: 'var(--success)', fontSize: 11, display: 'flex', alignItems: 'center' }}><i className="fa fa-circle-check"></i></span>}
+                          {r.readyToList && <span title="Listed in Stock" style={{ color: 'var(--success)', fontSize: 13, display: 'flex', alignItems: 'center' }}><i className="fa fa-circle-check"></i></span>}
                           <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                         </div>
                       </td>

@@ -144,12 +144,12 @@ const SalesBooking = () => {
                     <td style={{ whiteSpace: 'nowrap', fontSize: 11 }}>{r.sob_edd ? fmtDate(r.sob_edd) : '—'}</td>
                     <td><span className={`badge ${statusBadge(r.status || 'Pending')}`}>{r.status || 'Pending'}</span></td>
                     <td>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                      <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-print" title="Print" onClick={() => handlePrintRecord(r)}><i className="fa fa-print"></i></button>
                         {(r.status !== 'Delivered') && (
                           <button className="btn-icon" title="Mark Delivered" onClick={() => handleMarkDelivered(r)}
-                            style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)', width: 28, height: 28, borderRadius: 5, border: 'none', cursor: 'pointer', fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)' }}>
                             <i className="fa fa-truck"></i>
                           </button>
                         )}
