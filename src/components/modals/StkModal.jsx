@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useData } from '../../contexts/DataContext';
@@ -21,17 +21,26 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   const [modelOptions, setModelOptions] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // ─── Helper: sum ALL workshop job-card totals for a car from in-memory data ───
-  const getWsTotal = (stkId, regNo) => {
+  // ─── LIVE refurb cost: computed from ctxData.ws every time ws data updates ───
+  const liveWsRefurb = useMemo(() => {
     const wsRecords = ctxData?.ws || [];
+    const stkId = editData?.stkId || formData.stkId || '';
+    const regNo = editData?.sk_regn || editData?.regNo || formData.sk_regn || '';
+    if (!stkId && !regNo) return 0;
     const matches = wsRecords.filter(w =>
-      (stkId && w.ws_stkid === stkId) ||
+      (stkId && (w.ws_stkid === stkId || w.ws_stkid === editData?.id)) ||
       (regNo && w.ws_vnum && w.ws_vnum.toUpperCase() === regNo.toUpperCase())
     );
-    if (!matches.length) return null;
-    const total = matches.reduce((sum, w) => sum + (Number(w.total) || Number(w.ws_est) || 0), 0);
-    return total;
-  };
+    if (!matches.length) return 0;
+    return matches.reduce((sum, w) => sum + (Number(w.total) || Number(w.ws_est) || 0), 0);
+  }, [ctxData?.ws, editData, formData.stkId, formData.sk_regn]);
+
+  // Sync liveWsRefurb into formData so it gets saved correctly
+  useEffect(() => {
+    if (isOpen && liveWsRefurb > 0) {
+      setFormData(prev => ({ ...prev, sk_refurb: liveWsRefurb }));
+    }
+  }, [isOpen, liveWsRefurb]);
 
   const applyAutoFillInq = async (inqId) => {
     const inqData = await autoFillFromInq(inqId);
@@ -127,16 +136,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         setModelOptions([]);
       }
       
-      // Refurb cost — always sync from ALL workshop job cards (summed) using in-memory data
-      const stkId = editData?.stkId || '';
-      const regNo = editData?.sk_regn || editData?.regNo || '';
-      const wsTotal = getWsTotal(stkId, regNo);
-      if (wsTotal !== null) {
-        setFormData(prev => ({ ...prev, sk_refurb: wsTotal }));
-      } else if (quickInqId) {
-        // For new records via inquiry, also try to fetch ws by regNo once inq data loads
-        // (handled after applyAutoFillInq resolves — no extra action needed)
-      }
+      // sk_refurb is synced via the separate liveWsRefurb useEffect above
     }
   }, [isOpen, editData, quickInqId, quickDocId]);
 
@@ -238,7 +238,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
   };
 
   const pp = Number(formData.sk_pp || 0);
-  const refurb = Number(formData.sk_refurb || 0);
+  const refurb = liveWsRefurb;  // always live from workshop
   const rto = Number(formData.sk_rto || 0);
   const ins = Number(formData.sk_ins || 0);
   const sp = Number(formData.sk_sp || 0);
