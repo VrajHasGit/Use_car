@@ -126,12 +126,10 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         setModelOptions([]);
       }
       
-      // Auto-fetch refurb from workshop if it exists and refurb is empty
-      if (editData && editData.stkId && !editData.sk_refurb) {
+      // Refurb cost is always synced from the latest Workshop job card total — never edited by hand
+      if (editData && editData.stkId) {
         autoFillFromWs(editData.stkId, editData.sk_regn || editData.regNo).then(wsData => {
-          if (wsData && (wsData.total || wsData.ws_est)) {
-            setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
-          }
+          setFormData(prev => ({ ...prev, sk_refurb: (wsData && (wsData.total || wsData.ws_est)) || 0 }));
         });
       }
     }
@@ -347,7 +345,7 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost & Pricing — AUTO CALCULATION</div>
           <div className="grid3">
             <div className="fg"><label>Purchase Price ₹ *</label><input type="number" name="sk_pp" value={formData.sk_pp} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>Refurb Cost ₹</label><input type="number" name="sk_refurb" value={formData.sk_refurb} onChange={handleChange} placeholder="0" /></div>
+            <div className="fg"><label>Refurb Cost ₹ (AUTO — FROM WORKSHOP)</label><div className="calc-out">₹ {refurb.toLocaleString('en-IN')}</div></div>
             <div className="fg"><label>RTO Transfer Cost ₹</label><input type="number" name="sk_rto" value={formData.sk_rto} onChange={handleChange} placeholder="0" /></div>
           </div>
           <div className="grid3">
