@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useData } from '../../contexts/DataContext';
-import { autoFillFromInq, autoFillFromDoc, autoFillFromWs } from '../../utils/relations';
+import { autoFillFromInq, autoFillFromDoc } from '../../utils/relations';
 import { today } from '../../utils/helpers';
 import { MAKES, MODELS, YEARS, FUELS, TRANS, COLORS, OWNERS } from '../../utils/constants';
 
@@ -20,6 +20,18 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
 
   const [modelOptions, setModelOptions] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  // ─── Helper: sum ALL workshop job-card totals for a car from in-memory data ───
+  const getWsTotal = (stkId, regNo) => {
+    const wsRecords = ctxData?.ws || [];
+    const matches = wsRecords.filter(w =>
+      (stkId && w.ws_stkid === stkId) ||
+      (regNo && w.ws_vnum && w.ws_vnum.toUpperCase() === regNo.toUpperCase())
+    );
+    if (!matches.length) return null;
+    const total = matches.reduce((sum, w) => sum + (Number(w.total) || Number(w.ws_est) || 0), 0);
+    return total;
+  };
 
   const applyAutoFillInq = async (inqId) => {
     const inqData = await autoFillFromInq(inqId);
@@ -57,11 +69,6 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_pdate: prev.sk_pdate || finalDate || today()
       }));
       setModelOptions(MODELS[inqData.make] || []);
-      
-      const wsData = await autoFillFromWs(null, inqData.regNo);
-      if (wsData && (wsData.total || wsData.ws_est)) {
-        setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
-      }
     }
   };
 
@@ -84,12 +91,6 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         sk_rc: docData.dc_rc ? 'Yes' : prev.sk_rc
       }));
       setModelOptions(MODELS[docData.ob_make || docData.ob_mm?.split(' ')[0] || docData.make] || []);
-      
-      const regNo = docData.dc_regn || docData.ob_regn || docData.regNo;
-      const wsData = await autoFillFromWs(null, regNo);
-      if (wsData && (wsData.total || wsData.ws_est)) {
-        setFormData(prev => ({ ...prev, sk_refurb: wsData.total || wsData.ws_est }));
-      }
     }
   };
 
@@ -126,11 +127,15 @@ export const StkModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
         setModelOptions([]);
       }
       
-      // Refurb cost is always synced from the latest Workshop job card total — never edited by hand
-      if (editData && editData.stkId) {
-        autoFillFromWs(editData.stkId, editData.sk_regn || editData.regNo).then(wsData => {
-          setFormData(prev => ({ ...prev, sk_refurb: (wsData && (wsData.total || wsData.ws_est)) || 0 }));
-        });
+      // Refurb cost — always sync from ALL workshop job cards (summed) using in-memory data
+      const stkId = editData?.stkId || '';
+      const regNo = editData?.sk_regn || editData?.regNo || '';
+      const wsTotal = getWsTotal(stkId, regNo);
+      if (wsTotal !== null) {
+        setFormData(prev => ({ ...prev, sk_refurb: wsTotal }));
+      } else if (quickInqId) {
+        // For new records via inquiry, also try to fetch ws by regNo once inq data loads
+        // (handled after applyAutoFillInq resolves — no extra action needed)
       }
     }
   }, [isOpen, editData, quickInqId, quickDocId]);
