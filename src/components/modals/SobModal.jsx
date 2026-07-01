@@ -89,8 +89,8 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
         sob_regn: stk.regNo || stk.sk_regn || prev.sob_regn,
         sob_year: stk.year || stk.sk_year || prev.sob_year,
         sob_km: stk.km || stk.sk_km || prev.sob_km,
-        sob_saleprice: stk.sprice || stk.sp || stk.sk_sp || prev.sob_saleprice,
-        sob_partner: stk.partner || stk.sk_partner || stk.ob_pname || stk.pc_pname || prev.sob_partner,
+        sob_saleprice: prev.sob_saleprice || stk.sprice || stk.sp || stk.sk_sp,
+        sob_partner: prev.sob_partner || stk.partner || stk.sk_partner || stk.ob_pname || stk.pc_pname,
         sob_oth_exp: (Number(stk.refurb) || 0) + (Number(stk.rto) || 0) + (Number(stk.ins) || 0) || prev.sob_oth_exp,
       }));
     }
@@ -104,12 +104,16 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
     );
     if (inq) {
       let dealStkId = inq.linkedStock;
+      let dealPriceFromSfu = null;
       const sfuRec = (data?.sfu || []).find(s => (s.sf_inqid || '').toLowerCase() === inqId.toLowerCase() || (s.id || '').toLowerCase() === inqId.toLowerCase());
       if (sfuRec && sfuRec.followUps) {
          const closedFu = sfuRec.followUps.find(f => f.stat === 'Closed-Won');
-         if (closedFu && closedFu.finalRegn) {
-            const stk = (data.stk || []).find(s => (s.regNo || s.sk_regn || '').toLowerCase() === closedFu.finalRegn.toLowerCase() || (s.stkId || s.id || '').toLowerCase() === closedFu.finalRegn.toLowerCase());
-            if (stk) dealStkId = stk.stkId || stk.id;
+         if (closedFu) {
+            if (closedFu.dealPrice) dealPriceFromSfu = closedFu.dealPrice;
+            if (closedFu.finalRegn) {
+              const stk = (data.stk || []).find(s => (s.regNo || s.sk_regn || '').toLowerCase() === closedFu.finalRegn.toLowerCase() || (s.stkId || s.id || '').toLowerCase() === closedFu.finalRegn.toLowerCase());
+              if (stk) dealStkId = stk.stkId || stk.id;
+            }
          }
       }
 
@@ -124,6 +128,8 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
         sob_branch: inq.branch || prev.sob_branch,
         sob_mm: [pref.make, pref.model].filter(Boolean).join(' ') || prev.sob_mm,
         sob_exec: inq.assigned || prev.sob_exec,
+        sob_partner: inq.nameSource || prev.sob_partner,
+        ...(dealPriceFromSfu ? { sob_saleprice: dealPriceFromSfu } : {}),
       }));
       if (dealStkId) setTimeout(() => autoFillFromStkId(dealStkId), 100);
       setAutoFillMsg(`✅ Auto-filled from Inquiry: ${inq.buyerName || inqId}`);
@@ -764,8 +770,8 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
               <input name="sob_exec" value={formData.sob_exec || ''} onChange={handleChange} placeholder="Executive Name" />
             </div>
             <div className="fg">
-              <label>Partner Name</label>
-              <input name="sob_partner" value={formData.sob_partner || ''} onChange={handleChange} placeholder="Partner Name" />
+              <label>Partner Name {(formData.sob_sinid || formData.sob_sclid) && <span style={{ color: 'var(--bl5)', fontSize: 10 }}>⚡ From Inquiry</span>}</label>
+              <input name="sob_partner" value={formData.sob_partner || ''} onChange={handleChange} placeholder="Partner Name" disabled={!!formData.sob_sinid || !!formData.sob_sclid} />
             </div>
             <div className="fg">
               <label>Support Partner</label>
@@ -777,8 +783,8 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
           <div className="sect-lbl"><i className="fa fa-calculator"></i> Cost Calculation (Auto)</div>
           <div className="grid3">
             <div className="fg">
-              <label>Sale Price</label>
-              <input type="number" name="sob_saleprice" value={formData.sob_saleprice || ''} onChange={handleChange} placeholder="0" disabled={!!formData.sob_sclid} />
+              <label>Sale Price {(formData.sob_sinid || formData.sob_sclid) && <span style={{ color: 'var(--success)', fontSize: 10 }}>⚡ Final Deal Price (locked)</span>}</label>
+              <input type="number" name="sob_saleprice" value={formData.sob_saleprice || ''} onChange={handleChange} placeholder="0" disabled={!!formData.sob_sinid || !!formData.sob_sclid} />
             </div>
             <div className="fg">
               <label>RTO Charge</label>

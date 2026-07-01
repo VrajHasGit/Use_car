@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
@@ -8,10 +9,12 @@ import { SfuModal } from '../components/modals/SfuModal';
 const SalesFollowUp = () => {
   const { data, refresh } = useData();
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
+  const [sentIds, setSentIds] = useState(new Set());
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
   const records = data.sfu || [];
 
@@ -34,6 +37,7 @@ const SalesFollowUp = () => {
   const getLastFu = (r) => (r.followUps && r.followUps.length > 0) ? r.followUps[r.followUps.length - 1] : r;
 
   const filtered = records.filter(r => {
+    if (sentIds.has(r.id)) return false;
     const isWon = r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won';
     if (isWon) return false;
 
@@ -74,6 +78,9 @@ const SalesFollowUp = () => {
   const handleSendToBooking = async (rec) => {
     if (!await window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Order Booking?`)) return;
     try {
+      // Immediately remove from the list (optimistic UI)
+      setSentIds(prev => new Set([...prev, rec.id]));
+
       // Update follow-up status
       await updateRecord('sfu', rec.id, { sf_stat: 'Closed-Won' });
 
@@ -100,10 +107,11 @@ const SalesFollowUp = () => {
       const inqRec = data.sal_inq?.find(i => i.salId === rec.sf_inqid);
       if (inqRec) await updateRecord('sal_inq', inqRec.id, { status: 'Closed-Won' });
 
-      showToast('Sent to Sales Order Booking! 📋');
+      showToast('Sent to Sales Order Booking! 📋 Navigating...');
       await refresh('sfu');
       await refresh('sob');
       await refresh('sal_inq');
+      setTimeout(() => navigate('/sales-booking'), 800);
     } catch (e) {
       showToast('Failed to send to order booking.', 'error');
     }
