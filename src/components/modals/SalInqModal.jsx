@@ -190,7 +190,7 @@ export const SalInqModal = ({ isOpen, onClose, onSave, editData }) => {
               <select name="source" value={formData.source} onChange={handleChange}>
                 <option>Walk-in</option><option>Call</option><option>Online</option>
                 <option>Reference</option><option>Dealer</option><option>Partner</option><option>OLX</option>
-                <option>CarDekho</option><option>Cars24</option><option>WhatsApp</option><option>Social Media</option>
+                <option>Carwale</option><option>WhatsApp</option><option>Social Media</option>
               </select>
             </div>
             <div className="fg">
@@ -203,7 +203,7 @@ export const SalInqModal = ({ isOpen, onClose, onSave, editData }) => {
             </div>
             <div className="fg">
               <label>Telecaller Name</label>
-              <input name="teleCallerName" value={formData.teleCallerName} onChange={handleChange} placeholder="Name" disabled={!['Online', 'OLX', 'CarDekho', 'Cars24'].includes(formData.source)} />
+              <input name="teleCallerName" value={formData.teleCallerName} onChange={handleChange} placeholder="Name" disabled={!['Online', 'OLX', 'Carwale'].includes(formData.source)} />
             </div>
           </div>
           <div className="grid1">

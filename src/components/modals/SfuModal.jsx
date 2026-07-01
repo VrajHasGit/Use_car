@@ -24,6 +24,7 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   const [expandedSection, setExpandedSection] = useState('customer'); // 'customer', 'followups'
   const [audioFiles, setAudioFiles] = useState({}); // { index: File }
   const [buyerPrefs, setBuyerPrefs] = useState(null); // full preference set from linked Sales Inquiry
+  const [assignedExec, setAssignedExec] = useState(''); // locked from inquiry's assignedTo
   const [showDealStockDropdown, setShowDealStockDropdown] = useState(false);
   const [dealBrowseAll, setDealBrowseAll] = useState(false);
 
@@ -63,6 +64,8 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   const applyInqAutoFill = async (id) => {
     const d = await lookupSalInq(id);
     if (d) {
+      const exec = d.assignedTo || d.assigned || '';
+      if (exec) setAssignedExec(exec);
       setFormData(prev => ({
         ...prev,
         sf_cname: d.buyerName || prev.sf_cname,
@@ -110,6 +113,7 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
       setExpandedSection('customer');
       setAudioFiles({});
       setBuyerPrefs(null);
+      setAssignedExec('');
 
       if (editData) {
         const migrated = { ...BLANK, ...editData };
@@ -178,7 +182,7 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
 
   const addFollowUp = () => {
     if (formData.followUps.length >= 8) return;
-    const previousExec = formData.followUps.length > 0 ? formData.followUps[0].exec : "Ritesh Shah";
+    const previousExec = assignedExec || (formData.followUps.length > 0 ? formData.followUps[0].exec : '');
     
     let prefillCar = '';
     if (formData.sf_stkid) {
@@ -218,7 +222,10 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
   const handleSave = async () => {
     setSaving(true);
     try {
-      const newFollowUps = await uploadPendingAudio(formData.followUps);
+      const rawFollowUps = await uploadPendingAudio(formData.followUps);
+      const newFollowUps = assignedExec
+        ? rawFollowUps.map(fu => ({ ...fu, exec: assignedExec }))
+        : rawFollowUps;
       const lastFu = newFollowUps.length > 0 ? newFollowUps[newFollowUps.length - 1] : null;
       const latestStat = lastFu?.stat || formData.sf_stat || 'Interested';
       const dataToSave = { ...formData, followUps: newFollowUps, sf_stat: latestStat };
@@ -245,7 +252,10 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
     if (!await window.confirm('Save changes and send this inquiry to Sales Order Booking?')) return;
     setSaving(true);
     try {
-      const newFollowUps = await uploadPendingAudio(formData.followUps);
+      const rawFollowUps2 = await uploadPendingAudio(formData.followUps);
+      const newFollowUps = assignedExec
+        ? rawFollowUps2.map(fu => ({ ...fu, exec: assignedExec }))
+        : rawFollowUps2;
       const lastFu = newFollowUps.length > 0 ? newFollowUps[newFollowUps.length - 1] : null;
       const latestStat = lastFu?.stat || formData.sf_stat || 'Closed-Won';
       const dataToSave = { ...formData, followUps: newFollowUps, sf_stat: latestStat };
@@ -305,34 +315,6 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
                 <div className="grid3">
                   <div className="fg"><label>Customer Name</label><input name="sf_cname" value={formData.sf_cname} onChange={handleChange} placeholder="Auto-filled" disabled={!!formData.sf_inqid} /></div>
                   <div className="fg"><label>Customer Mobile</label><input name="sf_mob" value={formData.sf_mob} onChange={handleChange} type="tel" placeholder="Mobile" disabled={!!formData.sf_inqid} /></div>
-                  <div className="fg"><label>Registration No.</label><input name="sf_regn" value={formData.sf_regn} onChange={handleChange} placeholder="GJ-01-AB-1234" disabled={!!formData.sf_stkid} /></div>
-                </div>
-                <div className="grid3">
-                  {!formData.sf_stkid && (
-                    <>
-                      <div className="fg"><label>Vehicle Make</label><input name="sf_make" value={formData.sf_make} onChange={handleChange} placeholder="e.g. Maruti Suzuki" disabled={!!formData.sf_stkid} /></div>
-                      <div className="fg"><label>Vehicle Model</label><input name="sf_model" value={formData.sf_model} onChange={handleChange} placeholder="e.g. Swift VXI" disabled={!!formData.sf_stkid} /></div>
-                    </>
-                  )}
-                  <div className="fg"><label>Variant</label><input name="sf_var" value={formData.sf_var} onChange={handleChange} placeholder="Variant" disabled={!!formData.sf_stkid} /></div>
-                </div>
-                <div className="grid3">
-                  <div className="fg"><label>Year</label><input name="sf_year" value={formData.sf_year} onChange={handleChange} placeholder="Year" type="number" disabled={!!formData.sf_stkid} /></div>
-                  <div className="fg">
-                    <label>Fuel Type</label>
-                    <select name="sf_fuel" value={formData.sf_fuel} onChange={handleChange} disabled={!!formData.sf_stkid}>
-                      {FUELS.map(f => <option key={f}>{f}</option>)}
-                    </select>
-                  </div>
-                  <div className="fg"><label>KM Driven</label><input name="sf_km" value={formData.sf_km} onChange={handleChange} type="number" placeholder="KM" disabled={!!formData.sf_stkid} /></div>
-                </div>
-                <div className="grid3">
-                  <div className="fg">
-                    <label>Owners</label>
-                    <select name="sf_own" value={formData.sf_own} onChange={handleChange} disabled={!!formData.sf_stkid}>
-                      {OWNERS.map(o => <option key={o}>{o}</option>)}
-                    </select>
-                  </div>
                   <div className="fg">
                     <label>Test Drive Given?</label>
                     <select name="sf_testDrive" value={formData.sf_testDrive} onChange={handleChange}>
@@ -396,7 +378,19 @@ export const SfuModal = ({ isOpen, onClose, onSave, editData, quickInqId, onSend
                       <div className="grid3">
                         <div className="fg"><label>Status</label><select value={fu.stat} onChange={(e) => handleFollowUpChange(idx, 'stat', e.target.value)} disabled={fu.isSaved}><option>Interested</option><option>Not Interested</option><option>Callback</option><option>Site Visit</option><option>Price Nego</option><option>Closed-Won</option><option>Closed-Lost</option></select></div>
                         <div className="fg"><label>Next Follow-Up</label><input type="date" value={fu.stat?.startsWith('Closed') ? '' : fu.nfd} onChange={(e) => handleFollowUpChange(idx, 'nfd', e.target.value)} disabled={fu.isSaved || fu.stat?.startsWith('Closed')} /></div>
-                        <div className="fg"><label>Executive</label><select value={fu.exec} onChange={(e) => handleFollowUpChange(idx, 'exec', e.target.value)} disabled={fu.isSaved || idx > 0}>{EXEC_OPTIONS.map(n => <option key={n}>{n}</option>)}</select></div>
+                        <div className="fg">
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            Executive
+                            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <i className="fa fa-lock" style={{ fontSize: 9 }}></i> from Inquiry
+                            </span>
+                          </label>
+                          <input
+                            value={assignedExec || fu.exec || ''}
+                            readOnly
+                            style={{ background: 'var(--surface)', cursor: 'not-allowed', color: 'var(--text2)' }}
+                          />
+                        </div>
                       </div>
                       <div style={{ marginTop: 10, background: 'var(--bg2)', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

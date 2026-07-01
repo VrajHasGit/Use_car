@@ -34,8 +34,7 @@ const SalesFollowUp = () => {
   const getLastFu = (r) => (r.followUps && r.followUps.length > 0) ? r.followUps[r.followUps.length - 1] : r;
 
   const filtered = records.filter(r => {
-    const lastFu = getLastFu(r);
-    const isWon = r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won' || lastFu?.stat === 'Closed-Won';
+    const isWon = r.sf_stat === 'Closed-Won' || r.status === 'Closed-Won';
     if (isWon) return false;
 
     if (search) {
