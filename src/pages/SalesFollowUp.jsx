@@ -72,35 +72,28 @@ const SalesFollowUp = () => {
     window.open(`https://wa.me/91${r.sf_mob || r.mobile}?text=${m}`, '_blank');
   };
 
-  const handleSendToCloser = async (rec) => {
-    if (!await window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Closer?`)) return;
+  const handleSendToBooking = async (rec) => {
+    if (!await window.confirm(`Send ${rec.sf_cname || rec.buyerName} to Sales Order Booking?`)) return;
     try {
       // Update follow-up status
       await updateRecord('sfu', rec.id, { sf_stat: 'Closed-Won' });
 
-      // Auto-create closer record
-      const exists = rec.sf_inqid ? data.scl?.find(p => p.sc_inqid === rec.sf_inqid) : false;
+      // Auto-create order booking record
+      const exists = rec.sf_inqid ? data.sob?.find(p => p.sob_sinid === rec.sf_inqid) : false;
       if (!exists) {
-        const cnt = await getNextCounter('scl');
-        await addRecord('scl', {
-          sclId: genId('SCL', cnt),
-          sc_inqid: rec.sf_inqid || '',
-          sc_stkid: rec.sf_stkid || '',
-          sc_bname: rec.sf_cname || rec.buyerName || '',
-          sc_mob: rec.sf_mob || rec.mobile || '',
-          sc_make: rec.sf_make || '',
-          sc_model: rec.sf_model || '',
-          sc_year: rec.sf_year || '',
-          sc_regn: rec.sf_regn || '',
-          sc_mrp: rec.sf_budget || '',
-          sc_date: today(),
-          sc_stat: 'Confirmed',
-          buyerName: rec.sf_cname || rec.buyerName || '',
-          mobile: rec.sf_mob || rec.mobile || '',
-          make: rec.sf_make || '',
-          model: rec.sf_model || '',
-          regNo: rec.sf_regn || '',
-          status: 'Confirmed'
+        const cnt = await getNextCounter('sob');
+        await addRecord('sob', {
+          sobId: genId('SOB', cnt),
+          sob_sinid: rec.sf_inqid || '',
+          sob_stkid: rec.sf_stkid || '',
+          sob_cname: rec.sf_cname || rec.buyerName || '',
+          sob_cont: rec.sf_mob || rec.mobile || '',
+          sob_mm: [rec.sf_make, rec.sf_model].filter(Boolean).join(' '),
+          sob_year: rec.sf_year || '',
+          sob_regn: rec.sf_regn || '',
+          sob_saleprice: rec.sf_budget || '',
+          sob_date: today(),
+          status: 'Pending',
         });
       }
 
@@ -108,12 +101,12 @@ const SalesFollowUp = () => {
       const inqRec = data.sal_inq?.find(i => i.salId === rec.sf_inqid);
       if (inqRec) await updateRecord('sal_inq', inqRec.id, { status: 'Closed-Won' });
 
-      showToast('Sent to Sales Closer! 🏆');
+      showToast('Sent to Sales Order Booking! 📋');
       await refresh('sfu');
-      await refresh('scl');
+      await refresh('sob');
       await refresh('sal_inq');
     } catch (e) {
-      showToast('Failed to send to closer.', 'error');
+      showToast('Failed to send to order booking.', 'error');
     }
   };
 
@@ -137,7 +130,7 @@ const SalesFollowUp = () => {
           <input className="srch" placeholder="🔍 Search buyer / stock ID…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
-      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} onSendToCloser={handleSendToCloser} />}
+      {isModalOpen && <SfuModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRec} onSendToBooking={handleSendToBooking} />}
 
       {/* KPI Strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -191,7 +184,7 @@ const SalesFollowUp = () => {
                     <td>
                       <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon bi-next" title="Send to Closer" onClick={() => handleSendToCloser(r)}><i className="fa fa-handshake"></i></button>
+                        <button className="btn-icon bi-next" title="Send to Order Booking" onClick={() => handleSendToBooking(r)}><i className="fa fa-clipboard-list"></i></button>
                         {(r.sf_mob || r.mobile) && <button className="btn-icon" title="WhatsApp" onClick={() => handleWA(r)} style={{ background: '#25D366', color: '#fff' }}><i className="fa-brands fa-whatsapp"></i></button>}
                         <button className="btn-icon bi-del" title="Delete" onClick={() => handleDelete(r)}><i className="fa fa-trash"></i></button>
                       </div>

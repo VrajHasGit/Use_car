@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SobModal } from '../components/modals/SobModal';
-import { DelModal } from '../components/modals/DelModal';
 
 const SalesBooking = () => {
   const { data, refresh } = useData();
@@ -14,7 +13,6 @@ const SalesBooking = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRec, setEditRec] = useState(null);
   const [toast, setToast] = useState(null);
-  const [quickModal, setQuickModal] = useState({ type: null, sobId: null });
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   const records = data.sob || [];
@@ -67,15 +65,50 @@ const SalesBooking = () => {
     setIsModalOpen(true);
   };
 
-  const closeQuickModal = () => setQuickModal({ type: null, sobId: null });
+  const handleSendToCloser = async (rec) => {
+    if (rec.sob_sclid) { showToast('Already sent to Sales Closer.', 'info'); return; }
+    if (!await window.confirm(`Send ${rec.sob_cname || rec.buyerName} to Sales Closer?`)) return;
+    try {
+      const stkRec = rec.sob_stkid ? (data.stk || []).find(s => (s.stkId || s.id) === rec.sob_stkid) : null;
+      const [mmMake, ...mmRest] = (rec.sob_mm || '').split(' ');
+      const make = stkRec?.make || stkRec?.sk_make || mmMake || '';
+      const model = stkRec?.model || stkRec?.sk_model || mmRest.join(' ') || '';
+
+      const cnt = await getNextCounter('scl');
+      const sclId = genId('SCL', cnt);
+      await addRecord('scl', {
+        sclId,
+        sc_inqid: rec.sob_sinid || '',
+        sc_stkid: rec.sob_stkid || '',
+        sc_bname: rec.sob_cname || rec.buyerName || '',
+        sc_mob: rec.sob_cont || rec.mobile || '',
+        sc_make: make,
+        sc_model: model,
+        sc_year: rec.sob_year || '',
+        sc_regn: rec.sob_regn || '',
+        sc_mrp: rec.sob_saleprice || '',
+        sc_tok: rec.sob_token || '',
+        sc_date: today(),
+        sc_stat: 'Confirmed',
+      });
+      await updateRecord('sob', rec.id, { sob_sclid: sclId });
+
+      showToast('Sent to Sales Closer! 🏆');
+      await refresh('sob');
+      await refresh('scl');
+    } catch (e) {
+      showToast('Failed to send to closer.', 'error');
+    }
+  };
 
   // KPIs
   const totalBookings = records.length;
   const pending = records.filter(r => !r.status || r.status === 'Pending').length;
   const delivered = records.filter(r => r.status === 'Delivered').length;
-  const totalValue = useMemo(() => records.reduce((a, r) => a + (parseFloat(r.dealTotal || r.sob_saleprice) || 0), 0), [records]);
-  const totalPaid = useMemo(() => records.reduce((a, r) => a + (parseFloat(r.totalPaid) || 0), 0), [records]);
-  const totalBalance = useMemo(() => records.reduce((a, r) => a + (parseFloat(r.balance) || 0), 0), [records]);
+  const rowTotal = (r) => parseFloat(r.total) || ((parseFloat(r.sob_saleprice) || 0) + (parseFloat(r.sob_rto) || 0));
+  const totalValue = useMemo(() => records.reduce((a, r) => a + rowTotal(r), 0), [records]);
+  const totalToken = useMemo(() => records.reduce((a, r) => a + (parseFloat(r.sob_token) || 0), 0), [records]);
+  const totalBalance = totalValue - totalToken;
 
   return (
     <div className="page on" id="pg_sal_booking">
@@ -111,7 +144,7 @@ const SalesBooking = () => {
       {/* Payment Summary */}
       {totalBookings > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
-          <div className="pl-card"><div className="pl-val" style={{ color: 'var(--success)' }}>{fmt(totalPaid)}</div><div className="pl-lbl">TOTAL RECEIVED</div></div>
+          <div className="pl-card"><div className="pl-val" style={{ color: 'var(--success)' }}>{fmt(totalToken)}</div><div className="pl-lbl">TOTAL TOKEN RECEIVED</div></div>
           <div className="pl-card"><div className="pl-val" style={{ color: totalBalance > 0 ? 'var(--warn)' : 'var(--success)' }}>{fmt(totalBalance)}</div><div className="pl-lbl">TOTAL BALANCE</div></div>
           <div className="pl-card"><div className="pl-val" style={{ color: 'var(--bl5)' }}>{totalBookings > 0 ? Math.round((delivered / totalBookings) * 100) : 0}%</div><div className="pl-lbl">DELIVERY RATE</div></div>
         </div>
@@ -121,10 +154,12 @@ const SalesBooking = () => {
         <div className="tc-hdr"><div className="tc-title"><i className="fa fa-clipboard-list" style={{ color: '#7C3AED' }}></i> Sales Order Bookings <span style={{ background: '#7C3AED', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, marginLeft: 8 }}>{filtered.length}</span></div></div>
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <table id="tbl_sob">
-            <thead><tr><th>SOB ID</th><th>Inq ID</th><th>Stock ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Sale Price</th><th>Paid</th><th>Balance</th><th>Delivery</th><th>Status</th><th style={{ minWidth: 160 }}>Actions</th></tr></thead>
+            <thead><tr><th>SOB ID</th><th>Inq ID</th><th>Stock ID</th><th>Date</th><th>Buyer</th><th>Reg No.</th><th>Vehicle</th><th>Total Amount</th><th>Token</th><th>Balance</th><th>Delivery</th><th>Status</th><th style={{ minWidth: 200 }}>Actions</th></tr></thead>
             <tbody>
               {filtered.length > 0 ? filtered.map(r => {
-                const bal = parseFloat(r.balance) || 0;
+                const total = rowTotal(r);
+                const token = parseFloat(r.sob_token) || 0;
+                const bal = total - token;
                 return (
                   <tr key={r.id}>
                     <td style={{ fontWeight: 700, color: '#7C3AED', fontFamily: "'Space Grotesk',sans-serif" }}>{r.sobId || r.id?.slice(0, 12)}</td>
@@ -138,15 +173,20 @@ const SalesBooking = () => {
                     <td style={{ fontWeight: 600 }}>{r.sob_cname || r.buyerName}</td>
                     <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--or1)' }}>{r.sob_regn || r.regNo || '—'}</td>
                     <td>{r.sob_mm || `${r.make || ''} ${r.model || ''}`}</td>
-                    <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(r.dealTotal || r.sob_saleprice || r.sp)}</td>
-                    <td style={{ color: 'var(--bl5)', fontWeight: 600 }}>{r.totalPaid ? fmt(r.totalPaid) : '—'}</td>
-                    <td style={{ color: bal > 0 ? 'var(--warn)' : 'var(--success)', fontWeight: 700 }}>{r.balance !== undefined ? fmt(r.balance) : '—'}</td>
+                    <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(total)}</td>
+                    <td style={{ color: 'var(--bl5)', fontWeight: 600 }}>{token ? fmt(token) : '—'}</td>
+                    <td style={{ color: bal > 0 ? 'var(--warn)' : 'var(--success)', fontWeight: 700 }}>{fmt(bal)}</td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: 11 }}>{r.sob_edd ? fmtDate(r.sob_edd) : '—'}</td>
                     <td><span className={`badge ${statusBadge(r.status || 'Pending')}`}>{r.status || 'Pending'}</span></td>
                     <td>
                       <div className="act-grp">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRec(r); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
                         <button className="btn-icon bi-print" title="Print" onClick={() => handlePrintRecord(r)}><i className="fa fa-print"></i></button>
+                        <button className="btn-icon" title={r.sob_sclid ? `Already sent: ${r.sob_sclid}` : 'Send to Sales Closer'} disabled={!!r.sob_sclid}
+                          onClick={() => handleSendToCloser(r)}
+                          style={{ background: r.sob_sclid ? 'rgba(0,0,0,.06)' : 'rgba(34,197,94,.1)', color: r.sob_sclid ? 'var(--text3)' : 'var(--success)', opacity: r.sob_sclid ? 0.6 : 1, cursor: r.sob_sclid ? 'not-allowed' : 'pointer' }}>
+                          <i className="fa fa-trophy"></i>
+                        </button>
                         {(r.status !== 'Delivered') && (
                           <button className="btn-icon" title="Mark Delivered" onClick={() => handleMarkDelivered(r)}
                             style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)' }}>

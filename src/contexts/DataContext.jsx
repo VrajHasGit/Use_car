@@ -7,7 +7,7 @@ const COLLECTIONS = [
   'pur_inq', 'val', 'pfu', 'pcl', 'ob',
   'sal_inq', 'sfu', 'scl', 'sob', 'stk',
   'ws', 'pay', 'del', 'doc', 'cust',
-  'dn', 'gp', 'sp', 'td', 'fin',
+  'dn', 'gp', 'sp', 'td', 'fin', 'sale_doc',
   'exp_rec', 'gst_inv', 'targets', 'feedback', 'tasks', 'users'
 ];
 

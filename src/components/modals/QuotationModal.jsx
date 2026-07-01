@@ -496,7 +496,10 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
   const [photos, setPhotos]         = useState([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [downloading, setDownloading]     = useState(null); // 'jpeg' | 'pdf' | null
-  const quoteRef = useRef(null);
+  const [copying, setCopying]             = useState(false);
+  const [copied, setCopied]               = useState(false);
+  const quoteRef   = useRef(null);
+  const captureRef = useRef(null);
   const today    = todayFmt();
 
   useEffect(() => {
@@ -518,26 +521,33 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
 
   const qNo = getQNo(stockRec.stkId);
 
+  const captureCanvas = async () => {
+    if (!captureRef.current) throw new Error('Document not ready yet');
+    await document.fonts.ready;
+    const { default: html2canvas } = await import('html2canvas');
+    return html2canvas(captureRef.current, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#FFFFFF',
+      logging: false,
+    });
+  };
+
   const handleDownload = async (format) => {
-    if (!quoteRef.current) return;
+    if (!captureRef.current) return;
     setDownloading(format);
     try {
-      await document.fonts.ready;
-      const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(quoteRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#FFFFFF',
-        logging: false,
-      });
+      const canvas = await captureCanvas();
       const safeName = `${qNo}_${(clientName || 'quotation').replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
       if (format === 'jpeg') {
         const a = document.createElement('a');
         a.download = `${safeName}.jpg`;
         a.href = canvas.toDataURL('image/jpeg', 0.94);
+        document.body.appendChild(a);
         a.click();
+        a.remove();
       } else {
         const { default: jsPDF } = await import('jspdf');
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -578,7 +588,31 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
     setDownloading(null);
   };
 
+  const handleCopyImage = async () => {
+    if (!captureRef.current) return;
+    if (!navigator.clipboard || typeof window.ClipboardItem === 'undefined') {
+      alert('This browser does not support copying images to the clipboard. Use Download JPEG instead.');
+      return;
+    }
+    setCopying(true);
+    try {
+      // Pass the clipboard a pending Blob promise (rather than awaiting first) so
+      // browsers that require the write to start within the click's user-gesture
+      // window (Safari/Firefox) don't reject it once html2canvas finishes later.
+      const blobPromise = captureCanvas().then(canvas => new Promise((resolve, reject) => {
+        canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('Could not render image'))), 'image/png');
+      }));
+      await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blobPromise })]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      alert('Copy failed: ' + e.message);
+    }
+    setCopying(false);
+  };
+
   const canDownload = !!clientName.trim() && !downloading;
+  const canCopy     = !!clientName.trim() && !copying;
 
   return (
     <div className="overlay" style={{ zIndex: 600 }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -630,6 +664,15 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
               <i className="fa fa-file-pdf"></i>
               {downloading === 'pdf' ? 'Saving…' : 'Download PDF'}
             </button>
+            <button
+              className="btn btn-out btn-sm"
+              onClick={handleCopyImage}
+              disabled={!canCopy}
+              title={!clientName.trim() ? 'Enter client name first' : 'Copy as image to paste into WhatsApp, email, etc.'}
+            >
+              <i className={`fa ${copied ? 'fa-check' : 'fa-copy'}`}></i>
+              {copying ? 'Copying…' : copied ? 'Copied!' : 'Copy Image'}
+            </button>
           </div>
           {!clientName.trim() && (
             <span style={{ fontSize:10, color:'var(--warn)', fontWeight:600, width:'100%', paddingLeft:2 }}>
@@ -657,6 +700,22 @@ export const QuotationModal = ({ isOpen, onClose, stockRec }) => {
             </div>
           )}
         </div>
+
+        {/* Off-screen, fully-sized copy used for html2canvas capture so the
+            scrollable preview's overflow/height never clips the download */}
+        {!loadingPhotos && (
+          <div style={{ position:'fixed', top:0, left:-99999, zIndex:-1, pointerEvents:'none' }}>
+            <div ref={captureRef}>
+              <QuotationDoc
+                r={stockRec}
+                clientName={clientName}
+                photos={photos}
+                qNo={qNo}
+                todayDate={today}
+              />
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

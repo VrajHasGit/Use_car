@@ -205,8 +205,8 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
     const payMode = pmt.mode || 'CASH';
     const price = Number(formData.pc_price || 0);
     const token = Number(formData.pc_tok || 0);
-    const totalPaid = (formData.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
-    const ledgerBal = (price - token - totalPaid).toLocaleString('en-IN') + '/-';
+    const paidThroughThis = (formData.payments || []).slice(0, idx + 1).reduce((s, p) => s + Number(p.amount || 0), 0);
+    const ledgerBal = (price - token - paidThroughThis).toLocaleString('en-IN') + '/-';
 
     const customStyles = `
   .print-header { display: none !important; }
@@ -422,7 +422,7 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
               </div>
               {!hiddenPayments[idx] && (
                 <>
-                  <div className="grid3">
+                  <div className="grid4">
                 <div className="fg">
                   <label>Mode</label>
                   <select value={pmt.mode} onChange={e => handlePaymentChange(idx, 'mode', e.target.value)} disabled={pmt.status === 'Done'}>
@@ -435,6 +435,10 @@ export const PclModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickIn
                 <div className="fg">
                   <label>Amount ₹</label>
                   <input type="number" value={pmt.amount} onChange={e => handlePaymentChange(idx, 'amount', e.target.value)} placeholder="0" disabled={pmt.status === 'Done' && (formData.pc_loan !== 'Yes' || (editData?.payments?.[idx]?.amount))} />
+                </div>
+                <div className="fg">
+                  <label>Payment Date</label>
+                  <input type="date" value={pmt.date || ''} onChange={e => handlePaymentChange(idx, 'date', e.target.value)} disabled={pmt.status === 'Done'} />
                 </div>
                 <div className="fg">
                   <label>Pay To</label>

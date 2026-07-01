@@ -278,8 +278,8 @@ function printPclVoucher(pmt, pcl, idx) {
   const payMode = pmt.mode || 'CASH';
   const price = Number(pcl.pc_price || 0);
   const token = Number(pcl.pc_tok || 0);
-  const totalPaid = (pcl.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
-  const ledgerBal = (price - token - totalPaid).toLocaleString('en-IN') + '/-';
+  const paidThroughThis = (pcl.payments || []).slice(0, idx + 1).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const ledgerBal = (price - token - paidThroughThis).toLocaleString('en-IN') + '/-';
   const css = `
     .print-header{display:none!important}
     body{background:#e0e0e0;margin:0;padding:20px;display:flex;flex-direction:column;align-items:center}

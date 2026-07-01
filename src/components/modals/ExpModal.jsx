@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { processFiles } from '../../utils/uploadMedia';
+import { printDocument } from '../../utils/helpers';
 
 export const COMMON_CATEGORIES = [
   'Rent', 'Salary', 'Utilities', 'Marketing', 'Office Supplies', 'Business Insurance',
@@ -25,13 +26,15 @@ const emptyForm = () => ({
   stkId: '', regNo: '', carMake: '', carModel: '', carYear: '',
   description: '',
   amount: '',
-  gstRate: '',
   paidBy: 'Petty Cash',
   payMethod: 'Cash',
   receiptNo: '',
   reference: '',
   notes: '',
   billPhotos: [],
+  voucherNo: '',
+  clientName: 'Carecay Pvt. Ltd.',
+  voucherStatus: 'Done',
 });
 
 export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
@@ -106,11 +109,6 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
   const handleDrop = (e) => { e.preventDefault(); setDragOver(false); processIncomingFiles(e.dataTransfer.files); };
   const removeBillPhoto = (idx) => setFormData(prev => ({ ...prev, billPhotos: prev.billPhotos.filter((_, i) => i !== idx) }));
 
-  const amt = Number(formData.amount) || 0;
-  const gstRate = Number(formData.gstRate) || 0;
-  const gstAmount = +(amt * gstRate / 100).toFixed(2);
-  const netAmount = +(amt + gstAmount).toFixed(2);
-
   const isCar = formData.expType === 'Car';
   const categories = isCar ? CAR_CATEGORIES : COMMON_CATEGORIES;
 
@@ -120,13 +118,163 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
     if (isCar && !formData.stkId) return alert('Please select the vehicle this expense belongs to.');
     setSaving(true);
     try {
-      if (onSave) await onSave({ ...formData, gstAmount, netAmount });
+      if (onSave) await onSave({ ...formData });
     } catch (error) {
       console.error('Error saving record: ', error);
       alert('Failed to save record.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleGenerateVoucher = () => {
+    if (!formData.amount || !formData.paidBy.trim() || !formData.description.trim()) {
+      return alert('Amount, Paid By and Description are required to generate a voucher.');
+    }
+
+    const amt = Number(formData.amount).toLocaleString('en-IN') + '/-';
+
+    const customStyles = `
+  .print-header { display: none !important; }
+  body { background: #e0e0e0; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+  .no-print { width: 800px; margin-bottom: 20px; }
+  .voucher-container {
+    width: 800px;
+    min-height: 520px;
+    background: #fff;
+    padding: 20px 30px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    color: #000;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  @media print {
+    body { background: #fff; padding: 0; display: block; margin: 0; }
+    .no-print { display: none !important; }
+    .voucher-container {
+      width: 100%;
+      height: 148mm;
+      border: none;
+      box-shadow: none;
+      padding: 10mm;
+      box-sizing: border-box;
+    }
+    @page { size: A4 portrait; margin: 0; }
+  }
+
+  .v-header-grid { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .v-logo img { height: 80px; object-fit: contain; }
+
+  .v-top-right { text-align: right; }
+  .v-title-box { background: #333; color: #fff; padding: 4px 10px; font-size: 20px; font-weight: bold; display: inline-block; letter-spacing: 1px; border-radius: 2px; margin-bottom: 10px; }
+
+  .v-row-right { display: flex; justify-content: flex-end; align-items: flex-end; gap: 30px; font-size: 14px; font-weight: 600; }
+  .v-line { border-bottom: 1px solid #000; display: inline-block; padding-left: 10px; font-weight: 600; }
+
+  .v-row-company { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 15px; }
+
+  .v-amount-box { display: flex; align-items: center; border: 2px solid #333; height: 34px; }
+  .v-rs { background: #333; color: #fff; padding: 0 10px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 16px; }
+
+  .v-row { display: flex; align-items: flex-end; margin-bottom: 15px; font-size: 14px; width: 100%; }
+  .v-label { white-space: nowrap; margin-right: 10px; font-weight: 500; }
+
+  .v-pay-by { border: 1.5px solid #333; display: inline-block; padding: 4px 10px; margin-top: 5px; font-size: 13px; font-weight: 600; }
+
+  .v-sign-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1.5px solid #333; }
+  .v-sign-table td { border: 1.5px solid #333; height: 60px; vertical-align: top; padding: 4px 6px; font-size: 12px; font-weight: 600; position: relative; }
+
+  .v-footer { text-align: center; margin-top: 15px; font-size: 12px; font-weight: bold; letter-spacing: 1.5px; }
+`;
+
+    const reference = formData.reference || formData.receiptNo || '';
+
+    const htmlContent = `
+<div class="no-print" style="background: #fff3cd; color: #856404; padding: 10px 15px; border-radius: 4px; border: 1px solid #ffeeba; margin-bottom: 20px; font-weight: bold; width: 800px; text-align: center; font-size: 13px;">
+  ⚠️ IMPORTANT: Ensure your print settings are set to "Paper Size: A4" and "Layout: Portrait". The voucher will print on the top half of the page.
+</div>
+<div class="voucher-container">
+  <div class="v-header-grid">
+    <div class="v-logo">
+      <img src="/logo.png" alt="Carecay" />
+    </div>
+    <div class="v-top-right">
+      <div class="v-title-box">Cash Voucher</div>
+      <div class="v-row-right">
+        <div>V.No. : <span class="v-line" style="width:120px; margin-bottom:2px;">${formData.voucherNo || ''}</span></div>
+        <div>Date : <span class="v-line" style="width:120px; margin-bottom:2px; font-weight: bold; padding-left: 5px;">${formData.date ? formData.date.split('-').reverse().join('/') : ''}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="v-row-company">
+    <div style="font-size: 15px; font-weight: 600; display:flex; align-items: flex-end; white-space: nowrap; margin-left: 5px;">
+      For Company Carecay Pvt Ltd
+    </div>
+    <div class="v-amount-box">
+      <div class="v-rs">Rs.</div>
+      <div style="width: 140px; text-align: center; font-weight: bold; font-size: 18px;">${amt}</div>
+    </div>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Pay To :</span>
+    <span class="v-line" style="flex:1;">${formData.paidBy || '______________________'}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Purpose :</span>
+    <span class="v-line" style="flex:1;">${formData.description}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Client Name:</span>
+    <span class="v-line" style="flex:1;">${formData.clientName}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Category :</span>
+    <span class="v-line" style="flex:1;">${formData.category || ''}</span>
+    <span class="v-label" style="margin-left: 30px;">Reference :</span>
+    <span class="v-line" style="flex:1;">${reference}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Remarks :</span>
+    <span class="v-line" style="flex:1;">${formData.notes || ''}</span>
+  </div>
+
+  <div class="v-row">
+    <span class="v-label">Payment Status :</span>
+    <span class="v-line" style="flex:1;">${formData.voucherStatus}</span>
+  </div>
+
+  <div class="v-pay-by">
+    Pay by : ${(formData.payMethod || 'CASH').toUpperCase()}
+  </div>
+
+  <table class="v-sign-table">
+    <tr>
+      <td style="width: 25%;">Authorised by :</td>
+      <td style="width: 25%;">Executive :</td>
+      <td style="width: 25%;">Officer :</td>
+      <td style="width: 25%; padding:0;">
+        <div style="position:absolute; bottom:4px; right:4px; font-size:10px; font-weight:normal;">Receiver Signature</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="v-footer">● FOR OFFICE INTERNAL USE ONLY ●</div>
+</div>
+`;
+
+    const safeVNo = (formData.voucherNo || 'VOUCHER').replace(/[^a-zA-Z0-9_-]/g, '-');
+    const safePayTo = (formData.paidBy || 'PAYEE').replace(/[^a-zA-Z0-9_ -]/g, '-');
+    const docTitle = `Expense-Voucher-${safeVNo}-${safePayTo}`.replace(/\s+/g, '-');
+
+    const downloadOpts = { jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' } };
+    printDocument(docTitle, htmlContent, customStyles, downloadOpts);
   };
 
   const TYPE_CARDS = [
@@ -266,13 +414,6 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
             </>
           )}
 
-          <div className="sect-lbl"><i className="fa fa-calculator"></i> Tax & Total — AUTO</div>
-          <div className="grid3">
-            <div className="fg"><label>GST Rate %</label><input type="number" name="gstRate" value={formData.gstRate || ''} onChange={handleChange} placeholder="0" /></div>
-            <div className="fg"><label>GST Amount ₹ (AUTO)</label><div className="calc-out">₹ {gstAmount.toLocaleString('en-IN')}</div></div>
-            <div className="fg"><label>Net Total ₹ (AUTO)</label><div className="calc-out" style={{ fontWeight: 800, color: 'var(--or1)' }}>₹ {netAmount.toLocaleString('en-IN')}</div></div>
-          </div>
-
           <div className="grid3">
             <div className="fg"><label>Paid By</label>
               <select name="paidBy" value={formData.paidBy || ''} onChange={handleChange}>
@@ -295,6 +436,22 @@ export const ExpModal = ({ isOpen, onClose, onSave, editData }) => {
 
           <div className="grid1">
             <div className="fg"><label>Notes</label><textarea rows={2} name="notes" value={formData.notes || ''} onChange={handleChange} placeholder="Additional notes…" /></div>
+          </div>
+
+          <div className="sect-lbl"><i className="fa fa-file-invoice-dollar"></i> Voucher Details</div>
+          <div className="grid3">
+            <div className="fg"><label>Voucher No.</label><input name="voucherNo" value={formData.voucherNo || ''} onChange={handleChange} placeholder="Optional" /></div>
+            <div className="fg"><label>Client / Company Name</label><input name="clientName" value={formData.clientName || ''} onChange={handleChange} /></div>
+            <div className="fg"><label>Payment Status</label>
+              <select name="voucherStatus" value={formData.voucherStatus || 'Done'} onChange={handleChange}>
+                <option>Done</option><option>Pending</option>
+              </select>
+            </div>
+          </div>
+          <div className="fg" style={{ marginBottom: 20 }}>
+            <button type="button" className="btn btn-out" style={{ width: '100%', color: 'var(--or1)', borderColor: 'var(--or1)', height: '40px', fontWeight: '700' }} onClick={handleGenerateVoucher} title="Generate Voucher">
+              <i className="fa fa-print"></i> Generate Voucher
+            </button>
           </div>
 
           <div className="sect-lbl"><i className="fa fa-image"></i> Bill / Receipt Photos</div>

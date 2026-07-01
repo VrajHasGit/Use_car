@@ -162,8 +162,7 @@ const Expenses = () => {
       'Expense ID': r.expId, Date: r.date, Type: r.expType || 'Common',
       Vehicle: r.expType === 'Car' ? `${r.carMake || ''} ${r.carModel || ''} (${r.regNo || r.stkId || ''})`.trim() : '',
       Description: r.description, Category: r.category,
-      'Amount (INR)': r.amount, 'GST Rate (%)': r.gstRate || 0, 'GST Amount (INR)': r.gstAmount || 0,
-      'Net Amount (INR)': r.netAmount || r.amount, 'Payment Method': r.payMethod, 'Paid By': r.paidBy,
+      'Amount (INR)': r.amount, 'Payment Method': r.payMethod, 'Paid By': r.paidBy,
       'Approved By': r.approvedBy || '', 'Approval Date': r.approvedAt?.slice(0, 10) || '',
       Status: r.status, Notes: r.notes || '',
     }));
@@ -282,7 +281,7 @@ const Expenses = () => {
             <thead>
               <tr>
                 <th>Expense ID</th><th>Date</th><th>Type / Vehicle</th><th>Description</th><th>Category</th>
-                <th>Amount</th><th>GST</th><th>Paid By</th><th>Pay Method</th>
+                <th>Amount</th><th>Paid By</th><th>Pay Method</th>
                 <th>Status</th><th>Approved By</th><th style={{ minWidth: 200 }}>Actions</th>
               </tr>
             </thead>
@@ -304,7 +303,6 @@ const Expenses = () => {
                   <td style={{ maxWidth: 180 }}><span title={r.description} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '—'}</span></td>
                   <td>{r.category ? <span className="badge b-info" style={{ fontSize: 9 }}>{r.category}</span> : '—'}</td>
                   <td style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: 'var(--danger)' }}>{fmt(r.amount)}</td>
-                  <td style={{ fontSize: 11, color: 'var(--text3)' }}>{r.gstRate ? `${r.gstRate}%` : '—'}</td>
                   <td style={{ fontSize: 11 }}>{r.paidBy || '—'}</td>
                   <td>{r.payMethod ? <span className="badge b-neutral" style={{ fontSize: 9 }}>{r.payMethod}</span> : '—'}</td>
                   <td><span className={`badge ${statusBadgeExp(r.status)}`}>{r.status || 'Pending'}</span></td>
@@ -336,7 +334,7 @@ const Expenses = () => {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="12" className="empty">
+                <tr><td colSpan="11" className="empty">
                   <i className="fa fa-receipt"></i><br />
                   {search || categoryFilter || statusFilter ? 'No expenses match your filters.' : 'No expense records yet. Click "Add Expense" to begin.'}
                 </td></tr>

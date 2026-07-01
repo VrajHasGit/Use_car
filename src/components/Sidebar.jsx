@@ -74,18 +74,23 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
           {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
           {navItem('/workshop', 'fa fa-screwdriver-wrench', 'Workshop / Refurb', null, { paddingLeft: '22px' })}
           {navItem('/expenses', 'fa fa-receipt', 'Expenses', null, { paddingLeft: '22px' })}
-          {navItem('/reports', 'fa fa-chart-bar', 'Reports', null, { paddingLeft: '22px' })}
         </>}
 
         {/* SALES PIPELINE */}
         {isSales && <>
           <div className="sb-sec" data-role="sales admin" style={{ color: 'rgba(80,160,255,.7)' }}>⬇ SALES PIPELINE</div>
-          {navItem('/sales-inquiry', 'fa fa-tags', 'Sales Inquiry')}
+          <NavLink
+            to="/sales-search"
+            className={({ isActive }) => `sb-item${isActive ? ' act' : ''}`}
+            style={{ color: '#67e8f9' }}
+          >
+            <i className="fa fa-magnifying-glass sb-ico sb-ico-pulse"></i>
+            <span className="sb-lbl">Sales Search</span>
+          </NavLink>
+          {navItem('/sales-inquiry', 'fa fa-tags', 'Sales Inquiry', null, { paddingLeft: '22px' })}
           {navItem('/sales-follow', 'fa fa-comments', 'Sales Follow-Up', null, { paddingLeft: '22px' })}
-          {navItem('/test-drive', 'fa fa-road', 'Test Drive', null, { paddingLeft: '22px' })}
-          {navItem('/stock', 'fa fa-warehouse', 'Car Stock', null, { paddingLeft: '22px' })}
-          {navItem('/sales-closer', 'fa fa-trophy', 'Sales Closer', null, { paddingLeft: '22px' })}
           {navItem('/sales-booking', 'fa fa-clipboard-list', 'Sales Order Booking', null, { paddingLeft: '22px' })}
+          {navItem('/sales-closer', 'fa fa-trophy', 'Sales Closer', null, { paddingLeft: '22px' })}
           {navItem('/finance', 'fa fa-landmark', 'Finance / Loan', null, { paddingLeft: '22px' })}
           {navItem('/payment', 'fa fa-credit-card', 'Sale Payment', null, { paddingLeft: '22px' })}
           {navItem('/sale-documents', 'fa fa-file-contract', 'Sale Documents', null, { paddingLeft: '22px' })}
@@ -110,6 +115,7 @@ const Sidebar = ({ isSlim, isMobileOpen }) => {
           <div className="sb-sec" data-role="admin">MANAGEMENT</div>
           {navItem('/user-mgmt', 'fa fa-user-shield', 'User Management')}
           {navItem('/settings', 'fa fa-gear', 'Settings')}
+          {navItem('/reports', 'fa fa-chart-bar', 'Reports')}
         </>}
       </nav>
 

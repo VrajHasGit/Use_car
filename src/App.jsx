@@ -36,6 +36,7 @@ import TestDrive from './pages/TestDrive';
 import PurchaseDocuments from './pages/PurchaseDocuments';
 import SalesDocuments from './pages/SalesDocuments';
 import PurchaseSearch from './pages/PurchaseSearch';
+import SalesSearch from './pages/SalesSearch';
 import Tasks from './pages/Tasks';
 
 import './index.css';
@@ -120,6 +121,9 @@ function AppInner() {
         } />
 
         {/* Sales Pipeline — sales roles */}
+        <Route path="sales-search" element={
+          <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesSearch /></RoleRoute>
+        } />
         <Route path="sales-inquiry" element={
           <RoleRoute allowedRoles={ROUTE_ROLES.sales}><SalesInquiry /></RoleRoute>
         } />

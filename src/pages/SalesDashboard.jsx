@@ -38,8 +38,8 @@ const SalesDashboard = () => {
     { stage: 'Inquiries', count: sal.length, icon: 'fa-tag', color: '#4A7CDE', link: '/sales-inquiry' },
     { stage: 'Follow-Ups', count: sfu.length, icon: 'fa-comments', color: '#F59E0B', link: '/sales-follow' },
     { stage: 'Test Drives', count: td.length, icon: 'fa-road', color: '#9D174D', link: '/test-drive' },
-    { stage: 'Closers', count: scl.length, icon: 'fa-trophy', color: '#059669', link: '/sales-closer' },
     { stage: 'Bookings', count: sob.length, icon: 'fa-clipboard-list', color: '#7C3AED', link: '/sales-booking' },
+    { stage: 'Closers', count: scl.length, icon: 'fa-trophy', color: '#059669', link: '/sales-closer' },
     { stage: 'Deliveries', count: del.length, icon: 'fa-truck', color: '#065F46', link: '/delivery' },
   ], [data]);
 
@@ -259,7 +259,7 @@ const SalesDashboard = () => {
                     <td style={{ fontWeight: 700, color: 'var(--bl5)', fontFamily: "'Space Grotesk',sans-serif", fontSize: 11 }}>{r.sobId || r.id?.slice(0, 10)}</td>
                     <td style={{ fontWeight: 600 }}>{r.sob_cname || r.buyerName || r.customerName}</td>
                     <td>{r.sob_mm || `${r.make || ''} ${r.model || ''}`}</td>
-                    <td className="amt-or">{fmt(r.dealTotal || r.sob_saleprice || r.salePrice || r.finalPrice)}</td>
+                    <td className="amt-or">{fmt(r.total || r.dealTotal || r.sob_saleprice || r.salePrice || r.finalPrice)}</td>
                     <td><span className={`badge ${statusBadge(r.status)}`}>{r.status || '—'}</span></td>
                   </tr>
                 )) : <tr><td colSpan="5" className="empty">No bookings yet</td></tr>}

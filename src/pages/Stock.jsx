@@ -84,8 +84,11 @@ const Stock = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [makeFilter, setMakeFilter] = useState('');
   const [fuelFilter, setFuelFilter] = useState('');
+  const [transFilter, setTransFilter] = useState('');
   const [yearFrom, setYearFrom] = useState('');
   const [yearTo, setYearTo] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [page, setPage] = useState(1);
   const [quotRec, setQuotRec] = useState(null);
@@ -141,11 +144,16 @@ const Stock = () => {
       const matchStatus = !statusFilter || r.status === statusFilter;
       const matchMake = !makeFilter || r.make === makeFilter;
       const matchFuel = !fuelFilter || r.fuel === fuelFilter;
+      const matchTrans = !transFilter || (r.trans || r.sk_trans || '').toLowerCase().includes(transFilter.toLowerCase());
       const matchYearFrom = !yearFrom || parseInt(r.year) >= parseInt(yearFrom);
       const matchYearTo = !yearTo || parseInt(r.year) <= parseInt(yearTo);
-      return matchSearch && matchStatus && matchMake && matchFuel && matchYearFrom && matchYearTo;
+      const sp = parseFloat(r.sp || r.sk_sp) || 0;
+      const matchPriceMin = !priceMin || sp >= parseFloat(priceMin) * 100000;
+      const matchPriceMax = !priceMax || sp <= parseFloat(priceMax) * 100000;
+      return matchSearch && matchStatus && matchMake && matchFuel && matchTrans &&
+             matchYearFrom && matchYearTo && matchPriceMin && matchPriceMax;
     });
-  }, [rawStock, stock, search, statusFilter, makeFilter, fuelFilter, yearFrom, yearTo]);
+  }, [rawStock, stock, search, statusFilter, makeFilter, fuelFilter, transFilter, yearFrom, yearTo, priceMin, priceMax]);
 
   const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
@@ -170,8 +178,8 @@ const Stock = () => {
 
   const PIE_COLORS = ['#E85D04', '#F4A261', '#E9C46A', '#2A9D8F', '#264653'];
 
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setMakeFilter(''); setFuelFilter(''); setYearFrom(''); setYearTo(''); setPage(1); };
-  const hasFilter = search || statusFilter || makeFilter || fuelFilter || yearFrom || yearTo;
+  const clearFilters = () => { setSearch(''); setStatusFilter(''); setMakeFilter(''); setFuelFilter(''); setTransFilter(''); setYearFrom(''); setYearTo(''); setPriceMin(''); setPriceMax(''); setPage(1); };
+  const hasFilter = search || statusFilter || makeFilter || fuelFilter || transFilter || yearFrom || yearTo || priceMin || priceMax;
 
   const handleSave = async (formData) => {
     try {
@@ -326,31 +334,68 @@ const handleExport = () => {
       )}
 
       {/* Filter Bar */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14, padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', }}>
-        <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
-        <CustomSelect className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ minWidth: 120 }}>
-          <option value="">All Status</option>
-          <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>Workshop</option><option>On Hold</option><option>Cancelled</option>
-        </CustomSelect>
-        <CustomSelect className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }} style={{ minWidth: 130 }}>
-          <option value="">All Makes</option>
-          {makes.map(m => <option key={m}>{m}</option>)}
-        </CustomSelect>
-        <CustomSelect className="flt" value={fuelFilter} onChange={e => { setFuelFilter(e.target.value); setPage(1); }} style={{ minWidth: 110 }}>
-          <option value="">All Fuel</option>
-          <option>Petrol</option><option>Diesel</option><option>EV</option><option>Hybrid</option><option>CNG</option>
-        </CustomSelect>
-        <input className="flt" type="number" placeholder="Year From" value={yearFrom} onChange={e => { setYearFrom(e.target.value); setPage(1); }} style={{ width: 100 }} min="1990" max={thisYear} />
-        <input className="flt" type="number" placeholder="Year To" value={yearTo} onChange={e => { setYearTo(e.target.value); setPage(1); }} style={{ width: 100 }} min="1990" max={thisYear} />
-        {hasFilter && (
-          <button className="btn btn-out btn-sm" onClick={clearFilters} style={{ whiteSpace: 'nowrap' }}>
-            <i className="fa fa-xmark"></i> Clear Filters
-          </button>
-        )}
-        {/* View Toggle */}
-        <div className="view-toggle" style={{ marginLeft: 'auto' }}>
-          <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')} title="List View"><i className="fa fa-list"></i></button>
-          <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')} title="Grid View"><i className="fa fa-grip"></i></button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14, padding: '12px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+        {/* Row 1 — search + status + make + fuel + year */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input className="srch" placeholder="🔍 Search reg / make / model…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ flex: '1 1 160px', minWidth: 160 }} />
+          <CustomSelect className="flt" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} style={{ minWidth: 120 }}>
+            <option value="">All Status</option>
+            <option>In Stock</option><option>Ready for Sale</option><option>Refurb</option><option>Under Refurb</option><option>Workshop</option><option>On Hold</option><option>Cancelled</option>
+          </CustomSelect>
+          <CustomSelect className="flt" value={makeFilter} onChange={e => { setMakeFilter(e.target.value); setPage(1); }} style={{ minWidth: 130 }}>
+            <option value="">All Makes</option>
+            {makes.map(m => <option key={m}>{m}</option>)}
+          </CustomSelect>
+          <CustomSelect className="flt" value={fuelFilter} onChange={e => { setFuelFilter(e.target.value); setPage(1); }} style={{ minWidth: 110 }}>
+            <option value="">All Fuel</option>
+            <option>Petrol</option><option>Diesel</option><option>EV</option><option>Hybrid</option><option>CNG</option>
+          </CustomSelect>
+          <input className="flt" type="number" placeholder="Year From" value={yearFrom} onChange={e => { setYearFrom(e.target.value); setPage(1); }} style={{ width: 96 }} min="1990" max={thisYear} />
+          <input className="flt" type="number" placeholder="Year To" value={yearTo} onChange={e => { setYearTo(e.target.value); setPage(1); }} style={{ width: 96 }} min="1990" max={thisYear} />
+          {/* View Toggle — pushed right */}
+          <div className="view-toggle" style={{ marginLeft: 'auto' }}>
+            <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')} title="List View"><i className="fa fa-list"></i></button>
+            <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')} title="Grid View"><i className="fa fa-grip"></i></button>
+          </div>
+        </div>
+
+        {/* Row 2 — budget + transmission + KM + location + clear */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Budget range */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0 8px', height: 36 }}>
+            <i className="fa fa-indian-rupee-sign" style={{ fontSize: 10, color: 'var(--or1)', opacity: .8 }}></i>
+            <input
+              type="number" placeholder="Min (L)" value={priceMin}
+              onChange={e => { setPriceMin(e.target.value); setPage(1); }}
+              style={{ width: 72, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--text)', padding: 0 }}
+              min="0" step="0.5"
+            />
+            <span style={{ color: 'var(--text3)', fontSize: 11 }}>–</span>
+            <input
+              type="number" placeholder="Max (L)" value={priceMax}
+              onChange={e => { setPriceMax(e.target.value); setPage(1); }}
+              style={{ width: 72, border: 'none', background: 'transparent', outline: 'none', fontSize: 13, color: 'var(--text)', padding: 0 }}
+              min="0" step="0.5"
+            />
+            <span style={{ color: 'var(--text3)', fontSize: 10, whiteSpace: 'nowrap' }}>Lakh</span>
+          </div>
+          {/* Transmission */}
+          <CustomSelect className="flt" value={transFilter} onChange={e => { setTransFilter(e.target.value); setPage(1); }} style={{ minWidth: 120 }}>
+            <option value="">All Trans.</option>
+            <option value="Manual">Manual</option>
+            <option value="Automatic">Automatic</option>
+            <option value="Semi">Semi-Auto</option>
+          </CustomSelect>
+          {hasFilter && (
+            <button className="btn btn-out btn-sm" onClick={clearFilters} style={{ whiteSpace: 'nowrap' }}>
+              <i className="fa fa-xmark"></i> Clear Filters
+            </button>
+          )}
+          {hasFilter && (
+            <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 2 }}>
+              {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
       </div>
 

@@ -4,10 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { addRecord, updateRecord, deleteRecord, getNextCounter } from '../services/db';
 import { today, genId, fmtDate, fmt, statusBadge } from '../utils/helpers';
 import { SalInqModal } from '../components/modals/SalInqModal';
-import { SfuModal } from '../components/modals/SfuModal';
-import { SclModal } from '../components/modals/SclModal';
-import { SobModal } from '../components/modals/SobModal';
-import { TestdriveModal } from '../components/modals/TestdriveModal';
 import { exportToExcel } from '../utils/exportData';
 
 const PAGE_SIZE = 20;
@@ -23,46 +19,6 @@ const STAGES = [
   { id: 'Hold', label: 'Hold' },
 ];
 const SOURCES = ['Walk-in', 'Phone', 'Website', 'OLX', 'Referral', 'WhatsApp', 'Social Media'];
-
-/* ── Log Call Modal ──────────────────────────────── */
-function LogCallModal({ rec, onClose, onSave }) {
-  const [noteType, setNoteType] = useState('Call');
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
-  const handleSave = async () => {
-    if (!notes.trim()) return;
-    setSaving(true);
-    const entry = { type: noteType, notes, ts: new Date().toISOString(), date: today() };
-    const timeline = [...(rec.timeline || []), entry];
-    await onSave(rec.id, { timeline, lastContact: today() });
-    setSaving(false); onClose();
-  };
-  return (
-    <div className="modal-overlay" style={{ zIndex: 1100 }}>
-      <div className="modal" style={{ maxWidth: 400 }}>
-        <div className="m-hdr"><div className="m-title"><i className="fa fa-phone" style={{ color: 'var(--success)' }}></i> Log Interaction — {rec.buyerName}</div><button className="m-close" onClick={onClose}>✕</button></div>
-        <div className="m-body" style={{ padding: 20 }}>
-          <div className="fg" style={{ marginBottom: 12 }}>
-            <label>Interaction Type</label>
-            <select value={noteType} onChange={e => setNoteType(e.target.value)}>
-              {['Call', 'WhatsApp', 'Visit', 'Email', 'Meeting', 'Test Drive'].map(t => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="fg">
-            <label>Notes *</label>
-            <textarea rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Describe the interaction, customer feedback, next steps…" style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border2)', color: 'var(--text)', borderRadius: 'var(--radius-sm)', padding: 10, fontFamily: 'inherit', fontSize: 12, resize: 'vertical' }} autoFocus />
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
-            <button className="btn btn-out" onClick={onClose}>Cancel</button>
-            <button className="btn btn-or" onClick={handleSave} disabled={!notes.trim() || saving}>
-              {saving ? <><i className="car-spinner"></i> Saving…</> : <><i className="fa fa-check"></i> Log Interaction</>}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ── Pagination ──────────────────────────────────── */
 function Paginate({ total, page, setPage }) {
@@ -91,8 +47,6 @@ const SalesInquiry = () => {
   const [sourceFilter, setSourceFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
-  const [quickModal, setQuickModal] = useState({ type: null, inqId: null });
-  const [logCallRec, setLogCallRec] = useState(null);
   const [toast, setToast] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -128,11 +82,10 @@ const SalesInquiry = () => {
   const handleSave = async (formData) => {
     try {
       const actor = { id: currentUser?.id, name: currentUser?.name || 'Admin', role: currentUser?.role || 'Admin' };
-      if (editRecord) { await updateRecord('sal_inq', editRecord.id, formData); showToast('Sales inquiry updated!'); }
+      if (editRecord) { await updateRecord('sal_inq', editRecord.id, { ...formData, updatedBy: actor.name }); showToast('Sales inquiry updated!'); }
       else {
-        const cnt = await getNextCounter('sal');
-        const salId = genId('SIN', cnt);
-        await addRecord('sal_inq', { ...formData, salId, date: formData.date || today(), status: formData.status || 'New' }, { title: 'New Sales Inquiry', message: (formData.buyerName || '') + ' — ' + (formData.make || '') + ' ' + (formData.model || ''), link: '/sales-inquiry', actor });
+        const salId = formData.salId || genId('SIN', await getNextCounter('sal'));
+        await addRecord('sal_inq', { ...formData, salId, date: formData.date || today(), status: formData.status || 'New', createdBy: actor.name, updatedBy: actor.name }, { title: 'New Sales Inquiry', message: (formData.buyerName || '') + ' — ' + (formData.makePref || '') + ' ' + (formData.model || ''), link: '/sales-inquiry', actor });
         showToast('Sales inquiry added!');
       }
       await refresh('sal_inq'); setIsModalOpen(false);
@@ -149,11 +102,6 @@ const SalesInquiry = () => {
     const vehicle = rec.linkedStock ? ` We have a ${rec.makePref || ''} ${rec.model || ''} ready for you.` : '';
     const msg = encodeURIComponent(`Hello ${rec.buyerName}, thank you for your interest at Carecay.${vehicle} Please visit or call us!`);
     window.open(`https://wa.me/91${rec.mobile}?text=${msg}`, '_blank');
-  };
-
-  const handleLogCall = async (id, updates) => {
-    try { await updateRecord('sal_inq', id, updates); await refresh('sal_inq'); showToast('Interaction logged! ✅'); }
-    catch (e) { showToast('Failed to log.', 'error'); }
   };
 
   const handleSetFU = async (rec) => {
@@ -176,19 +124,33 @@ const SalesInquiry = () => {
     exportToExcel(rows, `sales_inquiries_${today()}.xlsx`);
   };
 
-  const closeQuickModal = () => setQuickModal({ type: null, inqId: null });
-
-  const markShifted = async (targetStage, recId) => {
-    const rec = data.sal_inq.find(r => r.id === recId || r.salId === recId);
-    if (rec) {
-      try {
-        await updateRecord('sal_inq', rec.id, { stage: targetStage, status: 'Closed-Won' });
-        await refresh('sal_inq');
-        showToast(`Shifted to ${targetStage}`);
-        closeQuickModal();
-      } catch (e) {
-        showToast('Failed to shift', 'error');
-      }
+  const handleShiftToFollowUp = async (inq) => {
+    if (!await window.confirm(`Send ${inq.buyerName}'s inquiry to Sales Follow-Up?`)) return;
+    try {
+      const cnt = await getNextCounter('sfu');
+      await addRecord('sfu', {
+        sfuId: genId('SFU', cnt),
+        sf_inqid: inq.salId || inq.id,
+        sf_stkid: inq.linkedStock || '',
+        sf_cname: inq.buyerName || '',
+        sf_mob: inq.mobile || '',
+        sf_make: inq.makePref || '',
+        sf_model: inq.model || '',
+        sf_year: inq.yearFrom || inq.yearTo || '',
+        sf_budget: inq.budget || '',
+        sf_fuel: inq.fuel && inq.fuel !== 'Any' ? inq.fuel : '',
+        sf_exec: inq.assigned || 'Ritesh Shah',
+        sf_stat: 'Interested',
+        followUps: [],
+        date: today(),
+        stage: 'Follow-Up',
+      });
+      await updateRecord('sal_inq', inq.id, { stage: 'Follow-Up' });
+      await refresh('sfu');
+      await refresh('sal_inq');
+      showToast('Sent to Sales Follow-Up!');
+    } catch (e) {
+      showToast('Failed to send to follow-up.', 'error');
     }
   };
 
@@ -210,8 +172,6 @@ const SalesInquiry = () => {
           </div>
         </div>
       )}
-      {logCallRec && <LogCallModal rec={logCallRec} onClose={() => setLogCallRec(null)} onSave={handleLogCall} />}
-
       {/* Header */}
       <div className="ph">
         <div className="ph-left">
@@ -230,10 +190,6 @@ const SalesInquiry = () => {
       </div>
 
       <SalInqModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} editData={editRecord} />
-      <SfuModal isOpen={quickModal.type === 'sfu'} onClose={closeQuickModal} quickInqId={quickModal.inqId} />
-      <SclModal isOpen={quickModal.type === 'scl'} onClose={closeQuickModal} onSuccess={() => markShifted('Closer', quickModal.inqId)} quickInqId={quickModal.inqId} />
-      <SobModal isOpen={quickModal.type === 'sob'} onClose={closeQuickModal} />
-      <TestdriveModal isOpen={quickModal.type === 'td'} onClose={closeQuickModal} />
 
       {/* KPI Strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 16 }}>
@@ -294,7 +250,11 @@ const SalesInquiry = () => {
                     <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{inq.buyerName}</td>
                     <td><a href={`tel:${inq.mobile}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{inq.mobile}</a></td>
                     <td className="amt-or">{fmt(inq.budget)}</td>
-                    <td style={{ color: 'var(--text2)', fontSize: 11 }}>{inq.makePref || '—'} {inq.model || ''}</td>
+                    <td style={{ color: 'var(--text2)', fontSize: 11 }}>
+                      {(inq.carPrefs && inq.carPrefs.length > 0)
+                        ? inq.carPrefs.map(p => `${p.make || ''} ${p.model || ''}`.trim()).filter(Boolean).join(', ') || '—'
+                        : `${inq.makePref || '—'} ${inq.model || ''}`}
+                    </td>
                     <td>
                       {inq.linkedStock ? (
                         <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, color: '#059669', fontSize: 10, background: 'rgba(5,150,105,.1)', padding: '2px 8px', borderRadius: 10 }}>{inq.linkedStock}</span>
@@ -319,20 +279,7 @@ const SalesInquiry = () => {
                     <td>
                       <div className="act-grp act-grp-3">
                         <button className="btn-icon bi-edit" title="Edit" onClick={() => { setEditRecord(inq); setIsModalOpen(true); }}><i className="fa fa-pen"></i></button>
-                        <button className="btn-icon" title="Log Call / Interaction" onClick={() => setLogCallRec(inq)}
-                          style={{ background: 'rgba(34,197,94,.1)', color: 'var(--success)' }}>
-                          <i className="fa fa-phone-volume"></i>
-                        </button>
-                        <button className="btn-icon bi-view" title="Follow-Up" onClick={() => setQuickModal({ type: 'sfu', inqId: inq.salId || inq.id })}><i className="fa fa-phone"></i></button>
-                        <button className="btn-icon bi-next" title="Sales Closer" onClick={() => setQuickModal({ type: 'scl', inqId: inq.salId || inq.id })}><i className="fa fa-handshake"></i></button>
-                        <button className="btn-icon" title="Order Booking" onClick={() => setQuickModal({ type: 'sob', inqId: inq.salId || inq.id })}
-                          style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED' }}>
-                          <i className="fa fa-clipboard-list"></i>
-                        </button>
-                        <button className="btn-icon" title="Test Drive" onClick={() => setQuickModal({ type: 'td', inqId: inq.salId || inq.id })}
-                          style={{ background: 'rgba(157,23,77,.1)', color: '#9D174D' }}>
-                          <i className="fa fa-road"></i>
-                        </button>
+                        <button className="btn-icon bi-next" title="Send to Sales Follow-Up" onClick={() => handleShiftToFollowUp(inq)}><i className="fa fa-arrow-right"></i></button>
                         <button className="btn-icon" title="Set Follow-Up Reminder" onClick={() => handleSetFU(inq)} style={{ background: 'rgba(124,58,237,.1)', color: '#7C3AED' }}><i className="fa fa-bell"></i></button>
                         {inq.mobile && (
                           <button className="btn-icon btn-wa" title="WhatsApp" onClick={() => handleWhatsApp(inq)}
