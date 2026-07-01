@@ -41,7 +41,6 @@ import Tasks from './pages/Tasks';
 import './index.css';
 
 import SplashLoader from './components/SplashLoader';
-import CustomCursor from './components/CustomCursor';
 
 // ── Protected Route: must be logged in ──
 const ProtectedRoute = ({ children }) => {
@@ -189,7 +188,6 @@ export default function App() {
 
   return (
     <>
-      <CustomCursor />
       <BrowserRouter>
         <AuthProvider>
           {appLoading && <SplashLoader onComplete={() => setAppLoading(false)} />}
