@@ -78,6 +78,9 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
       (r.stkId || r.id || '').toLowerCase() === stkId.toLowerCase()
     );
     if (stk) {
+      const ownMap = { '1st': '1st Owner', '2nd': '2nd Owner', '3rd': '3rd Owner', '4th': '4th+ Owner', '4th+': '4th+ Owner' };
+      const rawOwn = stk.owners || stk.sk_own || stk.own || '';
+      const mappedOwn = ownMap[rawOwn] || rawOwn;
       setFormData(prev => ({
         ...prev,
         sob_stkid: stkId,
@@ -89,6 +92,8 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
         sob_regn: stk.regNo || stk.sk_regn || prev.sob_regn,
         sob_year: stk.year || stk.sk_year || prev.sob_year,
         sob_km: stk.km || stk.sk_km || prev.sob_km,
+        sob_own: mappedOwn || prev.sob_own,
+        sob_insval: stk.sk_insval || stk.insval || stk.insVal || prev.sob_insval,
         sob_saleprice: prev.sob_saleprice || stk.sprice || stk.sp || stk.sk_sp,
         sob_partner: prev.sob_partner || stk.partner || stk.sk_partner || stk.ob_pname || stk.pc_pname,
         sob_oth_exp: (Number(stk.refurb) || 0) + (Number(stk.rto) || 0) + (Number(stk.ins) || 0) || prev.sob_oth_exp,
@@ -110,8 +115,16 @@ export const SobModal = ({ isOpen, onClose, onSave, onSuccess, editData, quickSc
          const closedFu = sfuRec.followUps.find(f => f.stat === 'Closed-Won');
          if (closedFu) {
             if (closedFu.dealPrice) dealPriceFromSfu = closedFu.dealPrice;
-            if (closedFu.finalRegn) {
-              const stk = (data.stk || []).find(s => (s.regNo || s.sk_regn || '').toLowerCase() === closedFu.finalRegn.toLowerCase() || (s.stkId || s.id || '').toLowerCase() === closedFu.finalRegn.toLowerCase());
+            // fetchedCarDetails.stkId is the most reliable source (set when user picks from dropdown)
+            const fetched = closedFu.fetchedCarDetails;
+            if (fetched?.stkId && fetched.stkId !== 'N/A') {
+              dealStkId = fetched.stkId;
+            } else if (closedFu.finalRegn) {
+              const norm = s => (s || '').replace(/[\s-]/g, '').toLowerCase();
+              const stk = (data.stk || []).find(s =>
+                norm(s.regNo || s.sk_regn) === norm(closedFu.finalRegn) ||
+                norm(s.stkId || s.id) === norm(closedFu.finalRegn)
+              );
               if (stk) dealStkId = stk.stkId || stk.id;
             }
          }
